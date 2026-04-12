@@ -384,3 +384,17 @@ toast.error(error.userMessage); // ✅
 // ❌ Native JavaScript alerts (alert(), confirm())
 // ❌ Ignoring fetch errors (silent network failures)
 ```
+
+---
+
+## Related Skills
+
+> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for error handling.
+
+| Skill | Why |
+|-------|-----|
+| `testing-rules` | Tests for error boundaries, error states |
+| `a11y-rules` | `role="alert"`, aria-live for errors |
+| `i18n-rules` | Translated error messages and toasts |
+| `fetching-rules` | Error states in TanStack Query, retry logic |
+| `backend/error-handling` | Server error format that the frontend consumes |

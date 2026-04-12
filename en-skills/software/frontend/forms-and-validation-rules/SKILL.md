@@ -368,3 +368,17 @@ function focusFirstError(errors: FieldErrors) {
 // ❌ Form without noValidate (mixes native + custom validation)
 // ❌ File upload without size or type limits
 ```
+
+---
+
+## Related Skills
+
+> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for forms.
+
+| Skill | Why |
+|-------|-----|
+| `testing-rules` | Form tests with userEvent + queries by label |
+| `a11y-rules` | Associated labels, accessible error messages, fieldset |
+| `i18n-rules` | Translated validation messages |
+| `security-rules` | Input sanitization, XSS prevention |
+| `backend/data-validation` | Shared Zod schemas between client and server |

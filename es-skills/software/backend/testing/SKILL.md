@@ -398,3 +398,16 @@ export default defineConfig({
 ❌ describe/it genéricos ("should work") → describir comportamiento esperado
 ❌ Snapshot tests para JSON responses → frágiles, usar assertions específicas
 ```
+
+---
+
+## Skills Relacionadas
+
+> **Consultar el índice maestro [`backend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para la cadena completa.
+
+| Skill | Por qué |
+|-------|--------|
+| `error-handling` | Tests de error paths, no solo happy path |
+| `data-validation` | Tests de schemas y DTOs |
+| `clean-code-principles` | Naming expresivo, test builders, AAA pattern |
+| `frontend/testing-rules` | Mismos principios para lógica compartida |

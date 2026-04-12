@@ -282,3 +282,16 @@ format.dateTime(date, { dateStyle: 'long' }) // ✅
 // ❌ Keys numéricas o crípticas
 { "msg_1": "Hola", "msg_2": "Adiós" }       // ❌ Imposible de mantener
 ```
+
+---
+
+## Skills Relacionadas
+
+> **Consultar el índice maestro [`frontend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para la cadena completa.
+
+| Skill | Por qué |
+|-------|--------|
+| `a11y-rules` | `lang` attribute, traducciones de aria-labels, RTL layout |
+| `forms-and-validation-rules` | Mensajes de error traducidos, labels i18n |
+| `error-handling-rules` | Mensajes de error y toasts traducidos |
+| `seo-rules` | hreflang, canonical URLs por locale |

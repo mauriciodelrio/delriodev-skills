@@ -297,3 +297,15 @@ const theme = createTheme({
 // ❌ Tailwind purge bypass
 <div className={`bg-${dynamicColor}-500`} />  // No se purga correctamente
 ```
+
+---
+
+## Skills Relacionadas
+
+> **Consultar el índice maestro [`frontend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para estilos.
+
+| Skill | Por qué |
+|-------|--------|
+| `a11y-rules` | Contraste mínimo 4.5:1, focus visible, prefers-reduced-motion |
+| `design-system-build-components-rules` | Tokens, variants, Atomic Design |
+| `performance-rules` | CSS crítico, purge, bundle size |

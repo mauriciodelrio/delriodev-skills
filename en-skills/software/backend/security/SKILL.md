@@ -289,3 +289,18 @@ async findByIdForUser(id: string, userId: string) {
 ❌ Trusting headers like X-Forwarded-For without a trusted proxy
 ❌ Weak JWT secret (< 32 chars) or shared between access and refresh
 ```
+
+---
+
+## Related Skills
+
+> **Consult the master index [`backend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
+
+| Skill | Why |
+|-------|-----|
+| `auth` | JWT, hashing, RBAC (auth security layer) |
+| `logging` | Audit logging of security events |
+| `error-handling` | Don't expose stack traces or internal info |
+| `data-validation` | Input sanitization at boundaries |
+| `governance/owasp-top-10` | Vulnerability prevention checklist |
+| `governance/pci-compliance` | If handling payment data |

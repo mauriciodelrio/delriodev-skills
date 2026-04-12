@@ -334,3 +334,17 @@ export function Toggle({
 <Auth>{(user) => <Theme>{(theme) => <Data>{...}</Data>}</Theme>}</Auth>
 // ✅ Use hooks: const user = useAuth(); const theme = useTheme();
 ```
+
+---
+
+## Related Skills
+
+> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** to verify which cross-cutting skills apply when creating components.
+
+| Skill | Why | When |
+|-------|-----|------|
+| `testing-rules` | Every new component requires tests | Always |
+| `a11y-rules` | WCAG 2.2 AA on every interactive component | Always |
+| `clean-code-principles` | JSDoc on interfaces/props, named exports | Always |
+| `i18n-rules` | Don't hardcode UI strings | If project uses i18n |
+| `css-rules` | Styles with Tailwind + `cn()` | Always |

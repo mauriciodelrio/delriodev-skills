@@ -321,3 +321,17 @@ test('tab navega entre botones del modal', async () => {
 - [ ] ¿Las imágenes tienen alt descriptivo (o vacío si decorativas)?
 - [ ] ¿Los íconos tienen aria-hidden="true" si son decorativos?
 - [ ] ¿Los modales manejan focus trap y restauran focus al cerrar?
+
+---
+
+## Skills Relacionadas
+
+> **Consultar el índice maestro [`frontend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para la cadena completa.
+
+| Skill | Por qué |
+|-------|--------|
+| `testing-rules` | Tests de accesibilidad (queries por role, axe-core) |
+| `component-patterns` | Compound components con roles semánticos |
+| `css-rules` | Contraste, focus indicators, prefers-reduced-motion |
+| `forms-and-validation-rules` | Labels, error messages accesibles, fieldset/legend |
+| `i18n-rules` | `lang` attribute, traducciones de aria-labels |

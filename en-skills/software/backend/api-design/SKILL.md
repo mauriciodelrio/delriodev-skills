@@ -332,3 +332,18 @@ export class UsersController {
 ❌ Ignoring Content-Type → always validate application/json
 ❌ API without documentation → OpenAPI is mandatory for shared APIs
 ```
+
+---
+
+## Related Skills
+
+> **Consult the master index [`backend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for endpoints.
+
+| Skill | Why |
+|-------|-----|
+| `testing` | Integration tests for each endpoint (Supertest) |
+| `data-validation` | DTOs and Zod schemas for inputs |
+| `error-handling` | Correct status codes, consistent error responses |
+| `security` | Rate limiting, sanitization, CORS |
+| `logging` | Request logging with correlation IDs |
+| `clean-code-principles` | JSDoc, RESTful naming, SRP |

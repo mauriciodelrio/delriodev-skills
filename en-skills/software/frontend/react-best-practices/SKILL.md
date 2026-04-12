@@ -347,3 +347,17 @@ function SubmitButton({ onSubmit }: { onSubmit: () => Promise<void> }) {
 // ❌ Business logic inside components (extract to hooks or services)
 // ❌ index.tsx as component name (use ComponentName.tsx)
 ```
+
+---
+
+## Related Skills
+
+> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** to verify which cross-cutting skills apply.
+
+| Skill | Why |
+|-------|-----|
+| `testing-rules` | Every new hook, component, or effect requires tests |
+| `a11y-rules` | Refs for focus management, keyboard navigation |
+| `clean-code-principles` | Atomic hooks, SRP, JSDoc on public hooks |
+| `state-management-rules` | State tool selection |
+| `performance-rules` | Memoization, lazy loading, code splitting |

@@ -109,3 +109,60 @@ When Fastify?
   ✅ Can be used under NestJS as an adapter
   ✅ API with high throughput
 ```
+
+---
+
+## Mandatory Skills by Action
+
+> **These rules apply ALWAYS when creating or modifying backend code.**
+> Each individual sub-skill must consult this section to know which
+> other skills are mandatory in parallel.
+
+```
+WHEN CREATING/MODIFYING AN ENDPOINT:
+  1. ☐ testing              → Unit + integration tests (coverage ≥ 80%)
+  2. ☐ data-validation      → DTOs, Zod/class-validator on inputs
+  3. ☐ error-handling       → Typed error classes, global handler
+  4. ☐ security             → Helmet, rate limiting, sanitization
+  5. ☐ logging              → Structured logging, correlation IDs
+  6. ☐ api-design           → REST conventions, status codes, OpenAPI
+  7. ☐ clean-code-principles → JSDoc, SRP, guard clauses, naming
+
+WHEN CREATING/MODIFYING AUTH:
+  1. ☐ All of the above +
+  2. ☐ auth                 → JWT, hashing, RBAC, guards
+  3. ☐ governance/owasp-top-10 → A07 Auth Failures, rate limiting
+
+WHEN CREATING/MODIFYING DB LOGIC:
+  1. ☐ testing              → Tests with real DB (Testcontainers) or mocks
+  2. ☐ database-patterns    → Repository, transactions, N+1 prevention
+  3. ☐ database-design      → Indexes, naming, migrations
+  4. ☐ clean-code-principles → Separation of concerns, DI
+
+WHEN CREATING/MODIFYING BACKGROUND JOBS:
+  1. ☐ testing              → Worker and scheduling tests
+  2. ☐ background-jobs      → BullMQ, retries, dead letter queues
+  3. ☐ error-handling       → Retry strategies, failure logging
+  4. ☐ logging              → Job lifecycle logging
+
+WHEN CONSUMING EXTERNAL APIs:
+  1. ☐ api-consumption      → Retry, circuit breaker, timeouts
+  2. ☐ error-handling       → Error mapping, fallback responses
+  3. ☐ logging              → Request/response logging (no PII)
+  4. ☐ security             → Don't expose secrets, token rotation
+```
+
+### Consultation Chain
+
+```
+When a sub-skill is activated, the agent MUST:
+
+  1. Read the requested sub-skill (e.g., auth)
+  2. Return to THIS index (backend/SKILL.md)
+  3. Consult "Mandatory Skills by Action" based on what it's doing
+  4. Read and apply each mandatory skill marked with ☐
+  5. Verify that the code meets ALL before marking as completed
+
+The agent does NOT mark a task as completed if any mandatory skill
+from this list is missing.
+```

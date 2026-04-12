@@ -321,6 +321,93 @@ FORMATO DE REPORTE:
 
 ---
 
+## Concerns Transversales Obligatorios
+
+> **Cada bloque de implementación debe pasar por esta checklist.**
+> Cuando el agente completa código (componente, endpoint, módulo, hook, servicio),
+> DEBE consultar la skill orquestadora del dominio (`frontend/SKILL.md` o
+> `backend/SKILL.md`) para verificar qué skills transversales aplican.
+
+### Checklist Post-Implementación
+
+```
+DESPUÉS de implementar cada bloque significativo de código:
+
+☐ TESTS — ¿Se crearon tests para el nuevo código?
+    → Frontend: consultar frontend/testing-rules
+    → Backend: consultar backend/testing
+    → Coverage mínimo: 80% (statements, branches, functions, lines)
+
+☐ CLEAN CODE — ¿Se aplicaron principios de código limpio?
+    → Consultar clean-code-principles
+    → JSDoc en interfaces/tipos públicos y funciones no obvias
+    → Named exports, funciones atómicas, guard clauses
+
+☐ DOCUMENTACIÓN — ¿Se requiere actualizar documentación?
+    → Consultar agent-workflow/project-documentation
+    → README se actualiza si: nuevo script, nueva env var, cambio de
+      estructura, cambio de tech stack, nuevo prerequisito
+
+☐ ACCESIBILIDAD (si es frontend)
+    → Consultar frontend/a11y-rules
+    → WCAG 2.2 AA, roles semánticos, aria-labels, focus management
+
+☐ i18n (si hay texto visible al usuario)
+    → Consultar frontend/i18n-rules
+    → NO hardcodear strings de UI — usar sistema de traducción
+
+☐ SEGURIDAD
+    → Frontend: consultar frontend/security-rules
+    → Backend: consultar backend/security + governance/owasp-top-10
+    → Validar inputs en boundaries, sanitizar outputs
+
+☐ ERROR HANDLING
+    → Frontend: consultar frontend/error-handling-rules
+    → Backend: consultar backend/error-handling
+    → No catch vacíos, errores tipados, fallback UI
+
+☐ LOGGING (si es backend)
+    → Consultar backend/logging
+    → Structured logging, no PII en logs, correlation IDs
+```
+
+### Cómo Funciona
+
+```
+El agente NO necesita memorizar todas las reglas de cada skill.
+El flujo es:
+
+  1. Implementar la tarea principal
+  2. Recorrer la checklist de arriba
+  3. Para cada ☐ que aplique, CONSULTAR la skill correspondiente
+  4. Aplicar las reglas de esa skill al código recién creado
+  5. Solo marcar la tarea como completada cuando todos los ☐ se cumplan
+
+Ejemplo — Se creó un componente React <PaymentForm>:
+  ☐ Tests → leer frontend/testing-rules → crear PaymentForm.test.tsx
+  ☐ Clean code → leer clean-code-principles → JSDoc en props interface
+  ☐ a11y → leer frontend/a11y-rules → labels, roles, focus trap
+  ☐ i18n → leer frontend/i18n-rules → strings extraídas a traducción
+  ☐ Seguridad → leer frontend/security-rules → sanitizar inputs de pago
+  ☐ Error handling → leer frontend/error-handling-rules → error boundary
+```
+
+### Definition of Done (Actualizado)
+
+```
+Un feature está DONE cuando:
+  1. ✅ Todos los A/C se cumplen
+  2. ✅ Tests pasan (con coverage ≥ 80%)
+  3. ✅ El código sigue clean-code-principles (JSDoc incluido)
+  4. ✅ Checklist de concerns transversales cumplido
+  5. ✅ No hay desvíos no reportados del plan
+  6. ✅ Context actualizado con estado final
+  7. ✅ Memory actualizado con lo implementado
+  8. ✅ README actualizado si aplica (project-documentation)
+```
+
+---
+
 ## Manejo de Features Grandes
 
 ```

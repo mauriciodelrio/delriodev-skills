@@ -127,6 +127,58 @@ description: >
 
 ## Cross-Cutting Principles
 
+> **These rules apply ALWAYS when creating or modifying frontend code.**
+> Each individual sub-skill must consult this section to know which
+> other skills are mandatory in parallel.
+
+### Mandatory Skills by Action
+
+```
+WHEN CREATING/MODIFYING A COMPONENT:
+  1. ☐ testing-rules        → Unit tests with Vitest + RTL (coverage ≥ 80%)
+  2. ☐ a11y-rules           → WCAG 2.2 AA, roles, aria-labels, focus management
+  3. ☐ clean-code-principles → JSDoc on props/interfaces, named exports, SRP
+  4. ☐ i18n-rules           → UI strings NOT hardcoded (if the project uses i18n)
+  5. ☐ error-handling-rules  → Error boundaries, fallback UI
+
+WHEN CREATING/MODIFYING A FORM:
+  1. ☐ All of the above +
+  2. ☐ forms-and-validation-rules → React Hook Form + Zod, validation UX
+  3. ☐ security-rules             → Input sanitization, XSS prevention
+  4. ☐ a11y-rules                 → Associated labels, accessible error messages
+
+WHEN CREATING/MODIFYING A HOOK OR STORE:
+  1. ☐ testing-rules              → Unit tests for the hook/store
+  2. ☐ clean-code-principles      → JSDoc, pure functions, expressive naming
+  3. ☐ state-management-rules     → Selectors, avoid re-renders
+
+WHEN CREATING/MODIFYING STYLES:
+  1. ☐ css-rules                  → Tailwind, responsive, dark mode
+  2. ☐ a11y-rules                 → Contrast, focus visible, reduced motion
+
+WHEN CREATING/MODIFYING DATA FETCHING:
+  1. ☐ fetching-rules             → TanStack Query, cache, error states
+  2. ☐ error-handling-rules       → Loading/error/empty states
+  3. ☐ security-rules             → Don't expose tokens, sanitize responses
+```
+
+### Consultation Chain
+
+```
+When a sub-skill is activated, the agent MUST:
+
+  1. Read the requested sub-skill (e.g., component-patterns)
+  2. Return to THIS index (frontend/SKILL.md)
+  3. Consult "Mandatory Skills by Action" based on what it's doing
+  4. Read and apply each mandatory skill marked with ☐
+  5. Verify that the code meets ALL before marking as completed
+
+The agent does NOT mark a task as completed if any mandatory skill
+from this list is missing.
+```
+
+### Universal Code Rules
+
 ```typescript
 // Every frontend skill MUST follow these principles:
 

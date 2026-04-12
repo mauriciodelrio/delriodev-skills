@@ -348,3 +348,18 @@ IMPLEMENTATION:
 ❌ Storing password in plain text → NEVER, not even in logs
 ❌ Auth middleware that trusts headers without verifying JWT signature
 ```
+
+---
+
+## Related Skills
+
+> **Consult the master index [`backend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
+
+| Skill | Why |
+|-------|-----|
+| `testing` | Tests for the full auth flow (register, login, refresh, RBAC) |
+| `error-handling` | Typed errors for auth failures (401, 403) |
+| `logging` | Log failed attempts, NEVER log passwords/tokens |
+| `security` | Rate limiting, Helmet, CSRF |
+| `governance/owasp-top-10` | A07 Auth Failures, A02 Crypto Failures |
+| `clean-code-principles` | Guard clauses, SRP, JSDoc on interfaces |

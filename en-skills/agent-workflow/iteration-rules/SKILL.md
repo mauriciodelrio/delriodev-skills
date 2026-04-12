@@ -298,3 +298,90 @@ TYPE 3 — INCONSISTENCY:
   → PAUSE. Ask which one is correct.
   → Do NOT assume that the existing code is correct.
 ```
+
+---
+
+## Mandatory Cross-Cutting Concerns
+
+> **Every implementation block must pass through this checklist.**
+> When the agent completes code (component, endpoint, module, hook, service),
+> it MUST consult the domain orchestrator skill (`frontend/SKILL.md` or
+> `backend/SKILL.md`) to verify which cross-cutting skills apply.
+
+### Post-Implementation Checklist
+
+```
+AFTER implementing each significant block of code:
+
+☐ TESTS — Were tests created for the new code?
+    → Frontend: consult frontend/testing-rules
+    → Backend: consult backend/testing
+    → Minimum coverage: 80% (statements, branches, functions, lines)
+
+☐ CLEAN CODE — Were clean code principles applied?
+    → Consult clean-code-principles
+    → JSDoc on public interfaces/types and non-obvious functions
+    → Named exports, atomic functions, guard clauses
+
+☐ DOCUMENTATION — Does documentation need updating?
+    → Consult agent-workflow/project-documentation
+    → README is updated if: new script, new env var, structure change,
+      tech stack change, new prerequisite
+
+☐ ACCESSIBILITY (if frontend)
+    → Consult frontend/a11y-rules
+    → WCAG 2.2 AA, semantic roles, aria-labels, focus management
+
+☐ i18n (if there is user-visible text)
+    → Consult frontend/i18n-rules
+    → Do NOT hardcode UI strings — use translation system
+
+☐ SECURITY
+    → Frontend: consult frontend/security-rules
+    → Backend: consult backend/security + governance/owasp-top-10
+    → Validate inputs at boundaries, sanitize outputs
+
+☐ ERROR HANDLING
+    → Frontend: consult frontend/error-handling-rules
+    → Backend: consult backend/error-handling
+    → No empty catches, typed errors, fallback UI
+
+☐ LOGGING (if backend)
+    → Consult backend/logging
+    → Structured logging, no PII in logs, correlation IDs
+```
+
+### How It Works
+
+```
+The agent does NOT need to memorize all rules from every skill.
+The flow is:
+
+  1. Implement the main task
+  2. Walk through the checklist above
+  3. For each applicable ☐, CONSULT the corresponding skill
+  4. Apply that skill's rules to the newly created code
+  5. Only mark the task as completed when all applicable ☐ are met
+
+Example — A React component <PaymentForm> was created:
+  ☐ Tests → read frontend/testing-rules → create PaymentForm.test.tsx
+  ☐ Clean code → read clean-code-principles → JSDoc on props interface
+  ☐ a11y → read frontend/a11y-rules → labels, roles, focus trap
+  ☐ i18n → read frontend/i18n-rules → extract strings to translations
+  ☐ Security → read frontend/security-rules → sanitize payment inputs
+  ☐ Error handling → read frontend/error-handling-rules → error boundary
+```
+
+### Definition of Done (Updated)
+
+```
+A feature is DONE when:
+  1. ✅ All A/C are met
+  2. ✅ Tests pass (with coverage ≥ 80%)
+  3. ✅ Code follows clean-code-principles (JSDoc included)
+  4. ✅ Cross-cutting concerns checklist fulfilled
+  5. ✅ No unreported deviations from the plan
+  6. ✅ Context updated with final state
+  7. ✅ Memory updated with what was implemented
+  8. ✅ README updated if applicable (project-documentation)
+```

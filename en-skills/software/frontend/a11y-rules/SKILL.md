@@ -321,3 +321,17 @@ test('tab navigates between modal buttons', async () => {
 - [ ] Do images have a descriptive alt (or empty if decorative)?
 - [ ] Do icons have aria-hidden="true" if decorative?
 - [ ] Do modals handle focus trap and restore focus on close?
+
+---
+
+## Related Skills
+
+> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
+
+| Skill | Why |
+|-------|-----|
+| `testing-rules` | Accessibility tests (queries by role, axe-core) |
+| `component-patterns` | Compound components with semantic roles |
+| `css-rules` | Contrast, focus indicators, prefers-reduced-motion |
+| `forms-and-validation-rules` | Labels, accessible error messages, fieldset/legend |
+| `i18n-rules` | `lang` attribute, translations of aria-labels |

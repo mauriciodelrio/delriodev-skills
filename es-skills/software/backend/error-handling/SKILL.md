@@ -358,3 +358,17 @@ const paymentResult = await callExternalService('Stripe', () =>
 ❌ Lanzar strings: throw 'error' → siempre throw new Error/AppError
 ❌ Mezclar errores operacionales y de programación → tratarlos distinto
 ```
+
+---
+
+## Skills Relacionadas
+
+> **Consultar el índice maestro [`backend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para la cadena completa.
+
+| Skill | Por qué |
+|-------|--------|
+| `logging` | Structured logging de errores, NO PII en mensajes |
+| `testing` | Tests de error paths (not just happy path) |
+| `security` | No exponer stack traces en producción |
+| `api-design` | Status codes y formato de error response consistente |
+| `frontend/error-handling-rules` | Formato de errores que el frontend consume |

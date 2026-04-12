@@ -127,6 +127,58 @@ description: >
 
 ## Principios Transversales
 
+> **Estas reglas aplican SIEMPRE que se crea o modifica código frontend.**
+> Cada sub-skill individual debe consultar esta sección para saber qué
+> otras skills son obligatorias en paralelo.
+
+### Skills Obligatorias por Acción
+
+```
+AL CREAR/MODIFICAR UN COMPONENTE:
+  1. ☐ testing-rules        → Tests unitarios con Vitest + RTL (coverage ≥ 80%)
+  2. ☐ a11y-rules           → WCAG 2.2 AA, roles, aria-labels, focus management
+  3. ☐ clean-code-principles → JSDoc en props/interfaces, named exports, SRP
+  4. ☐ i18n-rules           → Strings de UI NO hardcodeadas (si el proyecto usa i18n)
+  5. ☐ error-handling-rules  → Error boundaries, fallback UI
+
+AL CREAR/MODIFICAR UN FORMULARIO:
+  1. ☐ Todos los anteriores +
+  2. ☐ forms-and-validation-rules → React Hook Form + Zod, UX de validación
+  3. ☐ security-rules             → Sanitización de inputs, XSS prevention
+  4. ☐ a11y-rules                 → Labels asociados, error messages accesibles
+
+AL CREAR/MODIFICAR UN HOOK O STORE:
+  1. ☐ testing-rules              → Tests unitarios del hook/store
+  2. ☐ clean-code-principles      → JSDoc, funciones puras, naming expresivo
+  3. ☐ state-management-rules     → Selectors, evitar re-renders
+
+AL CREAR/MODIFICAR ESTILOS:
+  1. ☐ css-rules                  → Tailwind, responsive, dark mode
+  2. ☐ a11y-rules                 → Contraste, focus visible, reduced motion
+
+AL CREAR/MODIFICAR DATA FETCHING:
+  1. ☐ fetching-rules             → TanStack Query, cache, error states
+  2. ☐ error-handling-rules       → Loading/error/empty estados
+  3. ☐ security-rules             → No exponer tokens, sanitizar respuestas
+```
+
+### Cadena de Consulta
+
+```
+Cuando una sub-skill se activa, el agente DEBE:
+
+  1. Leer la sub-skill solicitada (ej: component-patterns)
+  2. Volver a ESTE índice (frontend/SKILL.md)
+  3. Consultar "Skills Obligatorias por Acción" según lo que está haciendo
+  4. Leer y aplicar cada skill obligatoria marcada con ☐
+  5. Verificar que el código cumple TODAS antes de marcar como completado
+
+El agente NO marca una tarea como completada si falta alguna skill
+obligatoria de esta lista.
+```
+
+### Reglas Universales de Código
+
 ```typescript
 // Toda skill frontend DEBE cumplir estos principios:
 

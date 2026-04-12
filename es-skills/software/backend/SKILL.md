@@ -109,3 +109,60 @@ Package Manager:
   ✅ Se puede usar bajo NestJS como adapter
   ✅ API con alto throughput
 ```
+
+---
+
+## Skills Obligatorias por Acción
+
+> **Estas reglas aplican SIEMPRE que se crea o modifica código backend.**
+> Cada sub-skill individual debe consultar esta sección para saber qué
+> otras skills son obligatorias en paralelo.
+
+```
+AL CREAR/MODIFICAR UN ENDPOINT:
+  1. ☐ testing              → Tests unitarios + integración (coverage ≥ 80%)
+  2. ☐ data-validation      → DTOs, Zod/class-validator en inputs
+  3. ☐ error-handling       → Error classes tipados, global handler
+  4. ☐ security             → Helmet, rate limiting, sanitización
+  5. ☐ logging              → Structured logging, correlation IDs
+  6. ☐ api-design           → REST conventions, status codes, OpenAPI
+  7. ☐ clean-code-principles → JSDoc, SRP, guard clauses, naming
+
+AL CREAR/MODIFICAR AUTH:
+  1. ☐ Todos los anteriores +
+  2. ☐ auth                 → JWT, hashing, RBAC, guards
+  3. ☐ governance/owasp-top-10 → A07 Auth Failures, rate limiting
+
+AL CREAR/MODIFICAR LÓGICA DE DB:
+  1. ☐ testing              → Tests con DB real (Testcontainers) o mocks
+  2. ☐ database-patterns    → Repository, transactions, N+1 prevention
+  3. ☐ database-design      → Índices, naming, migraciones
+  4. ☐ clean-code-principles → Separación de concerns, DI
+
+AL CREAR/MODIFICAR BACKGROUND JOBS:
+  1. ☐ testing              → Tests de workers y scheduling
+  2. ☐ background-jobs      → BullMQ, retries, dead letter queues
+  3. ☐ error-handling       → Retry strategies, failure logging
+  4. ☐ logging              → Job lifecycle logging
+
+AL CONSUMIR APIs EXTERNAS:
+  1. ☐ api-consumption      → Retry, circuit breaker, timeouts
+  2. ☐ error-handling       → Error mapping, fallback responses
+  3. ☐ logging              → Request/response logging (sin PII)
+  4. ☐ security             → No exponer secrets, token rotation
+```
+
+### Cadena de Consulta
+
+```
+Cuando una sub-skill se activa, el agente DEBE:
+
+  1. Leer la sub-skill solicitada (ej: auth)
+  2. Volver a ESTE índice (backend/SKILL.md)
+  3. Consultar "Skills Obligatorias por Acción" según lo que está haciendo
+  4. Leer y aplicar cada skill obligatoria marcada con ☐
+  5. Verificar que el código cumple TODAS antes de marcar como completado
+
+El agente NO marca una tarea como completada si falta alguna skill
+obligatoria de esta lista.
+```

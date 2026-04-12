@@ -369,3 +369,16 @@ screen.getByRole('button', { name: /enviar/i });             // ✅
 // ❌ Tests que mockean todo (test sin sentido)
 // ❌ Un único test gigante por feature (difícil de debuggear)
 ```
+
+---
+
+## Skills Relacionadas
+
+> **Consultar el índice maestro [`frontend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para la cadena completa de validación.
+
+| Skill | Por qué |
+|-------|--------|
+| `a11y-rules` | Los tests deben verificar accesibilidad (queries por role, label) |
+| `clean-code-principles` | Test data builders, naming expresivo, funciones atómicas |
+| `component-patterns` | Entender la API del componente para testearlo correctamente |
+| `backend/testing` | Mismos principios para lógica compartida o APIs |

@@ -398,3 +398,16 @@ export default defineConfig({
 ❌ Generic describe/it ("should work") → describe the expected behavior
 ❌ Snapshot tests for JSON responses → fragile, use specific assertions
 ```
+
+---
+
+## Related Skills
+
+> **Consult the master index [`backend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
+
+| Skill | Why |
+|-------|-----|
+| `error-handling` | Tests for error paths, not just happy path |
+| `data-validation` | Tests for schemas and DTOs |
+| `clean-code-principles` | Expressive naming, test builders, AAA pattern |
+| `frontend/testing-rules` | Same principles for shared logic |

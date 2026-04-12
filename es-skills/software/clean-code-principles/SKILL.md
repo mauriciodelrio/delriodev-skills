@@ -741,3 +741,19 @@ Antes de hacer commit, preguntarse:
 // ❌ Premature abstraction — abstraer en la 3ra repetición, no la 1ra
 // ❌ Importar módulos enteros por una función — import { pick } from 'lodash-es'
 ```
+
+---
+
+## Skills Relacionadas
+
+> **Esta skill es transversal — aplica a TODO código generado.**
+> Los índices maestros [`frontend/SKILL.md`](../frontend/SKILL.md) y
+> [`backend/SKILL.md`](../backend/SKILL.md) referencian esta skill como
+> obligatoria en cada acción. El agente DEBE aplicarla siempre.
+
+| Skill | Relación |
+|-------|----------|
+| `frontend/testing-rules` | Tests bien escritos siguen clean code (naming, AAA, builders) |
+| `backend/testing` | Mismos principios en tests de backend |
+| `typescript-patterns` | Tipado estricto complementa naming y encapsulación |
+| `agent-workflow/iteration-rules` | Checklist post-implementación exige clean code |

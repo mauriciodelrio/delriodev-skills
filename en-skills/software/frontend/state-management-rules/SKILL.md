@@ -314,3 +314,15 @@ function ProductList({ products, searchQuery }: Props) {
 | `Jotai` | Global (atomic) | Per atom | Low | Composable state |
 | `Signals` | Global (granular) | Only DOM nodes | Minimal | Frequent updates |
 | `TanStack Query` | Server | Per query key | Medium | API data |
+
+---
+
+## Related Skills
+
+> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
+
+| Skill | Why |
+|-------|-----|
+| `testing-rules` | Unit tests for stores, selectors, state hooks |
+| `clean-code-principles` | Atomic selectors, named exports, JSDoc |
+| `fetching-rules` | TanStack Query for server state |

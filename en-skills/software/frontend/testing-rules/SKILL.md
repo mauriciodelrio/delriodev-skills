@@ -369,3 +369,16 @@ screen.getByRole('button', { name: /submit/i });             // ✅
 // ❌ Tests that mock everything (meaningless test)
 // ❌ A single giant test per feature (hard to debug)
 ```
+
+---
+
+## Related Skills
+
+> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full validation chain.
+
+| Skill | Why |
+|-------|-----|
+| `a11y-rules` | Tests should verify accessibility (queries by role, axe-core) |
+| `clean-code-principles` | Test data builders, expressive naming, atomic functions |
+| `component-patterns` | Understand the component API to test it correctly |
+| `backend/testing` | Same principles for shared logic or APIs |

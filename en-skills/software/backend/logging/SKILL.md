@@ -316,3 +316,17 @@ app.get('/health/ready', async (req, res) => {
 ❌ Health endpoint that requires auth → K8s cannot verify
 ❌ Logs without timestamp → impossible to sort chronologically
 ```
+
+---
+
+## Related Skills
+
+> **Consult the master index [`backend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
+
+| Skill | Why |
+|-------|-----|
+| `error-handling` | Error logging with context and stack traces |
+| `security` | NEVER log PII, passwords, tokens, secrets |
+| `governance/gdpr` | PII masking, data retention in logs |
+| `governance/hipaa` | PHI audit trails (if applicable) |
+| `testing` | Verify that logs are emitted correctly |

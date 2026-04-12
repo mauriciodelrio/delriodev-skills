@@ -281,3 +281,17 @@ const listOrdersQuery = paginationSchema
 ❌ transform() que muta datos de forma inesperada → solo sanitización y format
 ❌ No validar query params → pageSize=999999, SQL injection en sort
 ```
+
+---
+
+## Skills Relacionadas
+
+> **Consultar el índice maestro [`backend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para la cadena completa.
+
+| Skill | Por qué |
+|-------|--------|
+| `testing` | Tests de schemas: valid inputs, edge cases, error messages |
+| `api-design` | Validación va en el request pipeline antes de la lógica |
+| `security` | Sanitización como primera línea de defensa |
+| `frontend/forms-and-validation-rules` | Schemas Zod compartidos cliente/servidor |
+| `clean-code-principles` | Schemas composables, DRY, naming expresivo |
