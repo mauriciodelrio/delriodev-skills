@@ -1,0 +1,53 @@
+{
+  "name": "copilot-skills",
+  "version": "0.1.0",
+  "description": "CLI wizard to install GitHub Copilot skills for software development, security, and compliance",
+  "type": "module",
+  "bin": {
+    "copilot-skills": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "skills"
+  ],
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsup",
+    "prepare-skills": "node scripts/prepare-skills.js",
+    "prepublishOnly": "npm run prepare-skills && npm run build",
+    "test": "tsx tests/e2e.ts",
+    "release": "release-it"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mauriciodelrio/delriodev-skills"
+  },
+  "homepage": "https://github.com/mauriciodelrio/delriodev-skills#readme",
+  "author": "mauriciodelrio",
+  "keywords": [
+    "copilot",
+    "github-copilot",
+    "skills",
+    "cli",
+    "vscode",
+    "ai",
+    "prompts",
+    "instructions"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "^1.2.0",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@release-it/conventional-changelog": "^10.0.0",
+    "@types/node": "^25.6.0",
+    "release-it": "^18.0.0",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.0"
+  }
+}

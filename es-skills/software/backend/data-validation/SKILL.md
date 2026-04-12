@@ -1,0 +1,283 @@
+---
+name: data-validation
+description: >
+  Validación y transformación de datos de entrada en backend Node.js.
+  Cubre Zod (schema-first), class-validator (NestJS pipes), DTOs,
+  sanitización de input, transformación de tipos, validación de archivos,
+  y patrones para validación de negocio vs validación de formato.
+---
+
+# ✅ Data Validation — Validación de Input
+
+## Principio
+
+> **Nunca confiar en datos del cliente.**
+> Todo input se valida en el backend, aunque el frontend ya valide.
+> Validar formato en el boundary (controller/middleware),
+> validar reglas de negocio en el service.
+
+---
+
+## Stack de Validación
+
+```
+Zod (PREFERIDO):
+  ✅ Schema-first: define schema → infiere tipo TypeScript
+  ✅ Funciona en NestJS y Express
+  ✅ Mismo schema compartible con frontend
+  ✅ Composable: .extend(), .merge(), .pick(), .omit()
+  ✅ Runtime validation + TypeScript types
+
+class-validator + class-transformer (NestJS nativo):
+  ✅ Decorators en clases DTO
+  ✅ Integración directa con NestJS ValidationPipe
+  ✅ Usar cuando el equipo prefiere el approach OOP
+  ❌ No comparte schemas con frontend
+```
+
+---
+
+## Zod — Schemas y DTOs
+
+```typescript
+import { z } from 'zod';
+
+// Schema base
+const createUserSchema = z.object({
+  name: z.string().min(2).max(100).trim(),
+  email: z.string().email().toLowerCase(),
+  password: z.string()
+    .min(8, 'Mínimo 8 caracteres')
+    .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
+    .regex(/[0-9]/, 'Debe contener al menos un número'),
+  role: z.enum(['user', 'admin']).default('user'),
+  age: z.coerce.number().int().min(18).max(120).optional(),
+});
+
+// Tipo inferido automáticamente
+type CreateUserDto = z.infer<typeof createUserSchema>;
+
+// Schema de update: todos los campos opcionales
+const updateUserSchema = createUserSchema.partial().omit({ password: true });
+
+// Schema de query params (siempre strings → coerce)
+const listUsersQuery = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+  search: z.string().trim().optional(),
+  role: z.enum(['user', 'admin']).optional(),
+  sort: z.enum(['name', 'createdAt', '-name', '-createdAt']).default('-createdAt'),
+});
+```
+
+### Zod — Middleware Express
+
+```typescript
+import { ZodSchema } from 'zod';
+
+function validate(schema: ZodSchema, source: 'body' | 'query' | 'params' = 'body') {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req[source]);
+    if (!result.success) {
+      return res.status(400).json({
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Los datos enviados no son válidos',
+          details: result.error.issues.map((issue) => ({
+            field: issue.path.join('.'),
+            message: issue.message,
+          })),
+        },
+      });
+    }
+    req[source] = result.data; // Datos transformados y validados
+    next();
+  };
+}
+
+// Uso
+router.post('/users', validate(createUserSchema), createUser);
+router.get('/users', validate(listUsersQuery, 'query'), listUsers);
+```
+
+### Zod — Pipe NestJS
+
+```typescript
+import { PipeTransform, BadRequestException } from '@nestjs/common';
+import { ZodSchema } from 'zod';
+
+export class ZodValidationPipe implements PipeTransform {
+  constructor(private schema: ZodSchema) {}
+
+  transform(value: unknown) {
+    const result = this.schema.safeParse(value);
+    if (!result.success) {
+      throw new BadRequestException({
+        code: 'VALIDATION_ERROR',
+        message: 'Los datos enviados no son válidos',
+        details: result.error.issues.map((issue) => ({
+          field: issue.path.join('.'),
+          message: issue.message,
+        })),
+      });
+    }
+    return result.data;
+  }
+}
+
+// Uso en controller
+@Post()
+create(@Body(new ZodValidationPipe(createUserSchema)) dto: CreateUserDto) {
+  return this.usersService.create(dto);
+}
+```
+
+---
+
+## class-validator — NestJS nativo
+
+```typescript
+import { IsString, IsEmail, MinLength, IsEnum, IsOptional } from 'class-validator';
+import { Transform } from 'class-transformer';
+
+export class CreateUserDto {
+  @IsString()
+  @MinLength(2)
+  @Transform(({ value }) => value?.trim())
+  name: string;
+
+  @IsEmail()
+  @Transform(({ value }) => value?.toLowerCase())
+  email: string;
+
+  @IsString()
+  @MinLength(8)
+  password: string;
+
+  @IsEnum(['user', 'admin'])
+  @IsOptional()
+  role?: string = 'user';
+}
+
+// Activar ValidationPipe global en main.ts
+app.useGlobalPipes(new ValidationPipe({
+  whitelist: true,           // Elimina propiedades no decoradas
+  forbidNonWhitelisted: true, // Error si envían propiedades desconocidas
+  transform: true,            // Transforma tipos automáticamente
+  transformOptions: {
+    enableImplicitConversion: true,
+  },
+}));
+```
+
+---
+
+## Validación por Capas
+
+```
+CAPA 1 — FORMATO (Controller / Middleware)
+  ¿Es un email válido? ¿El string tiene mínimo 8 chars?
+  ¿El number es positivo? ¿El enum es válido?
+  → Zod / class-validator
+  → Retorna 400 Bad Request
+
+CAPA 2 — NEGOCIO (Service)
+  ¿El email ya está registrado? ¿El usuario tiene saldo suficiente?
+  ¿La fecha de reserva es futura? ¿El producto tiene stock?
+  → Lógica en el service
+  → Retorna 409 Conflict / 422 Unprocessable Entity
+
+NO MEZCLAR:
+  ❌ Verificar "email duplicado" en el validator → eso es lógica de negocio
+  ❌ Verificar "es email válido" en el service → eso es formato
+```
+
+---
+
+## Sanitización
+
+```typescript
+// REGLAS DE SANITIZACIÓN:
+//   1. trim() strings → trailing spaces
+//   2. toLowerCase() emails → case-insensitive
+//   3. Escapar HTML si se almacena para renderizar → prevenir stored XSS
+//   4. Strip campos no esperados → whitelist: true en NestJS
+
+// Zod — sanitización inline
+const commentSchema = z.object({
+  content: z
+    .string()
+    .trim()
+    .min(1)
+    .max(5000)
+    .transform((val) => sanitizeHtml(val, { allowedTags: [] })), // strip HTML
+});
+
+// NUNCA:
+//   ❌ Confiar en que el frontend sanitiza
+//   ❌ Almacenar HTML raw del usuario sin sanitizar
+//   ❌ Usar regex para "limpiar" HTML → usar librería (sanitize-html, DOMPurify)
+```
+
+---
+
+## Validación de Params y IDs
+
+```typescript
+// Siempre validar que IDs tienen el formato correcto
+const uuidParam = z.object({
+  id: z.string().uuid('ID must be a valid UUID'),
+});
+
+// Express
+router.get('/users/:id', validate(uuidParam, 'params'), getUser);
+
+// NestJS — ParseUUIDPipe built-in
+@Get(':id')
+findOne(@Param('id', ParseUUIDPipe) id: string) {
+  return this.usersService.findOne(id);
+}
+```
+
+---
+
+## Schemas Reutilizables
+
+```typescript
+// Shared schemas para patterns comunes
+const paginationSchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+const dateRangeSchema = z.object({
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+}).refine(
+  (data) => !data.from || !data.to || data.from <= data.to,
+  { message: '"from" debe ser anterior a "to"' },
+);
+
+// Composición
+const listOrdersQuery = paginationSchema
+  .merge(dateRangeSchema)
+  .extend({
+    status: z.enum(['pending', 'shipped', 'delivered']).optional(),
+  });
+```
+
+---
+
+## Anti-patrones
+
+```
+❌ Validar solo en frontend → el backend SIEMPRE valida
+❌ Zod y class-validator mezclados en el mismo proyecto → elegir uno
+❌ DTOs sin whitelist → el cliente puede inyectar campos extra
+❌ Confiar en tipos TypeScript para runtime safety → TS no existe en runtime
+❌ Regex complejo para validar emails → usar z.string().email()
+❌ Validación de negocio en el schema → eso va en el service
+❌ Schema gigante de 100+ campos → dividir en sub-schemas composables
+❌ transform() que muta datos de forma inesperada → solo sanitización y format
+❌ No validar query params → pageSize=999999, SQL injection en sort
+```
