@@ -9,6 +9,8 @@ Repository of **skills** for GitHub Copilot with detailed instructions for softw
 
 All skills are in **English** with code examples in **TypeScript**.
 
+---
+
 ## Quick Start
 
 ```bash
