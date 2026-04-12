@@ -1,7 +1,7 @@
 # 🧠 Skills Repository
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENCE)
-[![npm](https://img.shields.io/npm/v/copilot-skills)](https://www.npmjs.com/package/copilot-skills)
+[![npm](https://img.shields.io/npm/v/delriodev-skills)](https://www.npmjs.com/package/delriodev-skills)
 [![Sponsor](https://img.shields.io/badge/Sponsor-💖-pink)](FUNDING.md)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 

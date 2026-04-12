@@ -26,7 +26,7 @@ A quick way to say thanks.
 
 - **New skills** — research, writing, and testing new SKILL.md content
 - **Translations** — maintaining English and Spanish parity across 71+ skills
-- **CLI tooling** — improving the `copilot-skills` installer wizard
+- **CLI tooling** — improving the `delriodev-skills` installer wizard
 - **Infrastructure** — npm publishing, CI/CD, testing
 
 ---
