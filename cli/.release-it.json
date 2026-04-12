@@ -10,13 +10,10 @@
   },
   "github": {
     "release": true,
-    "releaseName": "v${version}"
+    "releaseName": "v${version}",
+    "releaseNotes": "cat .release-notes.md"
   },
-  "plugins": {
-    "@release-it/conventional-changelog": {
-      "preset": "angular",
-      "infile": "CHANGELOG.md",
-      "header": "# Changelog"
-    }
+  "hooks": {
+    "after:bump": "node scripts/generate-release-notes.mjs ${version} && git add CHANGELOG.md"
   }
 }
