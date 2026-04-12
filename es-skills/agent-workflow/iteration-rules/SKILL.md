@@ -34,6 +34,7 @@ FEATURE RECIBIDO (ya pasó por requirements-format)
 ├── 3. EJECUCIÓN (por cada tarea)
 │   ├── Marcar tarea como en progreso
 │   ├── Implementar
+│   │── Hacer tests unitarios y de integración para el nuevo código
 │   ├── ¿Bloque significativo? → Checkpoint de validación
 │   ├── ¿Desvío detectado? → Pausar, reportar (no-drift)
 │   ├── Actualizar .docs/context/ al avanzar
