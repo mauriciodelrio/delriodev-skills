@@ -3,3 +3,4 @@ dist/
 skills/
 .test-tmp/
 tests/
+.release-notes.md
