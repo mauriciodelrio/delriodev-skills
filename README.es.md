@@ -1,4 +1,4 @@
-# 🧠 Skills Repository
+# 🧠 DelRio Dev Skills Repository
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENCE)
 [![npm](https://img.shields.io/npm/v/delriodev-skills)](https://www.npmjs.com/package/delriodev-skills)
