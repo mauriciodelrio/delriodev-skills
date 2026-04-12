@@ -11,6 +11,22 @@ Todas las skills están en **español** con ejemplos de código en **TypeScript*
 
 ---
 
+## Ejecución
+
+```bash
+npx delriodev-skills
+``` 
+
+No se necesita instalación. El asistente te guiará a través de la selección de idioma, la elección de categorías y el directorio de destino.
+
+## Funcionalidades
+
+- **Install** — Elige categorías y copia las skills a tu espacio de trabajo o configuración global
+- **Update** — Vuelve a sincronizar las skills instaladas desde la fuente más reciente
+- **Clean** — Elimina las skills instaladas y el manifiesto
+
+---
+
 ## Estructura
 
 ```

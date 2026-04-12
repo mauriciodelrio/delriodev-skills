@@ -9,6 +9,20 @@ Repository of **skills** for GitHub Copilot with detailed instructions for softw
 
 All skills are in **English** with code examples in **TypeScript**.
 
+## Quick Start
+
+```bash
+npx delriodev-skills
+```
+
+No installation needed. The wizard guides you through language selection, category picking, and target directory.
+
+## Features
+
+- **Install** — Choose categories and copy skills to your workspace or global config
+- **Update** — Re-sync installed skills from the latest source
+- **Clean** — Remove installed skills and manifest
+
 ---
 
 ## Structure
