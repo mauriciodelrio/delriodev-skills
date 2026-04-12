@@ -1,6 +1,6 @@
 {
   "name": "delriodev-skills",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "CLI wizard to install GitHub Copilot skills for software development, security, and compliance",
   "type": "module",
   "bin": {
