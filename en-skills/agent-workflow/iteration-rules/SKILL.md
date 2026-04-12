@@ -34,6 +34,8 @@ FEATURE RECEIVED (already went through requirements-format)
 ├── 3. EXECUTION (for each task)
 │   ├── Mark task as in progress
 │   ├── Implement
+│   │── Make unit and integration tests for the new code
+│   ├── If there's a relevant technical decision → mention it
 │   ├── Significant block? → Validation checkpoint
 │   ├── Drift detected? → Pause, report (no-drift)
 │   ├── Update .docs/context/ as progress is made
