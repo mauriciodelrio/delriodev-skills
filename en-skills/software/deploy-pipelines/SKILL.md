@@ -1,41 +1,21 @@
 ---
 name: deploy-pipelines
 description: >
-  Deployment pipelines for Node.js/TypeScript applications. Covers
-  deploy to Vercel and AWS (CDK/SST), preview environments, blue/green
-  and canary strategies, rollback, environment management (dev/staging/prod),
-  GitHub Actions as CI/CD, and secrets management in pipelines.
-  Complements basic-workflows (dev workflow) and architecture (infrastructure).
+  Use this skill when generating CI/CD pipelines, configuring deploy to Vercel
+  or AWS (CDK/SST), implementing preview environments, blue/green or canary
+  strategies, rollback, environment management (dev/staging/prod) or secrets
+  in pipelines. Applies to any Node.js/TypeScript project with GitHub Actions.
 ---
 
-# 🚀 Deploy Pipelines — Deployment and Environments
+# Deploy Pipelines
 
-## Principle
+## Agent workflow
 
-> **If the deploy isn't automatic, it isn't reliable.**
-> Every push to main must be able to reach production without manual
-> intervention. Safe deploys are automated, repeatable, and reversible deploys.
-
----
-
-## Scope
-
-```
-✅ This skill covers:
-  - GitHub Actions for CI/CD
-  - Deploy to Vercel (frontend + serverless)
-  - Deploy to AWS (CDK/SST)
-  - Preview environments
-  - Blue/green, canary, rollback
-  - Environment and secrets management
-  - Pipeline stages (lint → test → build → deploy)
-
-❌ Does NOT cover:
-  - Detailed AWS infrastructure → architecture/*
-  - Docker builds → docker
-  - Git workflow (branching) → git-usage
-  - Tests (what to test) → backend/testing, frontend testing skills
-```
+1. Use the YAML templates in this skill as the base for pipelines
+2. Follow the required stage order: install → lint → type check → test → build → deploy
+3. Always configure OIDC for AWS (never static access keys)
+4. Include preview environments in every project with PRs
+5. Validate against the Gotchas section before delivering CI/CD configuration
 
 ---
 
@@ -474,18 +454,15 @@ MONOREPO TIPS:
 
 ---
 
-## Anti-patterns
+## Gotchas
 
-```
-❌ Manual deploy (SSH + git pull) → automate with CI/CD
-❌ Deploy without tests → at least lint + type check + unit tests
-❌ Same branch for staging and prod → separate branches with promotion
-❌ Hardcoded secrets → GitHub Secrets + environment separation
-❌ No preview environments → reviewers can't test
-❌ Rollback that takes > 5 min → always have a fast strategy
-❌ Destructive migrations in deploy → backward compatible always
-❌ Static access keys in CI → OIDC for AWS
-❌ Deploy without concurrency control → cancel previous deploys
-❌ No timeout on jobs → a hung job blocks the pipeline
-❌ Deploy to prod without going through staging → always staging first
-```
+- Never manual deploy (SSH + git pull). Every deploy goes through CI/CD with the full pipeline.
+- Every pipeline needs at least lint + type check + unit tests before deploy. No tests = no deploy.
+- Staging and production must use separate branches with promotion, never the same branch.
+- Secrets never hardcoded in code or committed `.env`. Use GitHub Secrets per environment.
+- Always include preview environments — without them reviewers can't test changes.
+- Rollback must take < 5 minutes. If you don't have a fast rollback strategy, you're not ready for production.
+- DB migrations are forward-only. Every migration must be backward compatible (nullable columns/with defaults).
+- AWS in CI uses OIDC exclusively. Static access keys rotate and leak.
+- Always configure `concurrency` with `cancel-in-progress: true` and `timeout-minutes` on every job.
+- Never deploy directly to production without going through staging first.
