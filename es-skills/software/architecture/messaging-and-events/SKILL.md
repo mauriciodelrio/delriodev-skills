@@ -1,24 +1,27 @@
 ---
 name: messaging-and-events
 description: >
-  Árbol de decisiones para comunicación entre servicios y procesamiento async.
-  Cubre SQS, SNS, EventBridge, WebSockets, y patrones event-driven. Incluye
-  criterios por tipo de comunicación, volumen, garantías de entrega, y costo.
-  No asumir — evaluar si el proyecto realmente necesita mensajería.
+  Usa esta skill cuando necesites decidir sobre comunicación entre servicios
+  y procesamiento async. Cubre SQS, SNS, EventBridge, WebSockets y patrones
+  event-driven. Evaluar si el proyecto realmente necesita mensajería antes
+  de introducirla.
 ---
 
-# 📨 Messaging & Events — Comunicación Async entre Servicios
+# Messaging & Events — Comunicación Async entre Servicios
 
-## Pregunta Fundamental
+## Flujo de trabajo del agente
 
-> **¿Realmente necesitas mensajería?**
+1. Preguntar si el proyecto realmente necesita mensajería (sección 1).
+2. Identificar el patrón de comunicación necesario con el árbol de decisión.
+3. Seleccionar el servicio (SQS, SNS, EventBridge, WebSockets) según criterios.
+4. Configurar con los ejemplos de código de la sección correspondiente.
+5. Validar que no se esté sobreingeniería (sección 6).
+
 > Un monolito con funciones bien separadas NO necesita mensajería.
-> Solo introducir cuando hay: procesamiento async, múltiples servicios
+> Solo introducir cuando hay procesamiento async, múltiples servicios
 > que reaccionan al mismo evento, o desacoplamiento explícito necesario.
 
----
-
-## Árbol de Decisión
+## 1. Árbol de decisión
 
 ```
 ¿Necesitas comunicación entre servicios?
@@ -53,36 +56,24 @@ description: >
 │       └── EventBridge + DynamoDB Streams o SQS
 ```
 
----
+## 2. Amazon SQS — Cola de mensajes
 
-## Amazon SQS — Cola de Mensajes
+**Cuándo usarlo:**
+- Procesamiento en background (enviar emails, generar PDFs)
+- Desacoplar productor de consumidor
+- Rate limiting natural (consumidor procesa a su ritmo)
+- Retry automático con backoff
+- Dead letter queue para mensajes que fallan repetidamente
+- Picos de carga (cola absorbe el pico)
 
-```
-Cuándo SÍ:
-  ✅ Procesamiento en background (enviar emails, generar PDFs)
-  ✅ Desacoplar productor de consumidor
-  ✅ Rate limiting natural (consumidor procesa a su ritmo)
-  ✅ Retry automático con backoff
-  ✅ Dead letter queue para mensajes que fallan repetidamente
-  ✅ Picos de carga (cola absorbe el pico)
+**Cuándo NO usarlo:**
+- Comunicación síncrona (request-response) → HTTP directo
+- Fan-out a múltiples consumidores → SNS + SQS
+- Real-time a clientes → WebSockets
 
-Cuándo NO:
-  ❌ Comunicación síncrona (request-response) → HTTP directo
-  ❌ Fan-out a múltiples consumidores → SNS + SQS
-  ❌ Real-time a clientes → WebSockets
+**Tipos:** Standard (at-least-once, orden no garantizado — la mayoría de casos) y FIFO (exactly-once, orden garantizado — pagos, secuencias; 300 msg/s, 3,000 con batching).
 
-Tipos:
-  - Standard:  At-least-once delivery, orden no garantizado
-               → La mayoría de casos
-  - FIFO:      Exactly-once, orden garantizado
-               → Cuando el orden importa (pagos, secuencias)
-               → Throughput: 300 msg/s (3,000 con batching)
-
-Costo:
-  - Free tier: 1M requests/mes (permanente)
-  - Standard:  $0.40 per 1M requests
-  - FIFO:      $0.50 per 1M requests
-```
+**Costo:** Free tier 1M requests/mes (permanente). Standard $0.40/1M requests. FIFO $0.50/1M requests.
 
 ### Ejemplo: Cola de Procesamiento
 
@@ -131,22 +122,18 @@ async function queueEmail(to: string, template: string, data: Record<string, unk
 }
 ```
 
----
+## 3. Amazon SNS — Pub/Sub
 
-## Amazon SNS — Pub/Sub
+**Cuándo usarlo:**
+- Fan-out: un evento → múltiples consumidores
+- Notificaciones push (email, SMS, HTTP)
+- SNS → SQS (cada consumidor tiene su cola independiente)
+- Alertas de monitoring (CloudWatch → SNS → Slack)
 
-```
-Cuándo SÍ:
-  ✅ Fan-out: un evento → múltiples consumidores
-  ✅ Notificaciones push (email, SMS, HTTP)
-  ✅ SNS → SQS (cada consumidor tiene su cola independiente)
-  ✅ Alertas de monitoring (CloudWatch → SNS → Slack)
-
-Cuándo NO:
-  ❌ Procesamiento en background simple → SQS directamente
-  ❌ Routing complejo basado en contenido → EventBridge
-  ❌ Necesitas replay de eventos → EventBridge Archive
-```
+**Cuándo NO usarlo:**
+- Procesamiento en background simple → SQS directamente
+- Routing complejo basado en contenido → EventBridge
+- Necesitas replay de eventos → EventBridge Archive
 
 ### Patrón: SNS + SQS Fan-out
 
@@ -161,32 +148,23 @@ UserCreated event
       └── → [SQS: send-to-analytics]      → Lambda: trackEvent
 ```
 
----
+## 4. Amazon EventBridge — Event Bus
 
-## Amazon EventBridge — Event Bus
+**Cuándo usarlo:**
+- Arquitectura event-driven con múltiples dominios
+- Routing complejo basado en contenido del evento
+- Integración con servicios AWS (S3, CodePipeline, etc.)
+- Integración con SaaS (Stripe, Auth0, Shopify)
+- Event replay (Archive & Replay)
+- Schema Registry para documentar eventos
+- Scheduling (EventBridge Scheduler reemplaza cron)
 
-```
-Cuándo SÍ:
-  ✅ Arquitectura event-driven con múltiples dominios
-  ✅ Routing complejo basado en contenido del evento
-  ✅ Integración con servicios AWS (S3, CodePipeline, etc.)
-  ✅ Integración con SaaS (Stripe, Auth0, Shopify)
-  ✅ Need event replay (Archive & Replay)
-  ✅ Schema Registry para documentar eventos
-  ✅ Scheduling (EventBridge Scheduler reemplaza cron)
+**Cuándo NO usarlo:**
+- Cola simple de procesamiento → SQS
+- Presupuesto mínimo y solo 1-2 eventos → SQS/SNS basta
+- Throughput > 10,000 events/s por regla → evaluar limites
 
-Cuándo NO:
-  ❌ Cola simple de procesamiento → SQS
-  ❌ Presupuesto mínimo y solo 1-2 eventos → SQS/SNS basta
-  ❌ Throughput > 10,000 events/s por regla → evaluar limites
-
-Costo:
-  - Custom events: $1.00 per 1M events
-  - AWS events: gratis
-  - Schema Registry: gratis
-  - Archive: $0.023/GB almacenado
-  - Scheduler: gratis (invocaciones serverless)
-```
+**Costo:** Custom events $1.00/1M. AWS events gratis. Schema Registry gratis. Archive $0.023/GB. Scheduler gratis.
 
 ```typescript
 // Publicar evento de dominio
@@ -229,9 +207,7 @@ functions:
               - OrderPlaced
 ```
 
----
-
-## Real-time — WebSockets
+## 5. Real-time — WebSockets
 
 ### Decisión
 
@@ -256,41 +232,23 @@ functions:
               → Necesita sticky sessions o Redis pub/sub
 ```
 
----
+## 6. Cuándo introducir messaging
 
-## Cuándo Introducir Messaging
+**Monolito (la mayoría de proyectos empiezan aquí):** No necesitas messaging. Funciones async con BullMQ + Redis. Migrar cuando haya dolor real (acoplamiento, escalabilidad).
 
-```
-MONOLITO (la mayoría de proyectos empiezan aquí):
-  → No necesitas messaging
-  → Funciones async: Simple job queue con BullMQ + Redis
-  → Cuando sientas dolor real (acoplamiento, escalabilidad), entonces migra
+**Modular monolith:** EventBridge para comunicación entre módulos. SQS para trabajo async pesado. DB compartida pero comunicación vía eventos.
 
-MODULAR MONOLITH:
-  → EventBridge para comunicación entre módulos
-  → SQS para trabajo async pesado
-  → Mantén la DB compartida pero comunica vía eventos
+**Microservicios (solo si la escala lo exige):** EventBridge como backbone. SQS por consumidor. Database per service. Saga pattern para transacciones distribuidas.
 
-MICROSERVICIOS (solo si escala lo exige):
-  → EventBridge como backbone
-  → SQS para cada consumidor
-  → Cada servicio tiene su DB (database per service)
-  → Saga pattern para transacciones distribuidas
-```
+## 7. Gotchas
 
----
-
-## Anti-patrones
-
-```
-❌ Messaging "por si acaso" en un monolito → complejidad innecesaria
-❌ HTTP síncrono entre microservicios para todo → acopla y hace frágil
-❌ SQS sin Dead Letter Queue → mensajes se pierden silenciosamente
-❌ Lambda procesando SQS con VisibilityTimeout < Lambda timeout
-❌ EventBridge sin Schema Registry → nadie sabe qué contiene cada evento
-❌ WebSockets para datos que se actualizan cada minuto → long polling basta
-❌ Un solo event bus gigante sin namespacing de source
-❌ No monitorear la DLQ → mensajes failing acumulándose sin que nadie sepa
-❌ Eventos con demasiado payload → poner referencia y que el consumidor consulte
-❌ Fire-and-forget sin confirmación ni retry para operaciones críticas
-```
+- Messaging "por si acaso" en un monolito — complejidad innecesaria.
+- HTTP síncrono entre microservicios para todo — acopla y hace frágil.
+- SQS sin Dead Letter Queue — mensajes se pierden silenciosamente.
+- Lambda procesando SQS con VisibilityTimeout < Lambda timeout.
+- EventBridge sin Schema Registry — nadie sabe qué contiene cada evento.
+- WebSockets para datos que se actualizan cada minuto — long polling basta.
+- Un solo event bus gigante sin namespacing de source.
+- No monitorear la DLQ — mensajes failing acumulándose sin que nadie sepa.
+- Eventos con demasiado payload — poner referencia y que el consumidor consulte.
+- Fire-and-forget sin confirmación ni retry para operaciones críticas.
