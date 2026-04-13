@@ -1,58 +1,51 @@
 ---
 name: auth
 description: >
-  Authentication and authorization implementation in Node.js backend.
-  Covers JWT (access + refresh tokens), OAuth2, secure password hashing,
-  RBAC/ABAC, NestJS guards, Express middleware, sessions, and complete
+  Use this skill when implementing authentication or authorization in a
+  Node.js backend. Covers JWT (access + refresh tokens), OAuth2, password
+  hashing, RBAC, NestJS guards, Express middleware, and complete
   login/register/refresh/logout flows.
 ---
 
-# 🔐 Auth — Authentication and Authorization
+# Auth — Authentication and Authorization
 
-## Principle
+## Agent workflow
 
-> **Auth is critical infrastructure, not just another feature.**
-> Never implement auth "quickly to improve later".
-> Do it right from the start or use a managed service (Auth0, Clerk, Supabase Auth).
+**1.** Decide between custom auth or managed service (section 1).
+**2.** Implement JWT with access + refresh token rotation (sections 2–3).
+**3.** Implement secure password hashing and register/login flows (sections 4–6).
+**4.** Apply RBAC with guards/middleware (section 7).
+**5.** Check against the gotchas list (section 10).
 
----
+## 1. Decision: Custom Auth or Managed Service?
 
-## Decision: Custom Auth or Managed Service?
+**Managed service (Auth0, Clerk, Supabase Auth):**
+- MVP or early-stage startup — don't spend time on auth
+- Social login (Google, GitHub, etc.) quickly
+- No security expertise on the team
+- Compliance (SOC2) requires audited auth
 
-```
-When managed service (Auth0, Clerk, Supabase Auth)?
-  ✅ MVP or early-stage startup → don't spend time on auth
-  ✅ You need social login (Google, GitHub, etc.) quickly
-  ✅ No security expertise on the team
-  ✅ Compliance (SOC2) requires audited auth
+**Custom auth:**
+- Full control over flow and UX
+- Special requirements (multi-tenant, custom MFA)
+- Cost: high user volume — managed gets expensive
+- You already have experience implementing secure auth
 
-When custom auth?
-  ✅ Full control over flow and UX
-  ✅ Special requirements (multi-tenant, custom MFA)
-  ✅ Cost: high user volume → managed gets expensive
-  ✅ You already have experience implementing secure auth
-```
+## 2. JWT — Access + Refresh Token
 
----
+**Flow:**
+1. Login → returns `{ accessToken, refreshToken }`
+2. Access token: short duration (15 min), in memory/header
+3. Refresh token: long duration (7–30 days), in httpOnly cookie
+4. Access expires → client uses refresh token to obtain a new pair
+5. Logout → invalidate refresh token (blacklist or delete from DB)
 
-## JWT — Access + Refresh Token
-
-```
-FLOW:
-  1. Login → returns { accessToken, refreshToken }
-  2. Access token: short duration (15 min), in memory/header
-  3. Refresh token: long duration (7-30 days), in httpOnly cookie
-  4. Access expires → client uses refresh token to obtain a new pair
-  5. Logout → invalidate refresh token (blacklist or delete from DB)
-
-RULES:
-  - Access token NEVER stored in localStorage
-  - Refresh token ALWAYS in httpOnly cookie with Secure + SameSite=Strict
-  - Refresh token rotation: each use generates a new refresh token
-  - The previous refresh token is invalidated immediately
-  - Access token payload: { sub, email, roles } — minimum necessary
-  - NEVER put sensitive data in the payload (password, secrets)
-```
+**Rules:**
+- Access token **never** stored in localStorage.
+- Refresh token **always** in httpOnly cookie with `Secure` + `SameSite=Strict`.
+- Refresh token rotation: each use generates a new refresh token; the previous one is invalidated immediately.
+- Access token payload: `{ sub, email, roles }` — minimum necessary.
+- **Never** put sensitive data in the payload (password, secrets).
 
 ```typescript
 // Token generation
@@ -91,28 +84,15 @@ function setRefreshCookie(res: Response, token: string) {
 }
 ```
 
----
+## 3. Password Hashing
 
-## Password Hashing
+**Algorithm:** bcrypt (proven) or argon2 (recommended modern).
 
-```
-ALGORITHM: bcrypt (proven) or argon2 (recommended modern)
+**Never:** MD5 / SHA-1 / SHA-256 without salt (crackable with rainbow tables), custom hashing, or fixed salt shared across users.
 
-NEVER:
-  ❌ MD5 / SHA-1 / SHA-256 without salt → crackable with rainbow tables
-  ❌ Implement custom hashing
-  ❌ Fixed salt shared across all users
+**bcrypt config:** salt rounds 12 (balance security/performance). In tests: salt rounds 1.
 
-bcrypt CONFIGURATION:
-  - Salt rounds: 12 (balance between security and performance)
-  - In tests: salt rounds 1 (speed)
-  
-argon2 CONFIGURATION:
-  - type: argon2id (resistant to side-channel and GPU attacks)
-  - memoryCost: 65536 (64 MB)
-  - timeCost: 3
-  - parallelism: 4
-```
+**argon2 config:** `argon2id` (resistant to side-channel and GPU attacks), memoryCost 65536 (64 MB), timeCost 3, parallelism 4.
 
 ```typescript
 import bcrypt from 'bcrypt';
@@ -128,9 +108,7 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
 }
 ```
 
----
-
-## Register Flow
+## 4. Register Flow
 
 ```typescript
 // 1. Validate input (email, password strength)
@@ -167,9 +145,7 @@ async function register(dto: RegisterDto) {
 }
 ```
 
----
-
-## Login Flow
+## 5. Login Flow
 
 ```typescript
 // 1. Find user by email → 401 if not found
@@ -183,9 +159,7 @@ async function register(dto: RegisterDto) {
 throw new UnauthorizedException('Invalid credentials');
 ```
 
----
-
-## Refresh Token Rotation
+## 6. Refresh Token Rotation
 
 ```typescript
 async function refreshTokens(currentRefreshToken: string) {
@@ -226,22 +200,15 @@ async function refreshTokens(currentRefreshToken: string) {
 }
 ```
 
----
+## 7. RBAC — Role-Based Access Control
 
-## RBAC — Role-Based Access Control
+**Typical roles:** `user` (basic access), `admin` (user management and configuration), `superadmin` (full access).
 
-```
-TYPICAL ROLES:
-  user        → basic access
-  admin       → user management and configuration
-  superadmin  → full access
-
-RULES:
-  1. Roles are stored in the DB as an array or relational table
-  2. Roles are included in the JWT payload
-  3. Verify role on EVERY protected request (don't rely only on UI)
-  4. Guard/middleware checks: does the user have the required role?
-```
+**Rules:**
+1. Roles are stored in the DB as an array or relational table.
+2. Roles are included in the JWT payload.
+3. Verify role on **every** protected request (don't rely only on UI).
+4. Guard/middleware checks: does the user have the required role?
 
 ```typescript
 // NestJS — decorator + guard
@@ -291,69 +258,51 @@ function requireRole(...roles: string[]) {
 router.delete('/users/:id', authenticate, requireRole('admin'), deleteUser);
 ```
 
----
+## 8. OAuth2 / Social Login
 
-## OAuth2 / Social Login
+**Flow (Authorization Code):**
+1. Frontend redirects to provider: `GET /auth/google`
+2. Backend redirects to Google with `client_id` + `redirect_uri`
+3. Google redirects back with authorization code
+4. Backend exchanges code for tokens with Google
+5. Backend obtains user profile
+6. Create or link user in DB
+7. Generate own JWTs
+8. Redirect to frontend with tokens
 
-```
-FLOW (Authorization Code):
-  1. Frontend redirects to provider: GET /auth/google
-  2. Backend redirects to Google with client_id + redirect_uri
-  3. Google redirects back with authorization code
-  4. Backend exchanges code for tokens with Google
-  5. Backend obtains user profile
-  6. Create or link user in DB
-  7. Generate own JWTs
-  8. Redirect to frontend with tokens
+**Libraries:** NestJS: `@nestjs/passport` + `passport-google-oauth20`. Express: `passport` + `passport-google-oauth20`.
 
-LIBRARIES:
-  NestJS: @nestjs/passport + passport-google-oauth20
-  Express: passport + passport-google-oauth20
+**Rules:**
+- **Never** store OAuth provider tokens on the frontend.
+- `state` parameter mandatory to prevent CSRF.
+- Verify that the provider email is verified.
+- Allow linking multiple providers to one user.
 
-RULES:
-  - NEVER store OAuth provider tokens on the frontend
-  - state parameter mandatory to prevent CSRF
-  - Verify that the provider email is verified
-  - Allow linking multiple providers to one user
-```
+## 9. Logout
 
----
-
-## Logout
+1. Delete refresh token from DB.
+2. Clear refresh token cookie.
+3. Access token remains valid until it expires (15 min). If you need immediate invalidation: token blacklist in Redis.
 
 ```
-IMPLEMENTATION:
-  1. Delete refresh token from DB
-  2. Clear refresh token cookie
-  3. Access token remains valid until it expires (15 min)
-     → If you need immediate invalidation: token blacklist in Redis
-  
-  // Blacklist in Redis (only if you need immediate invalidation)
-  await redis.set(`blacklist:${accessToken}`, '1', 'EX', 900); // 15min TTL
+// Blacklist in Redis (only if you need immediate invalidation)
+await redis.set(`blacklist:${accessToken}`, '1', 'EX', 900); // 15min TTL
 ```
 
----
+## 10. Gotchas
 
-## Anti-patterns
+- JWT in localStorage — XSS can steal it.
+- Refresh token without rotation — if stolen, indefinite access.
+- Same secret for access and refresh — compromise of one = compromise of both.
+- Token that never expires — use short TTLs.
+- Sensitive information in JWT payload — it's base64, NOT encrypted.
+- Validate auth only on frontend — the backend **always** validates.
+- Error "User not found" on login — allows enumeration. Use a generic message.
+- bcrypt with salt rounds < 10 in production — too fast to crack.
+- Storing password in plain text — never, not even in logs.
+- Auth middleware that trusts headers without verifying JWT signature.
 
-```
-❌ JWT in localStorage → XSS can steal it
-❌ Refresh token without rotation → if stolen, indefinite access
-❌ Same secret for access and refresh → compromise of one = compromise of both
-❌ Token that never expires → use short TTLs
-❌ Sensitive information in JWT payload → it's base64, NOT encrypted
-❌ Validate auth only on frontend → the backend ALWAYS validates
-❌ Error "User not found" on login → allows enumeration
-❌ bcrypt with salt rounds < 10 in production → too fast to crack
-❌ Storing password in plain text → NEVER, not even in logs
-❌ Auth middleware that trusts headers without verifying JWT signature
-```
-
----
-
-## Related Skills
-
-> **Consult the master index [`backend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
+## 11. Related Skills
 
 | Skill | Why |
 |-------|-----|
