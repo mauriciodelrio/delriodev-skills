@@ -1,23 +1,27 @@
 ---
 name: networking-and-security
 description: >
-  Decision tree for networking and security on AWS. Covers VPC, subnets,
-  security groups, WAF, API Gateway, secrets management (SSM/Secrets Manager),
-  IAM least privilege, SSL certificates, and DDoS protection. All infrastructure
-  must be secure by default — the agent does not generate configuration without security.
+  Use this skill when you need to configure networking and security on AWS.
+  Covers VPC, subnets, security groups, WAF, API Gateway, secrets management,
+  IAM least privilege, SSL, and DDoS protection. All infrastructure must be
+  secure by default.
 ---
 
-# 🔒 Networking & Security — Networks, Access, and Protection
+# Networking & Security — Networks, Access, and Protection
 
-## Principle
+## Agent workflow
 
-> **Security is not a layer you add later — it is the foundation on which
-> everything else is built.** Every cloud resource is born private and is exposed
+1. Determine the project type and which services need a private network.
+2. Walk through the networking tree (section 1) to decide if VPC is needed.
+3. Configure security groups, secrets, and IAM per service (sections 3-6).
+4. Evaluate WAF and SSL based on public exposure (sections 7-8).
+5. Validate against the security checklist (section 9) before closing.
+
+> Security is not a layer you add later — it is the foundation on which
+> everything else is built. Every cloud resource is born private and is exposed
 > explicitly only as needed.
 
----
-
-## Decision Tree — Networking
+## 1. Decision tree — Networking
 
 ```
 What type of project?
@@ -43,27 +47,21 @@ What type of project?
         without going through the internet (PrivateLink)
 ```
 
----
+## 2. VPC — Virtual Private Cloud
 
-## VPC — Virtual Private Cloud
+**When to use:**
+- RDS PostgreSQL/MySQL (always in private subnet)
+- ElastiCache Redis (always in private subnet)
+- ECS Fargate tasks
+- OpenSearch (always in private subnet)
+- EC2 instances
 
-### When You Need VPC
+**When NOT to use:**
+- Only Lambda + DynamoDB + S3 → IAM is enough
+- Minimal budget ($0–$50) → avoid NAT Gateway ($32/month)
+- Hobby/prototype project → use external services (Neon, Supabase)
 
-```
-When YES:
-  ✅ RDS PostgreSQL/MySQL (always in private subnet)
-  ✅ ElastiCache Redis (always in private subnet)
-  ✅ ECS Fargate tasks
-  ✅ OpenSearch (always in private subnet)
-  ✅ EC2 instances
-
-When NO:
-  ❌ Only Lambda + DynamoDB + S3 → IAM is enough
-  ❌ Minimal budget ($0–$50) → avoid NAT Gateway ($32/month)
-  ❌ Hobby/prototype project → use external services (Neon, Supabase)
-```
-
-### Standard VPC Architecture
+### Standard VPC architecture
 
 ```
 VPC: 10.0.0.0/16
@@ -107,30 +105,14 @@ module "vpc" {
 }
 ```
 
----
+## 3. Security groups
 
-## Security Groups
-
-```
 Golden rule: DENY ALL by default, open only what's necessary.
 
-ALB Security Group:
-  Inbound:  443 (HTTPS) from 0.0.0.0/0
-  Outbound: App port toward app security group
-
-App Security Group (ECS/Lambda):
-  Inbound:  App port ONLY from ALB security group
-  Outbound: 443 toward internet (external APIs)
-            DB port toward DB security group
-
-DB Security Group:
-  Inbound:  5432 (Postgres) / 3306 (MySQL) ONLY from app security group
-  Outbound: None (or minimal)
-
-Redis Security Group:
-  Inbound:  6379 ONLY from app security group
-  Outbound: None
-```
+- **ALB:** Inbound 443 (HTTPS) from 0.0.0.0/0. Outbound: app port toward app SG.
+- **App (ECS/Lambda):** Inbound app port ONLY from ALB SG. Outbound: 443 toward internet, DB port toward DB SG.
+- **DB:** Inbound 5432 (Postgres) / 3306 (MySQL) ONLY from app SG. Outbound: none.
+- **Redis:** Inbound 6379 ONLY from app SG. Outbound: none.
 
 ```hcl
 resource "aws_security_group" "db" {
@@ -151,9 +133,7 @@ resource "aws_security_group" "db" {
 }
 ```
 
----
-
-## API Gateway
+## 4. API Gateway
 
 ### When to Use
 
@@ -173,9 +153,7 @@ How do you expose your API to the world?
     └── Vercel handles it automatically
 ```
 
----
-
-## Secrets Management
+## 5. Secrets management
 
 ### Decision Tree
 
@@ -234,16 +212,9 @@ provider:
     STRIPE_SECRET: ${ssm:/myapp/${sls:stage}/stripe-secret}
 ```
 
----
+## 6. IAM — Least privilege
 
-## IAM — Least Privilege
-
-```
-RULE: Each service receives ONLY the permissions it needs.
-NEVER use AdministratorAccess or * in production.
-
-Example — Lambda that reads from S3 and writes to DynamoDB:
-```
+Each service receives ONLY the permissions it needs. NEVER use AdministratorAccess or `*` in production.
 
 ```json
 {
@@ -267,16 +238,9 @@ Example — Lambda that reads from S3 and writes to DynamoDB:
 }
 ```
 
-### Deploy Roles (GitHub Actions → AWS)
+### Deploy roles (GitHub Actions → AWS)
 
-```
-Use OIDC federation — NOT static access keys.
-
-GitHub Actions assumes an IAM Role via OIDC:
-  → No AWS secrets in GitHub
-  → Credentials rotate automatically
-  → Scope limited to the repository
-```
+Use OIDC federation, NOT static access keys. GitHub Actions assumes an IAM Role via OIDC: no AWS secrets in GitHub, credentials rotate automatically, scope limited to the repository.
 
 ```hcl
 # Terraform — OIDC provider for GitHub Actions
@@ -310,83 +274,54 @@ resource "aws_iam_role" "github_deploy" {
 }
 ```
 
----
+## 7. WAF — Web Application Firewall
 
-## WAF — Web Application Firewall
+**When to use:**
+- Public API exposed to the internet
+- E-commerce / marketplace (PCI compliance)
+- Applications with sensitive data
+- Protection against bots, SQL injection, XSS
 
-```
-When YES:
-  ✅ Public API exposed to the internet
-  ✅ E-commerce / marketplace (PCI compliance)
-  ✅ Applications with sensitive data
-  ✅ Protection against bots, SQL injection, XSS
+**When NOT to use:**
+- Internal APIs only accessible from VPC
+- Minimal budget ($6/month per web ACL + $0.60/million requests)
 
-When NO:
-  ❌ Internal APIs only accessible from VPC
-  ❌ Minimal budget ($6/month per web ACL + $0.60/million requests)
+**Minimum recommended rules:** AWSManagedRulesCommonRuleSet (OWASP top 10), AWSManagedRulesKnownBadInputsRuleSet, AWSManagedRulesSQLiRuleSet, rate limiting (e.g.: 2000 requests/5 min per IP).
 
-Minimum recommended rules:
-  - AWSManagedRulesCommonRuleSet (OWASP top 10)
-  - AWSManagedRulesKnownBadInputsRuleSet
-  - AWSManagedRulesSQLiRuleSet
-  - Rate limiting (e.g.: 2000 requests/5 min per IP)
-```
+## 8. SSL/TLS
 
----
+HTTPS is mandatory, no exceptions.
 
-## SSL/TLS
+- **Frontend on Vercel:** automatic SSL included.
+- **CloudFront + custom domain:** ACM (FREE certificates), must be in us-east-1 for CloudFront.
+- **ALB + custom domain:** ACM certificate in the ALB's region, automatic renewal.
+- **API Gateway:** compatible with ACM custom domain.
 
-```
-HTTPS is mandatory. No exceptions.
+## 9. Security checklist
 
-Frontend on Vercel:
-  → Automatic SSL included
+- [ ] All S3 buckets with public access blocked
+- [ ] DB in private subnet, not accessible from the internet
+- [ ] Secrets in SSM/Secrets Manager, not in code or .env in prod
+- [ ] IAM roles with least privilege (no `*` or AdministratorAccess)
+- [ ] HTTPS everywhere (redirect HTTP → HTTPS)
+- [ ] Security groups: deny all by default
+- [ ] OIDC for CI/CD (no static access keys)
+- [ ] WAF on public endpoints (if budget allows)
+- [ ] Encryption at rest enabled (S3, RDS, ElastiCache)
+- [ ] Encryption in transit (TLS 1.2+)
+- [ ] CloudTrail enabled (audit log of AWS actions)
+- [ ] MFA on AWS root account
+- [ ] Do not use root account for daily operations
 
-CloudFront + custom domain:
-  → ACM (AWS Certificate Manager) — FREE certificates
-  → MUST be in us-east-1 for CloudFront
+## 10. Gotchas
 
-ALB + custom domain:
-  → ACM certificate in the ALB's region
-  → Automatic renewal
-
-API Gateway:
-  → Compatible with ACM custom domain
-```
-
----
-
-## Security Checklist
-
-```
-☐ All S3 buckets with public access blocked
-☐ DB in private subnet, not accessible from the internet
-☐ Secrets in SSM/Secrets Manager, not in code or .env in prod
-☐ IAM roles with least privilege (no * or AdministratorAccess)
-☐ HTTPS everywhere (redirect HTTP → HTTPS)
-☐ Security groups: deny all by default
-☐ OIDC for CI/CD (no static access keys)
-☐ WAF on public endpoints (if budget allows)
-☐ Encryption at rest enabled (S3, RDS, ElastiCache)
-☐ Encryption in transit (TLS 1.2+)
-☐ CloudTrail enabled (audit log of AWS actions)
-☐ MFA on AWS root account
-☐ Do not use root account for daily operations
-```
-
----
-
-## Anti-patterns
-
-```
-❌ DB accessible from the internet (0.0.0.0/0 in security group)
-❌ Secrets hardcoded in code or environment variables in repositories
-❌ IAM with Action: "*" or Resource: "*"
-❌ Static access keys for CI/CD (use OIDC)
-❌ HTTP without redirect to HTTPS
-❌ VPC when not needed (Lambda + DynamoDB doesn't need VPC)
-❌ NAT Gateway in dev/staging if not necessary ($32/month minimum)
-❌ A single security group for everything ("all traffic" between services)
-❌ Bastion host as primary access method (use SSM Session Manager)
-❌ Not enabling CloudTrail
-```
+- DB accessible from the internet (0.0.0.0/0 in security group) — always private subnet.
+- Secrets hardcoded in code or environment variables in repositories.
+- IAM with Action `*` or Resource `*` — use least privilege.
+- Static access keys for CI/CD — use OIDC.
+- HTTP without redirect to HTTPS.
+- VPC when not needed — Lambda + DynamoDB doesn't need VPC.
+- NAT Gateway in dev/staging when not necessary — $32/month minimum.
+- A single security group for everything ("all traffic" between services).
+- Bastion host as primary access method — use SSM Session Manager.
+- Not enabling CloudTrail.
