@@ -1,19 +1,20 @@
 ---
 name: code-quality-rules
 description: >
-  Reglas de calidad de código para proyectos frontend. Cubre configuración de
+  Usa esta skill cuando configures calidad de código en proyectos frontend:
   ESLint 9+ (flat config), Prettier, Biome, convenciones de nombrado,
   orden de imports, límites de complejidad, y pre-commit hooks con lint-staged.
 ---
 
-# ✅ Calidad de Código — Reglas
+# Calidad de Código
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Automatizar todo lo automatizable.** El formatter y el linter deciden el estilo.
-> Los humanos deciden la arquitectura.
-
----
+1. Configurar linter: ESLint 9 flat config (sección 1) o Biome (sección 3).
+2. Configurar formatter: Prettier (sección 2) o Biome.
+3. Aplicar convenciones de nombrado del proyecto (sección 4).
+4. Configurar pre-commit hooks con lint-staged (sección 5).
+5. Separar type imports de value imports (sección 6).
 
 ## 1. ESLint 9+ — Flat Config
 
@@ -43,10 +44,10 @@ export default tseslint.config(
     plugins: { react, 'react-hooks': reactHooks },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react/jsx-no-leaked-render': 'error',          // {count && <div>} → bug si count=0
-      'react/self-closing-comp': 'error',              // <div></div> → <div />
-      'react/jsx-curly-brace-presence': ['error', 'never'], // No {"text"} → "text"
-      'react/hook-use-state': 'error',                 // [value, setValue] naming
+      'react/jsx-no-leaked-render': 'error',
+      'react/self-closing-comp': 'error',
+      'react/jsx-curly-brace-presence': ['error', 'never'],
+      'react/hook-use-state': 'error',
     },
   },
   // Accessibility
@@ -101,8 +102,6 @@ export default tseslint.config(
 );
 ```
 
----
-
 ## 2. Prettier
 
 ```json
@@ -127,8 +126,6 @@ dist/
 coverage/
 pnpm-lock.yaml
 ```
-
----
 
 ## 3. Biome (Alternativa a ESLint + Prettier)
 
@@ -164,49 +161,40 @@ pnpm-lock.yaml
 }
 ```
 
----
-
 ## 4. Convenciones de Nombrado
 
 ```typescript
-// ✅ Componentes: PascalCase
+// Componentes: PascalCase
 export function UserProfile() {}
-export function DataTable<T>() {}
 
-// ✅ Hooks: camelCase con "use" prefix
-export function useAuth() {}
+// Hooks: camelCase con "use" prefix
 export function useDebounce<T>(value: T, delay: number) {}
 
-// ✅ Tipos/Interfaces: PascalCase, sin prefijo "I"
-export interface UserProfile {}                // ✅
-export interface IUserProfile {}               // ❌ Prefijo "I" innecesario
+// Tipos/Interfaces: PascalCase, sin prefijo "I"
+export interface UserProfile {}         // Correcto
+export interface IUserProfile {}        // No usar prefijo "I"
 export type ButtonVariant = 'primary' | 'secondary';
 
-// ✅ Props: NombreComponenteProps
+// Props: NombreComponenteProps
 export interface ButtonProps {}
 export interface DataTableProps<T> {}
 
-// ✅ Constantes: UPPER_SNAKE_CASE
+// Constantes: UPPER_SNAKE_CASE
 export const MAX_RETRY_COUNT = 3;
 export const API_ENDPOINTS = { users: '/api/users' } as const;
 
-// ✅ Funciones helper: camelCase verbosa
+// Funciones helper: camelCase verbosa
 export function formatCurrency(amount: number, locale: string) {}
 export function isValidEmail(email: string): boolean {}
 
-// ✅ Event handlers: handle + Event
-function handleClick() {}
+// Event handlers: handle + Evento
 function handleSubmit() {}
 function handleSearchChange(query: string) {}
 
-// ✅ Boolean naming: is/has/should/can prefix
+// Booleans: is/has/should/can prefix
 const isLoading = true;
 const hasPermission = false;
-const shouldShowBanner = true;
-const canEdit = false;
 ```
-
----
 
 ## 5. Pre-commit Hooks
 
@@ -239,34 +227,22 @@ pnpm exec lint-staged
 pnpm run type-check
 ```
 
----
-
 ## 6. Type-Only Imports
 
 ```typescript
-// ✅ SIEMPRE separar type imports (tree shaking + claridad)
 import { useState, useEffect } from 'react';
 import type { ReactNode, ComponentProps } from 'react';
 
 import { Button } from '@shared/components/ui/Button';
 import type { ButtonProps } from '@shared/components/ui/Button';
-
-// ESLint rule: @typescript-eslint/consistent-type-imports
 ```
 
----
+## Gotchas
 
-## Anti-patrones
-
-```typescript
-// ❌ Deshabilitar ESLint rules sin justificación
-// eslint-disable-next-line @typescript-eslint/no-explicit-any  ← ¿Por qué?
-
-// ❌ Archivos > 300 líneas — dividir en componentes/hooks
-// ❌ any — usar unknown + type guards
-// ❌ console.log en producción — usar logger
-// ❌ Commented-out code — eliminarlo (git lo tiene)
-// ❌ Abreviaturas crípticas: usr, btn, val (excepto i, j, e, _)
-// ❌ Funciones con > 3 parámetros (usar objeto de opciones)
-// ❌ Nested ternaries — usar early returns o variables
-```
+- `eslint-disable` sin comentario de justificación es deuda técnica oculta — agregar siempre `// reason: ...`.
+- `any` se propaga silenciosamente por el type system — usar `unknown` + type guards.
+- `console.log` en producción expone datos internos — usar un logger con niveles (debug/info/warn/error).
+- Código comentado permanece indefinidamente — eliminar, git lo preserva.
+- Funciones con > 3 parámetros se vuelven ilegibles — usar objeto de opciones.
+- Ternarios anidados son difíciles de parsear — usar early returns o variables intermedias.
+- `transition-all` en Prettier config: no confundir `trailingComma: "all"` con Tailwind — son contextos distintos.

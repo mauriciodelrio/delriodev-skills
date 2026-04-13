@@ -1,26 +1,27 @@
 ---
 name: nextjs-best-practices
 description: >
-  Best practices for Next.js 15+ with App Router. Covers Server Actions,
-  middleware, caching (Data Cache, Full Route Cache, Router Cache),
-  next/image, next/font, metadata API, route handlers, and architecture
-  patterns for production-ready applications.
+  Use this skill when developing with Next.js 15+ App Router:
+  Server Actions, middleware, caching (Data/Route/Router Cache),
+  next/image, next/font, metadata API, route handlers, and
+  production-ready architecture patterns.
 ---
 
-# ▲ Next.js — Best Practices
+# Next.js — Best Practices
 
-## Guiding Principle
+## Agent workflow
 
-> **Server-first architecture.** Everything is a Server Component by default.
-> Use `'use client'` and `'use server'` as explicit boundaries.
-
----
+1. Everything is a Server Component by default. Add `'use client'` only when interactivity is needed.
+2. Server Actions for mutations with Zod validation + `revalidatePath`/`revalidateTag` (section 1).
+3. Middleware for auth redirects and security headers (section 2).
+4. Know the 4 cache levels: Request Memoization → Data Cache → Full Route Cache → Router Cache (section 3).
+5. `next/image` with `sizes` + `priority` for LCP, `next/font` with CSS variables (sections 4-5).
+6. Static Metadata API in layouts, `generateMetadata` dynamic in pages (section 6).
+7. Route handlers for public APIs; prefer Server Actions for internal mutations (section 7).
 
 ## 1. Server Actions
 
 ```tsx
-// ✅ Server Action — mutations from Client Components
-// features/products/actions/createProduct.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -34,7 +35,6 @@ const createProductSchema = z.object({
 });
 
 export async function createProduct(formData: FormData) {
-  // ALWAYS validate on the server
   const parsed = createProductSchema.safeParse({
     name: formData.get('name'),
     price: Number(formData.get('price')),
@@ -51,7 +51,6 @@ export async function createProduct(formData: FormData) {
   redirect('/products');
 }
 
-// ✅ Usage in Client Component with useActionState
 'use client';
 
 import { useActionState } from 'react';
@@ -75,12 +74,9 @@ export function CreateProductForm() {
 }
 ```
 
----
-
 ## 2. Middleware
 
 ```tsx
-// middleware.ts (project root)
 import { NextResponse, type NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
@@ -106,74 +102,56 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Exclude static files and internal API routes
     '/((?!_next/static|_next/image|favicon.ico|api/health).*)',
   ],
 };
 ```
 
----
-
 ## 3. Caching — The 4 Levels
 
 ```tsx
 // Level 1: Request Memoization (automatic)
-// Same fetch() in multiple Server Components = 1 single request
 async function Layout({ children }) {
-  const user = await getUser(); // fetch #1
+  const user = await getUser();
   return <>{children}</>;
 }
 async function Page() {
-  const user = await getUser(); // Reuses result from #1 (deduplicated)
+  const user = await getUser(); // Reuses result from Layout (deduplicated)
   return <Profile user={user} />;
 }
 
 // Level 2: Data Cache (persistent, opt-out with no-store)
-// ✅ Cached by default
 const data = await fetch('https://api.example.com/products');
-
-// ✅ Revalidate every hour
 const data = await fetch(url, { next: { revalidate: 3600 } });
-
-// ✅ Invalidate on-demand with tags
 const data = await fetch(url, { next: { tags: ['products'] } });
-// In Server Action: revalidateTag('products');
-
-// ✅ Opt-out — no caching
 const data = await fetch(url, { cache: 'no-store' });
 
 // Level 3: Full Route Cache (static HTML + RSC payload)
-// Automatic for routes that don't use headers(), cookies(), searchParams
-// Opt-out: export const dynamic = 'force-dynamic';
+// Automatic if route doesn't use headers(), cookies(), searchParams
 
-// Level 4: Router Cache (client-side, route prefetch)
-// Automatic with <Link>. Invalidated with router.refresh()
+// Level 4: Router Cache (client-side, prefetch via <Link>)
+// Invalidated with router.refresh()
 
-// ✅ Manual cache for functions that DON'T use fetch
+// Manual cache for functions without fetch
 import { unstable_cache } from 'next/cache';
 
 const getCachedUser = unstable_cache(
   async (userId: string) => db.user.findUnique({ where: { id: userId } }),
-  ['user-by-id'], // cache key
+  ['user-by-id'],
   { revalidate: 600, tags: ['users'] },
 );
 ```
 
----
-
 ## 4. Image Optimization
 
 ```tsx
-// ✅ ALWAYS use next/image
 import Image from 'next/image';
-
-// Image with known dimensions
 <Image
   src="/hero.webp"
   alt="Product hero banner"
   width={1200}
   height={630}
-  priority          // LCP — load without lazy loading
+  priority
   quality={85}
   placeholder="blur"
   blurDataURL={blurHash}
@@ -189,14 +167,7 @@ import Image from 'next/image';
     className="object-cover rounded-lg"
   />
 </div>
-
-// ❌ NEVER
-<img src={url} />                    // Not optimized
-<Image src={url} alt="" />           // Empty alt (a11y)
-<Image src={url} width={0} height={0} style={{ width: '100%' }} /> // Hack
 ```
-
----
 
 ## 5. Optimized Fonts
 
@@ -228,12 +199,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 // theme: { fontFamily: { sans: ['var(--font-sans)'], mono: ['var(--font-mono)'] } }
 ```
 
----
-
 ## 6. Metadata API
 
 ```tsx
-// app/layout.tsx — global metadata
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -250,7 +218,7 @@ export const metadata: Metadata = {
   },
 };
 
-// app/products/[id]/page.tsx — dynamic metadata
+// dynamic metadata
 export async function generateMetadata({
   params,
 }: {
@@ -269,15 +237,11 @@ export async function generateMetadata({
 }
 ```
 
----
-
-## 7. Route Handlers (API Routes)
+## 7. Route Handlers
 
 ```tsx
-// app/api/products/route.ts
 import { NextResponse, type NextRequest } from 'next/server';
 
-// GET with caching
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const page = Number(searchParams.get('page') ?? '1');
@@ -294,7 +258,6 @@ export async function GET(request: NextRequest) {
   });
 }
 
-// POST with validation
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const parsed = createProductSchema.safeParse(body);
@@ -311,17 +274,12 @@ export async function POST(request: NextRequest) {
 }
 ```
 
----
+## Gotchas
 
-## Next.js Anti-patterns
-
-```tsx
-// ❌ 'use client' on high-level layouts
-// ❌ Server Actions that return JSX (only return data)
-// ❌ fetch() in Client Components when it could be a Server Component
-// ❌ Not using next/image's Image component
-// ❌ middleware.ts with heavy logic (DB queries, slow fetches)
-// ❌ Ignoring the cache hierarchy (Data → Route → Router)
-// ❌ revalidatePath('/') to invalidate everything (be granular with tags)
-// ❌ Using API routes for what should be a Server Action
-```
+- `'use client'` on high-level layouts forces the entire subtree to be Client Components — move interactivity to leaf components.
+- Server Actions that return JSX cause serialization errors — return only plain data.
+- `fetch()` in Client Components when data could be fetched in a Server Component wastes bundle and adds waterfalls.
+- `<img>` without next/image loses automatic optimization (WebP, lazy loading, responsive).
+- Heavy logic in middleware (DB queries, slow fetches) blocks all requests — keep it lightweight.
+- `revalidatePath('/')` invalidates the entire cache — use `revalidateTag` for granular invalidation.
+- API routes for internal mutations when Server Actions are simpler and type-safe.

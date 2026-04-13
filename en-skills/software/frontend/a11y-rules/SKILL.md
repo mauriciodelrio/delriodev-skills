@@ -1,101 +1,82 @@
 ---
 name: a11y-rules
 description: >
-  Web accessibility rules for React/Next.js applications. Covers WCAG 2.2
-  level AA, ARIA roles and attributes, focus management, keyboard navigation,
-  landmarks, live regions, accessible forms, and testing with automated
-  tools (axe-core, Lighthouse).
+  Use this skill when building or reviewing React/Next.js components that
+  require WCAG 2.2 level AA compliance: ARIA roles and attributes, focus
+  management, keyboard navigation, landmarks, live regions, accessible
+  forms, and automated testing (axe-core, Lighthouse).
 ---
 
-# ♿ Accessibility (a11y) — WCAG 2.2 AA Rules
+# Accessibility (a11y) — WCAG 2.2 AA
 
-## Guiding Principle
+## Agent workflow
 
-> **Accessibility is NOT optional.** Every component MUST be keyboard-navigable,
-> understandable by screen readers, and meet a minimum contrast ratio of 4.5:1.
+1. Verify semantic HTML before adding ARIA (section 1-2).
+2. Implement focus management and keyboard navigation (section 3-4).
+3. Ensure descriptive alt on images and captions on video (section 5).
+4. Apply labels, fieldset/legend, and accessible errors in forms (section 6).
+5. Validate minimum contrast 4.5:1 and don't rely on color alone (section 7).
+6. Write tests with axe-core and validate keyboard interaction (section 8).
+7. Pass a11y checklist per component before commit.
 
----
-
-## 1. Semantic HTML — First Line of Defense
+## 1. Semantic HTML
 
 ```tsx
-// ✅ Use semantic HTML elements BEFORE ARIA
-<header>...</header>           // Instead of <div role="banner">
-<nav aria-label="Main">        // Instead of <div role="navigation">
-<main>...</main>               // Instead of <div role="main">
-<article>...</article>         // Standalone content
-<aside>...</aside>             // Complementary content
-<footer>...</footer>           // Instead of <div role="contentinfo">
+<header>...</header>
+<nav aria-label="Main">...</nav>
+<main>...</main>
+<article>...</article>
+<aside>...</aside>
+<footer>...</footer>
 <button onClick={fn}>          // NEVER <div onClick={fn}>
 <a href="/page">               // NEVER <span onClick={navigate}>
 
-// ✅ Hierarchical headings — DO NOT skip levels
-<h1>Page title</h1>               // Only 1 per page
+// Headings: DO NOT skip levels — screen readers use them to navigate
+<h1>Page title</h1>            // Only 1 per page
   <h2>Section</h2>
     <h3>Subsection</h3>
-  <h2>Another section</h2>
 
-// ❌ NEVER
-<h1>Title</h1>
-<h3>Skipping h2</h3>              // ❌ Screen readers use headings to navigate
-<div className="text-2xl font-bold">Fake heading</div>  // ❌ Not a real heading
+// ❌ Fake heading — invisible to screen readers
+<div className="text-2xl font-bold">Fake heading</div>
 ```
-
----
 
 ## 2. ARIA — Only When HTML Isn't Enough
 
 ```tsx
-// ✅ ARIA Rule #1: Don't use ARIA if native HTML solves it
-<button>Save</button>                    // ✅ No need for role="button"
-<button aria-label="Close modal">✕</button> // ✅ Label for icon-only button
+// Icon-only button — needs aria-label
+<button aria-label="Close modal">✕</button>
 
-// ✅ aria-label: alternative text for elements without visible text
 <button aria-label="Search products">
   <SearchIcon aria-hidden="true" />
 </button>
 
-// ✅ aria-labelledby: reference existing visible text
+// aria-labelledby: reference visible text (DO NOT duplicate with aria-label)
 <dialog aria-labelledby="dialog-title">
   <h2 id="dialog-title">Confirm deletion</h2>
-  <p>Are you sure you want to delete this product?</p>
 </dialog>
 
-// ✅ aria-describedby: additional description (hints, errors)
-<input
-  id="email"
-  type="email"
-  aria-describedby="email-error email-hint"
-/>
+// aria-describedby: hints and errors
+<input id="email" type="email" aria-describedby="email-error email-hint" />
 <p id="email-hint">We'll use this email for notifications</p>
 <p id="email-error" role="alert">The email is not valid</p>
 
-// ✅ aria-live: announce dynamic changes
+// aria-live: dynamic changes
 <div aria-live="polite" aria-atomic="true">
   {notification && <p>{notification}</p>}
 </div>
 
-// ✅ aria-expanded: state of expandable elements
-<button
-  aria-expanded={isOpen}
-  aria-controls="menu-items"
-  onClick={() => setIsOpen(!isOpen)}
->
+// aria-expanded + aria-controls
+<button aria-expanded={isOpen} aria-controls="menu-items">
   Menu
 </button>
 <ul id="menu-items" hidden={!isOpen}>...</ul>
 
-// ❌ NEVER: roles that contradict HTML semantics
-<button role="link">...</button>           // ❌ Use <a>
-<a role="button" onClick={fn}>...</a>      // ❌ Use <button>
+// NEVER contradict semantics: <button role="link"> → use <a>
 ```
-
----
 
 ## 3. Focus Management
 
 ```tsx
-// ✅ Focus trap in modals
 import { useEffect, useRef } from 'react';
 
 function useFocusTrap(isOpen: boolean) {
@@ -133,7 +114,7 @@ function useFocusTrap(isOpen: boolean) {
   return containerRef;
 }
 
-// ✅ Restore focus when closing modal
+// Restore focus when closing modal
 function Modal({ isOpen, onClose, children }: ModalProps) {
   const triggerRef = useRef<HTMLElement | null>(null);
 
@@ -141,80 +122,62 @@ function Modal({ isOpen, onClose, children }: ModalProps) {
     if (isOpen) {
       triggerRef.current = document.activeElement as HTMLElement;
     } else {
-      triggerRef.current?.focus(); // Restore focus to original trigger
+      triggerRef.current?.focus();
     }
   }, [isOpen]);
 
   // ...
 }
 
-// ✅ Skip navigation link
+// Skip navigation link
 <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4">
   Skip to main content
 </a>
 <main id="main-content" tabIndex={-1}>...</main>
 ```
 
----
-
 ## 4. Keyboard Navigation
 
 ```tsx
-// ✅ All interactive elements MUST be reachable with Tab
-// ✅ Actions with Enter/Space for buttons, Enter for links
-
-// ✅ Keyboard patterns for complex widgets
+// Keyboard patterns per widget:
 // Tabs → Arrow keys to navigate, Tab to exit
 // Menu → Arrow keys, Enter to select, Escape to close
 // Dialog → Tab to navigate, Escape to close
 
-// ✅ Visible focus indicators
-// tailwind.config.ts or global CSS
-// NEVER: outline-none without a visible replacement
+// Focus indicator — focus-visible shows ring only with keyboard, not mouse
 <button className={cn(
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
-  // ✅ focus-visible: only shows ring with keyboard, not with mouse
 )}>
   Action
 </button>
-
-// ❌ NEVER remove outline without replacement
-<button className="outline-none" />  // ❌ Keyboard users can't see the focus
 ```
-
----
 
 ## 5. Images and Media
 
 ```tsx
-// ✅ Informative images — descriptive alt
+// Informative: alt describes the content
 <Image alt="Bar chart showing Q4 2025 sales with a 23% increase" src={chart} />
 
-// ✅ Decorative images — empty alt + aria-hidden
+// Decorative: empty alt + aria-hidden
 <Image alt="" aria-hidden="true" src={decorativeLine} />
 <SearchIcon aria-hidden="true" className="h-5 w-5" />
 
-// ✅ Videos with captions
+// Video with captions
 <video controls>
   <source src="demo.mp4" type="video/mp4" />
   <track kind="captions" src="captions-en.vtt" srcLang="en" label="English" default />
 </video>
 
-// ❌ NEVER generic alt
-<Image alt="image" src={product} />     // ❌ Provides no information
-<Image alt="photo" src={userAvatar} />  // ❌ Describe WHAT it shows
+// ❌ alt="image" or alt="photo" provide nothing — describe WHAT it shows
 ```
-
----
 
 ## 6. Accessible Forms
 
 ```tsx
-// ✅ Associated label ALWAYS
 <label htmlFor="email">Email address</label>
 <input id="email" type="email" aria-required="true" />
 
-// ✅ Group of related fields
+// Group of related fields
 <fieldset>
   <legend>Shipping address</legend>
   <label htmlFor="street">Street</label>
@@ -223,7 +186,7 @@ function Modal({ isOpen, onClose, children }: ModalProps) {
   <input id="city" />
 </fieldset>
 
-// ✅ Accessible validation errors
+// Accessible error pattern
 <label htmlFor="password">Password</label>
 <input
   id="password"
@@ -241,11 +204,9 @@ function Modal({ isOpen, onClose, children }: ModalProps) {
   </p>
 )}
 
-// ❌ NEVER placeholder as the only label
-<input placeholder="Email" />  // ❌ Disappears when typing, not accessible
+// NEVER placeholder as only label — disappears when typing
+<input placeholder="Email" />
 ```
-
----
 
 ## 7. Contrast and Color
 
@@ -258,22 +219,16 @@ WCAG 2.2 AA Requirements:
 ```
 
 ```tsx
-// ✅ Error indicated with color + icon + text
+// ALWAYS: color + icon + text
 <div className="flex items-center gap-2 text-red-600">
   <AlertCircleIcon aria-hidden="true" className="h-4 w-4" />
   <span>This field is required</span>
 </div>
-
-// ❌ Color only as indicator
-<input className="border-red-500" />  // ❌ No visible error message
 ```
-
----
 
 ## 8. Accessibility Testing
 
 ```tsx
-// ✅ axe-core in unit tests
 import { render } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 
@@ -285,7 +240,6 @@ test('LoginForm has no accessibility violations', async () => {
   expect(results).toHaveNoViolations();
 });
 
-// ✅ Keyboard interaction testing
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
@@ -309,24 +263,27 @@ test('tab navigates between modal buttons', async () => {
 });
 ```
 
----
-
 ## a11y Checklist per Component
 
-- [ ] Does it have a label/aria-label and is it descriptive?
-- [ ] Is it navigable with Tab and activatable with Enter/Space?
-- [ ] Does it have a visible focus indicator?
-- [ ] Does the contrast meet 4.5:1 (text) / 3:1 (UI)?
-- [ ] Are errors announced with role="alert"?
-- [ ] Do images have a descriptive alt (or empty if decorative)?
-- [ ] Do icons have aria-hidden="true" if decorative?
-- [ ] Do modals handle focus trap and restore focus on close?
+- [ ] Descriptive label/aria-label
+- [ ] Navigable with Tab, activatable with Enter/Space
+- [ ] Visible focus indicator
+- [ ] Contrast 4.5:1 (text) / 3:1 (UI)
+- [ ] Errors with role="alert"
+- [ ] Images: descriptive alt or empty if decorative
+- [ ] Decorative icons: aria-hidden="true"
+- [ ] Modals: focus trap + restore focus on close
 
----
+## Gotchas
+
+- `aria-label` on elements with visible text creates double reading in screen readers — use `aria-labelledby` referencing the existing text instead.
+- `tabindex="0"` makes a `<div>` focusable, but does NOT give it button semantics — you also need `role="button"` and `Enter`/`Space` handler. Prefer `<button>` always.
+- `outline-none` in Tailwind without a `ring-*` replacement silently breaks keyboard navigation — no error, the user just can't see where focus is.
+- `aria-live="assertive"` interrupts the user — reserve for critical errors. For general notifications use `"polite"`.
+- `role="alert"` triggers immediate announcement on render — conditional rendering with `{error && ...}` works fine, but changing text inside an existing alert may be ignored by the screen reader.
+- A native `<dialog>` with `showModal()` handles focus trap automatically — don't reimplement `useFocusTrap` if using the native element.
 
 ## Related Skills
-
-> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
 
 | Skill | Why |
 |-------|-----|

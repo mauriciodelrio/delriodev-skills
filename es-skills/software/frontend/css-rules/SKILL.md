@@ -1,24 +1,24 @@
 ---
 name: css-rules
 description: >
-  Reglas de estilos para aplicaciones React/Next.js. Cubre Tailwind CSS 4+,
+  Usa esta skill cuando apliques estilos en React/Next.js: Tailwind CSS 4+,
   CSS Modules, custom properties (design tokens), responsive design, dark mode,
-  theming con Material UI, utilidad cn() (clsx + twMerge), y convenciones
-  de organización de estilos.
+  theming con Material UI, y utilidad cn() (clsx + twMerge).
 ---
 
-# 🎨 CSS — Reglas de Estilos
+# CSS — Reglas de Estilos
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Utility-first con escape hatches.** Tailwind para el 90% de los estilos,
-> CSS Modules para animaciones complejas, custom properties para tokens de diseño.
+1. Usar `cn()` para toda composición de clases Tailwind (sección 1).
+2. Aplicar mobile-first + container queries para responsive (sección 2).
+3. Implementar dark mode con clase + persistencia (sección 3).
+4. CSS Modules solo para animaciones complejas no expresables en Tailwind (sección 4).
+5. Design tokens con custom properties para theming (sección 5).
 
----
+## 1. Tailwind CSS
 
-## 1. Tailwind CSS — Convenciones
-
-### Utilidad cn() — Obligatoria
+### Utilidad cn()
 
 ```typescript
 // shared/lib/cn.ts
@@ -29,50 +29,33 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// ✅ USO: merge seguro de clases Tailwind
 <div className={cn(
-  'rounded-lg p-4',                    // Base
-  variant === 'error' && 'border-red-500 bg-red-50',  // Condicional
-  className                             // Override del padre
+  'rounded-lg p-4',
+  variant === 'error' && 'border-red-500 bg-red-50',
+  className,
 )} />
-
-// ❌ NUNCA interpolación de strings para clases condicionales
-<div className={`p-4 ${isActive ? 'bg-blue-500' : 'bg-gray-500'}`} />
-// twMerge no puede resolver conflictos en strings interpolados
 ```
 
 ### Orden de Clases Tailwind
 
+Usar `prettier-plugin-tailwindcss` para orden automático. Orden lógico: layout → tamaño → visual → tipografía → interacción → responsive.
+
 ```tsx
-// ✅ Orden recomendado (Prettier plugin lo hace automático)
 <div
   className={cn(
-    // 1. Layout (display, position, overflow)
     'flex items-center justify-between',
-    // 2. Tamaño (width, height, padding, margin)
     'h-12 w-full px-4 py-2',
-    // 3. Visual (bg, border, shadow, rounded)
     'rounded-lg border border-gray-200 bg-white shadow-sm',
-    // 4. Tipografía (font, text, leading)
     'text-sm font-medium text-gray-900',
-    // 5. Interacción (hover, focus, transition)
     'transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500',
-    // 6. Responsive
     'md:h-14 md:px-6 lg:text-base',
   )}
 />
 
-// Instalar plugin de orden automático:
-// pnpm add -D prettier-plugin-tailwindcss
-```
-
-### Clases Dinámicas — Sin Template Literals
+### Clases Dinámicas
 
 ```tsx
-// ❌ NUNCA clases dinámicas con template literals
-<div className={`bg-${color}-500`} />  // Tailwind NO puede detectar esto en build
-
-// ✅ Mapeo explícito
+// Template literals no son detectables por Tailwind en build — usar mapeo explícito
 const colorMap = {
   blue: 'bg-blue-500 text-blue-900',
   red: 'bg-red-500 text-red-900',
@@ -82,53 +65,33 @@ const colorMap = {
 <div className={cn(colorMap[color])} />
 ```
 
----
-
 ## 2. Responsive Design
 
 ```tsx
-// ✅ Mobile-first (Tailwind default)
-// Diseñar para móvil primero, añadir breakpoints para pantallas más grandes
-
 <div className={cn(
-  // Mobile (default)
   'flex flex-col gap-4 p-4',
-  // Tablet (md: 768px+)
   'md:flex-row md:gap-6 md:p-6',
-  // Desktop (lg: 1024px+)
   'lg:gap-8 lg:p-8',
-  // Wide (xl: 1280px+)
   'xl:max-w-7xl xl:mx-auto',
 )}>
   <aside className="w-full md:w-64 lg:w-80">Sidebar</aside>
   <main className="flex-1">Content</main>
 </div>
 
-// ✅ Container queries para layouts de componentes
+// Container queries: responden al tamaño del contenedor, no del viewport
 <div className="@container">
-  <div className="flex flex-col @md:flex-row @lg:grid @lg:grid-cols-3">
-    {/* Responde al tamaño del CONTENEDOR, no del viewport */}
-  </div>
+  <div className="flex flex-col @md:flex-row @lg:grid @lg:grid-cols-3" />
 </div>
 ```
-
----
 
 ## 3. Dark Mode
 
 ```tsx
-// ✅ Tailwind dark mode con clase (controlado por JS)
 // tailwind.config.ts
 export default {
-  darkMode: 'class', // o 'selector' en v4
+  darkMode: 'class',
 };
 
-// ✅ Componente con dark mode
-<div className="bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
-  <h1 className="text-gray-800 dark:text-gray-200">Título</h1>
-</div>
-
-// ✅ Toggle de tema con persistencia
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -156,17 +119,13 @@ export function useTheme() {
   return { theme, setTheme };
 }
 
-// ✅ Evitar flash: script inline en layout.tsx antes del body
-// <script dangerouslySetInnerHTML={{ __html: `...` }} />
-// que lee localStorage y aplica la clase 'dark' inmediatamente
+// Evitar flash: script inline en layout.tsx que lee localStorage y aplica 'dark' antes del paint
 ```
 
----
-
-## 4. CSS Modules — Para Animaciones y Estilos Complejos
+## 4. CSS Modules
 
 ```tsx
-// Componente.module.css — cuando Tailwind no alcanza
+// Componente.module.css
 .shimmer {
   background: linear-gradient(
     90deg,
@@ -191,31 +150,16 @@ export function Skeleton({ className }: { className?: string }) {
 }
 ```
 
----
-
-## 5. Design Tokens con Custom Properties
+## 5. Design Tokens
 
 ```css
-/* styles/tokens.css */
 :root {
-  /* Colores primitivos */
-  --color-blue-50: oklch(0.97 0.02 240);
   --color-blue-500: oklch(0.55 0.22 260);
   --color-blue-600: oklch(0.49 0.22 260);
-
-  /* Colores semánticos */
   --color-primary: var(--color-blue-600);
   --color-surface: white;
   --color-on-surface: var(--color-gray-900);
   --color-border: var(--color-gray-200);
-
-  /* Spacing scale */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
 }
 
 [data-theme='dark'] {
@@ -227,20 +171,14 @@ export function Skeleton({ className }: { className?: string }) {
 ```
 
 ```tsx
-// Usar en Tailwind v4 con theme()
+// Usar en Tailwind: bg-[var(--color-surface)] o extender config con semantic names
 <div className="bg-[var(--color-surface)] text-[var(--color-on-surface)]" />
-
-// O extender tailwind.config.ts
-// colors: { primary: 'var(--color-primary)', surface: 'var(--color-surface)' }
-// Y usar: <div className="bg-surface text-on-surface" />
 ```
 
----
-
-## 6. Material UI — Convenciones con Tailwind
+## 6. Material UI + Tailwind
 
 ```tsx
-// ✅ MUI + Tailwind: usar sx solo para overrides de MUI, Tailwind para layout
+// sx para overrides de MUI, Tailwind para layout
 import { Button, ThemeProvider, createTheme } from '@mui/material';
 
 const theme = createTheme({
@@ -254,58 +192,30 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: 'none',    // Sin UPPERCASE forzado
-          borderRadius: '0.375rem', // Sincronizar con Tailwind rounded-md
+          textTransform: 'none',
+          borderRadius: '0.375rem',
         },
       },
     },
   },
 });
 
-// ✅ Layout con Tailwind, componentes con MUI
-<div className="flex items-center gap-4 p-6">
-  <Button variant="contained" size="large">
-    Guardar
-  </Button>
-</div>
-
-// ❌ NO mezclar sx={{ margin: 2 }} con className="m-2"
-// Elegir uno por componente. Tailwind para layout, MUI sx para theming específico.
 ```
 
----
+## Gotchas
 
-## Anti-patrones CSS
-
-```tsx
-// ❌ Inline styles para todo
-<div style={{ display: 'flex', gap: '16px', padding: '24px' }} />
-
-// ❌ !important
-<div className="text-red-500 !important" />  // Code smell
-
-// ❌ CSS global sin scope
-/* globals.css */
-.card { ... }  // Colisión de nombres. Usar CSS Modules o Tailwind
-
-// ❌ z-index random
-<div className="z-[9999]" />  // Usar escala definida: z-10, z-20, z-30, z-40, z-50
-
-// ❌ Valores mágicos hardcoded
-<div className="w-[327px] h-[53px]" />  // Usar tokens del spacing scale
-
-// ❌ Tailwind purge bypass
-<div className={`bg-${dynamicColor}-500`} />  // No se purga correctamente
-```
-
----
+- Interpolación de strings (`bg-${color}-500`) no es detectable por Tailwind en build — usar mapeo explícito con `as const`.
+- `!important` en Tailwind es síntoma de conflicto de especificidad — investigar la causa raíz.
+- CSS global sin scope (`.card { }` en globals.css) causa colisiones — usar CSS Modules o Tailwind.
+- `z-[9999]` crea z-index wars — usar escala predefinida: z-10, z-20, z-30, z-40, z-50.
+- Valores mágicos como `w-[327px]` indican tokens faltantes — usar spacing scale o design tokens.
+- NO mezclar `sx={{ margin: 2 }}` con `className="m-2"` en MUI — elegir uno por componente.
+- Flash de tema incorrecto en dark mode — agregar script inline en `<head>` que aplique clase `dark` antes del paint.
 
 ## Skills Relacionadas
 
-> **Consultar el índice maestro [`frontend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para estilos.
-
 | Skill | Por qué |
 |-------|--------|
-| `a11y-rules` | Contraste mínimo 4.5:1, focus visible, prefers-reduced-motion |
-| `design-system-build-components-rules` | Tokens, variants, Atomic Design |
-| `performance-rules` | CSS crítico, purge, bundle size |
+| `a11y-rules` | Contraste 4.5:1, focus visible |
+| `design-system-build-components-rules` | Tokens, variants |
+| `performance-rules` | CSS crítico, purge |

@@ -1,30 +1,32 @@
 ---
 name: seo-rules
 description: >
-  Technical SEO rules for Next.js applications. Covers Metadata API,
+  Use this skill when implementing technical SEO in Next.js: Metadata API,
   Open Graph, structured data (JSON-LD), sitemap, robots.txt, canonical URLs,
-  Core Web Vitals for SEO, and patterns for dynamic content.
+  Core Web Vitals, and semantic HTML for crawlers.
 ---
 
-# 🔍 SEO — Technical Rules
+# SEO — Technical Rules
 
-## Guiding Principle
+## Agent workflow
 
-> **SEO starts in the code.** Correct metadata, structured data, canonical URLs,
-> and Core Web Vitals are the developer's responsibility, not just marketing's.
-
----
+1. Static metadata in `layout.tsx` (title template, OG defaults, robots). Dynamic via `generateMetadata` (section 1).
+2. JSON-LD for rich snippets: Product, Organization, BreadcrumbList (section 2).
+3. Dynamic `sitemap.ts` and `robots.ts` in `app/` (section 3).
+4. Canonical URL on every page. Alternates for multi-language (section 4).
+5. Semantic HTML: `<article>`, `<time>`, `<nav>` breadcrumbs, single `<h1>` (section 5).
+6. Core Web Vitals: `priority` on hero image, `aspect-ratio` for CLS, dimensions on iframes (section 6).
+7. Verify checklist before deploy (section 7).
 
 ## 1. Metadata API — Next.js
 
 ```tsx
-// app/layout.tsx — global metadata (inherited)
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://myapp.com'),
   title: {
-    template: '%s | MyApp',     // Child pages: "Products | MyApp"
+    template: '%s | MyApp',
     default: 'MyApp — Business Management',
   },
   description: 'Leading business management platform for SMBs',
@@ -56,7 +58,6 @@ export const metadata: Metadata = {
 ### Dynamic Metadata
 
 ```tsx
-// app/products/[slug]/page.tsx
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -92,13 +93,9 @@ export async function generateMetadata({
 }
 ```
 
----
-
 ## 2. Structured Data (JSON-LD)
 
 ```tsx
-// ✅ JSON-LD for rich snippets in Google
-// shared/components/seo/JsonLd.tsx
 interface JsonLdProps {
   data: Record<string, unknown>;
 }
@@ -112,7 +109,7 @@ export function JsonLd({ data }: JsonLdProps) {
   );
 }
 
-// ✅ Product
+// Product
 function ProductJsonLd({ product }: { product: Product }) {
   return (
     <JsonLd
@@ -145,7 +142,7 @@ function ProductJsonLd({ product }: { product: Product }) {
   );
 }
 
-// ✅ Organization (appears in Knowledge Panel)
+// Organization (appears in Knowledge Panel)
 function OrganizationJsonLd() {
   return (
     <JsonLd
@@ -164,7 +161,7 @@ function OrganizationJsonLd() {
   );
 }
 
-// ✅ Breadcrumbs
+// Breadcrumbs
 function BreadcrumbJsonLd({ items }: { items: { name: string; url: string }[] }) {
   return (
     <JsonLd
@@ -183,12 +180,9 @@ function BreadcrumbJsonLd({ items }: { items: { name: string; url: string }[] })
 }
 ```
 
----
-
 ## 3. Sitemap and Robots
 
 ```tsx
-// app/sitemap.ts — dynamic generation
 import type { MetadataRoute } from 'next';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -237,12 +231,9 @@ export default function robots(): MetadataRoute.Robots {
 }
 ```
 
----
-
 ## 4. Canonical URLs and Alternates
 
 ```tsx
-// ✅ Canonical on every page to avoid duplicate content
 export const metadata: Metadata = {
   alternates: {
     canonical: '/products',
@@ -254,7 +245,7 @@ export const metadata: Metadata = {
   },
 };
 
-// ✅ Pagination with rel prev/next
+// Pagination with rel prev/next
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const params = await searchParams;
   const page = Number(params.page ?? '1');
@@ -271,12 +262,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 ```
 
----
-
 ## 5. Semantic HTML for SEO
 
 ```tsx
-// ✅ Semantic structure that crawlers understand
 <article itemScope itemType="https://schema.org/Article">
   <header>
     <h1 itemProp="headline">{post.title}</h1>
@@ -291,7 +279,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   </div>
 </article>
 
-// ✅ Visible breadcrumbs + JSON-LD
+// Visible breadcrumbs + JSON-LD
 <nav aria-label="Breadcrumb">
   <ol className="flex gap-2 text-sm text-gray-500">
     <li><a href="/">Home</a></li>
@@ -303,39 +291,31 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 </nav>
 ```
 
----
-
 ## 6. Performance SEO (Core Web Vitals)
 
-```tsx
-// Google uses Core Web Vitals as a ranking factor:
-// LCP (Largest Contentful Paint) < 2.5s
-// INP (Interaction to Next Paint) < 200ms
-// CLS (Cumulative Layout Shift) < 0.1
+Google uses Core Web Vitals as a ranking factor: LCP < 2.5s, INP < 200ms, CLS < 0.1.
 
-// ✅ LCP: prioritize hero image
+```tsx
+// LCP: prioritize hero image
 <Image src={heroUrl} alt="..." priority sizes="100vw" />
 
-// ✅ CLS: reserve space for async content
-<div className="aspect-video">          {/* Fixed ratio */}
+// CLS: reserve space for async content
+<div className="aspect-video">
   <Image src={url} alt="..." fill />
 </div>
 
-// ✅ CLS: explicit dimensions on iframes/embeds
+// CLS: explicit dimensions on iframes/embeds
 <iframe width="560" height="315" src={embedUrl} title={title} loading="lazy" />
 ```
 
----
+## 7. SEO Checklist per Page
 
-## SEO Checklist per Page
-
-- [ ] Does it have a unique and descriptive `<title>` (< 60 chars)?
-- [ ] Does it have a unique `<meta description>` (< 160 chars)?
-- [ ] Does it have a canonical URL?
-- [ ] Do images have descriptive alt text?
-- [ ] Does it have Open Graph tags (og:title, og:description, og:image)?
-- [ ] Does it have relevant JSON-LD structured data?
-- [ ] Do headings follow hierarchy (h1 → h2 → h3)?
-- [ ] Is there only 1 `<h1>` per page?
-- [ ] Are alternate language routes declared?
-- [ ] LCP < 2.5s, CLS < 0.1?
+- Unique and descriptive `<title>` (< 60 chars)
+- Unique `<meta description>` (< 160 chars)
+- Canonical URL present
+- Images with descriptive alt text
+- Open Graph tags (og:title, og:description, og:image)
+- Relevant JSON-LD structured data
+- Heading hierarchy (h1 → h2 → h3), single `<h1>`
+- Alternate language routes declared
+- LCP < 2.5s, CLS < 0.1

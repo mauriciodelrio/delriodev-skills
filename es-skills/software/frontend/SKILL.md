@@ -1,16 +1,25 @@
 ---
 name: frontend
 description: >
-  Skill índice maestro para desarrollo frontend. Orquesta y enruta hacia
-  22 sub-skills especializadas que cubren desde arquitectura de proyecto y
-  patrones de componentes hasta performance, seguridad y testing.
-  Stack principal: React 19+, Next.js 15+, Vite, TypeScript strict,
-  Tailwind CSS / Material UI, pnpm, Vitest/Jest/RTL.
+  Usa esta skill cuando trabajes en frontend. Orquesta 22 sub-skills
+  especializadas que cubren arquitectura, componentes, rendering, estilos,
+  data fetching, testing, performance y seguridad.
+  Stack: React 19+, Next.js 15+, TypeScript strict, Tailwind CSS, pnpm.
 ---
 
-# 🏗️ Frontend Skills — Índice Maestro
+# Frontend Skills — Índice Maestro
 
-## Stack Tecnológico
+## Flujo de trabajo del agente
+
+1. Identificar la acción (crear componente, formulario, hook, estilos, data fetching).
+2. Consultar el mapa de skills (sección 2) o la guía de activación por palabras clave (sección 3).
+3. Leer la sub-skill específica.
+4. Volver a este índice y consultar "Skills obligatorias por acción" (sección 4).
+5. Leer y aplicar cada skill obligatoria según el tipo de acción.
+6. Verificar cumplimiento de reglas universales de código (sección 5).
+7. No marcar tarea como completada hasta cumplir todas las skills obligatorias.
+
+## 1. Stack Tecnológico
 
 | Capa | Tecnologías |
 |------|-------------|
@@ -27,11 +36,9 @@ description: >
 | **i18n** | next-intl, react-i18next, ICU MessageFormat |
 | **Animaciones** | Framer Motion, View Transitions API |
 
----
+## 2. Mapa de Skills por Capa
 
-## Mapa de Skills por Capa
-
-### 🏛️ Arquitectura y Estructura
+### Arquitectura y Estructura
 
 | Skill | Descripción | Alcance |
 |-------|-------------|---------|
@@ -40,7 +47,7 @@ description: >
 | [design-system-build-components-rules](./design-system-build-components-rules/SKILL.md) | Atomic Design: átomos, moléculas, organismos, tokens, variants | Construcción de Design System |
 | [monorepo-and-tooling](./monorepo-and-tooling/SKILL.md) | Turborepo, pnpm workspaces, shared configs | Arquitectura multi-paquete |
 
-### ⚛️ React y Rendering
+### React y Rendering
 
 | Skill | Descripción | Alcance |
 |-------|-------------|---------|
@@ -50,7 +57,7 @@ description: >
 | [nextjs-best-practices](./nextjs-best-practices/SKILL.md) | App Router, Server Actions, middleware, caching | Next.js específico |
 | [routing-rules](./routing-rules/SKILL.md) | Layouts, guards, route groups, parallel/intercepting routes | Navegación y rutas |
 
-### 🎨 UI, Estilos y UX
+### UI, Estilos y UX
 
 | Skill | Descripción | Alcance |
 |-------|-------------|---------|
@@ -60,14 +67,14 @@ description: >
 | [i18n-rules](./i18n-rules/SKILL.md) | next-intl, formateo ICU, plurales, RTL, detección de locale | Internacionalización |
 | [seo-rules](./seo-rules/SKILL.md) | Metadata API, structured data, OG tags, sitemap, robots | SEO técnico |
 
-### 📡 Data y Formularios
+### Data y Formularios
 
 | Skill | Descripción | Alcance |
 |-------|-------------|---------|
 | [fetching-rules](./fetching-rules/SKILL.md) | TanStack Query, SWR, cache, optimistic updates, prefetch | Data fetching |
 | [forms-and-validation-rules](./forms-and-validation-rules/SKILL.md) | React Hook Form, Zod, multi-step, file upload, UX de validación | Formularios |
 
-### ✅ Calidad y Seguridad
+### Calidad y Seguridad
 
 | Skill | Descripción | Alcance |
 |-------|-------------|---------|
@@ -77,15 +84,13 @@ description: >
 | [security-rules](./security-rules/SKILL.md) | XSS, CSP, sanitización, auth tokens, CORS | Seguridad frontend |
 | [error-handling-rules](./error-handling-rules/SKILL.md) | Error boundaries, Sentry, fallback UI, retry, toast | Manejo de errores |
 
-### 📦 Infraestructura
+### Infraestructura
 
 | Skill | Descripción | Alcance |
 |-------|-------------|---------|
 | [package-management-rules](./package-management-rules/SKILL.md) | pnpm, lockfiles, versioning, auditoría, actualización | Gestión de dependencias |
 
----
-
-## Guía de Activación de Sub-Skills
+## 3. Guía de Activación por Palabras Clave
 
 ### Palabras Clave → Skill
 
@@ -123,67 +128,37 @@ description: >
 **Infraestructura:**
 - `pnpm`, `dependencia`, `lockfile`, `versión`, `audit`, `actualizar paquete` → `package-management-rules`
 
----
+## 4. Skills Obligatorias por Acción
 
-## Principios Transversales
+Al crear/modificar un **componente**:
+- `testing-rules` — tests Vitest + RTL (coverage ≥ 80%)
+- `a11y-rules` — WCAG 2.2 AA, roles, aria-labels, focus
+- `clean-code-principles` — JSDoc en props/interfaces, named exports
+- `i18n-rules` — strings no hardcodeadas (si el proyecto usa i18n)
+- `error-handling-rules` — error boundaries, fallback UI
 
-> **Estas reglas aplican SIEMPRE que se crea o modifica código frontend.**
-> Cada sub-skill individual debe consultar esta sección para saber qué
-> otras skills son obligatorias en paralelo.
+Al crear/modificar un **formulario** (todos los anteriores más):
+- `forms-and-validation-rules` — React Hook Form + Zod
+- `security-rules` — sanitización de inputs, XSS prevention
+- `a11y-rules` — labels asociados, mensajes de error accesibles
 
-### Skills Obligatorias por Acción
+Al crear/modificar un **hook o store**:
+- `testing-rules` — tests unitarios del hook/store
+- `state-management-rules` — selectores, evitar re-renders
 
-```
-AL CREAR/MODIFICAR UN COMPONENTE:
-  1. ☐ testing-rules        → Tests unitarios con Vitest + RTL (coverage ≥ 80%)
-  2. ☐ a11y-rules           → WCAG 2.2 AA, roles, aria-labels, focus management
-  3. ☐ clean-code-principles → JSDoc en props/interfaces, named exports, SRP
-  4. ☐ i18n-rules           → Strings de UI NO hardcodeadas (si el proyecto usa i18n)
-  5. ☐ error-handling-rules  → Error boundaries, fallback UI
+Al crear/modificar **estilos**:
+- `css-rules` — Tailwind, responsive, dark mode
+- `a11y-rules` — contraste, focus visible, reduced motion
 
-AL CREAR/MODIFICAR UN FORMULARIO:
-  1. ☐ Todos los anteriores +
-  2. ☐ forms-and-validation-rules → React Hook Form + Zod, UX de validación
-  3. ☐ security-rules             → Sanitización de inputs, XSS prevention
-  4. ☐ a11y-rules                 → Labels asociados, error messages accesibles
+Al crear/modificar **data fetching**:
+- `fetching-rules` — TanStack Query, cache, error states
+- `error-handling-rules` — loading/error/empty estados
+- `security-rules` — no exponer tokens, sanitizar respuestas
 
-AL CREAR/MODIFICAR UN HOOK O STORE:
-  1. ☐ testing-rules              → Tests unitarios del hook/store
-  2. ☐ clean-code-principles      → JSDoc, funciones puras, naming expresivo
-  3. ☐ state-management-rules     → Selectors, evitar re-renders
-
-AL CREAR/MODIFICAR ESTILOS:
-  1. ☐ css-rules                  → Tailwind, responsive, dark mode
-  2. ☐ a11y-rules                 → Contraste, focus visible, reduced motion
-
-AL CREAR/MODIFICAR DATA FETCHING:
-  1. ☐ fetching-rules             → TanStack Query, cache, error states
-  2. ☐ error-handling-rules       → Loading/error/empty estados
-  3. ☐ security-rules             → No exponer tokens, sanitizar respuestas
-```
-
-### Cadena de Consulta
-
-```
-Cuando una sub-skill se activa, el agente DEBE:
-
-  1. Leer la sub-skill solicitada (ej: component-patterns)
-  2. Volver a ESTE índice (frontend/SKILL.md)
-  3. Consultar "Skills Obligatorias por Acción" según lo que está haciendo
-  4. Leer y aplicar cada skill obligatoria marcada con ☐
-  5. Verificar que el código cumple TODAS antes de marcar como completado
-
-El agente NO marca una tarea como completada si falta alguna skill
-obligatoria de esta lista.
-```
-
-### Reglas Universales de Código
+## 5. Reglas Universales de Código
 
 ```typescript
-// Toda skill frontend DEBE cumplir estos principios:
-
-// 1. TypeScript strict — SIEMPRE
-// tsconfig.json
+// TypeScript strict siempre
 {
   "compilerOptions": {
     "strict": true,
@@ -192,7 +167,7 @@ obligatoria de esta lista.
   }
 }
 
-// 2. Exportar tipos junto al componente
+// Exportar tipos junto al componente
 export interface ButtonProps {
   variant: 'primary' | 'secondary' | 'ghost';
   size: 'sm' | 'md' | 'lg';
@@ -201,15 +176,8 @@ export interface ButtonProps {
   disabled?: boolean;
 }
 
-// 3. Componentes como funciones con nombre (no arrow exports anónimas)
+// Componentes como funciones con nombre
 export function Button({ variant, size, children, ...props }: ButtonProps) {
   return <button className={cn(variants[variant], sizes[size])} {...props}>{children}</button>;
 }
-
-// 4. NUNCA:
-// - any (usar unknown + type guards)
-// - index signatures sin validar
-// - useEffect para sincronizar estado derivado
-// - prop drilling > 2 niveles (usar composición o context)
-// - CSS inline para estilos dinámicos complejos (usar Tailwind + cn())
 ```

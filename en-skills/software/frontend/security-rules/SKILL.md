@@ -1,34 +1,32 @@
 ---
 name: security-rules
 description: >
-  Security rules for React/Next.js frontend applications. Covers XSS prevention,
-  Content Security Policy, input sanitization, CORS, secure token storage,
-  CSRF protection, and security headers.
+  Use this skill when implementing security in React/Next.js applications:
+  XSS prevention, Content Security Policy, input sanitization, CORS,
+  secure token storage, security headers, and env vars.
 ---
 
-# 🔒 Frontend Security — Rules
+# Frontend Security — Rules
 
-## Guiding Principle
+## Agent workflow
 
-> **Never trust user input.** Validate on server, sanitize on client.
-> Security headers are mandatory, not optional.
-
----
+1. Validate ALL user input with Zod on server. Client-side validation is UX only (section 5).
+2. Auth tokens in httpOnly cookies, never localStorage (section 4).
+3. CSP with nonce for inline scripts via middleware (section 2).
+4. Security headers in `next.config` (section 3).
+5. `dangerouslySetInnerHTML` only with DOMPurify. Validate `href` against `javascript:` (section 1).
+6. Explicit CORS with origin whitelist (section 6).
+7. Env vars validated with Zod at startup. Secrets never in `NEXT_PUBLIC_*` (section 7).
 
 ## 1. XSS Prevention
 
 ```tsx
-// ✅ React escapes HTML by default — this is SAFE
+// React escapes HTML by default — safe against XSS
 function UserGreeting({ name }: { name: string }) {
-  return <p>Hello, {name}</p>;  // XSS-safe: React escapes the content
+  return <p>Hello, {name}</p>;
 }
 
-// ❌ DANGER: dangerouslySetInnerHTML — NEVER with user input
-function UnsafeContent({ html }: { html: string }) {
-  return <div dangerouslySetInnerHTML={{ __html: html }} />;  // ❌ Direct XSS
-}
-
-// ✅ If you NEED to render HTML (markdown, CMS), sanitize:
+// If you NEED to render HTML (markdown, CMS), sanitize with DOMPurify:
 import DOMPurify from 'dompurify';
 
 function SafeContent({ html }: { html: string }) {
@@ -40,12 +38,12 @@ function SafeContent({ html }: { html: string }) {
   return <div dangerouslySetInnerHTML={{ __html: sanitized }} />;
 }
 
-// ✅ Links: validate href to prevent javascript: protocol
+// Validate href to prevent javascript: protocol
 function SafeLink({ href, children }: { href: string; children: ReactNode }) {
   const isValid = /^https?:\/\//.test(href) || href.startsWith('/');
 
   if (!isValid) {
-    return <span>{children}</span>; // Don't render as link
+    return <span>{children}</span>;
   }
 
   return (
@@ -56,12 +54,9 @@ function SafeLink({ href, children }: { href: string; children: ReactNode }) {
 }
 ```
 
----
-
 ## 2. Content Security Policy (CSP)
 
 ```typescript
-// middleware.ts — CSP with nonce for inline scripts
 import { NextRequest, NextResponse } from 'next/server';
 
 export function middleware(request: NextRequest) {
@@ -70,7 +65,7 @@ export function middleware(request: NextRequest) {
   const csp = [
     `default-src 'self'`,
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
-    `style-src 'self' 'unsafe-inline'`,  // Tailwind needs inline styles
+    `style-src 'self' 'unsafe-inline'`,
     `img-src 'self' blob: data: https:`,
     `font-src 'self'`,
     `connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL}`,
@@ -86,7 +81,7 @@ export function middleware(request: NextRequest) {
   return response;
 }
 
-// app/layout.tsx — Pass nonce to Scripts
+// Pass nonce to Scripts
 import { headers } from 'next/headers';
 import Script from 'next/script';
 
@@ -105,12 +100,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 }
 ```
 
----
-
 ## 3. Security Headers
 
 ```typescript
-// next.config.mjs
 const securityHeaders = [
   {
     key: 'X-DNS-Prefetch-Control',
@@ -150,13 +142,10 @@ export default {
 };
 ```
 
----
-
 ## 4. Secure Token Storage
 
 ```typescript
-// ✅ Auth tokens in httpOnly cookies (NOT localStorage)
-// Server Action or Route Handler for login:
+// Auth tokens in httpOnly cookies (NOT localStorage)
 import { cookies } from 'next/headers';
 
 export async function loginAction(formData: FormData) {
@@ -167,34 +156,23 @@ export async function loginAction(formData: FormData) {
 
   const cookieStore = await cookies();
   cookieStore.set('session', response.token, {
-    httpOnly: true,       // ❗ Not accessible from JS
-    secure: true,         // HTTPS only
-    sameSite: 'lax',      // CSRF protection
-    maxAge: 60 * 60 * 24, // 24 hours
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24,
     path: '/',
   });
 }
-
-// ❌ NEVER store tokens in:
-// - localStorage        → accessible from any JS (XSS → token theft)
-// - sessionStorage      → same problem
-// - cookies without httpOnly → accessible from document.cookie
-// - URL query params    → logged in history/server
-
-// ✅ Refresh token rotation
-// The backend issues a new refresh token on each use of the previous one.
-// If a refresh token is used twice → invalidate all user tokens.
 ```
 
----
+Never store tokens in localStorage, sessionStorage, cookies without httpOnly, or URL query params. Implement refresh token rotation: if a refresh token is used twice, invalidate all user tokens.
 
 ## 5. Input Validation
 
 ```typescript
-// ✅ Validate on BOTH sides with Zod (shared schema)
 import { z } from 'zod';
 
-// Shared schema (imported in client AND server)
+// Shared schema (client + server)
 export const commentSchema = z.object({
   content: z
     .string()
@@ -215,20 +193,16 @@ export async function createComment(_: unknown, formData: FormData) {
     return { errors: parsed.error.flatten().fieldErrors };
   }
 
-  // parsed.data is SAFE — inferred type + sanitized
+  // parsed.data is safe — inferred type + sanitized
   await db.comment.create({ data: parsed.data });
 }
 ```
 
----
-
 ## 6. CORS and API Routes
 
 ```typescript
-// app/api/[...]/route.ts — explicit CORS
 const ALLOWED_ORIGINS = [
   process.env.NEXT_PUBLIC_APP_URL!,
-  // add other allowed origins
 ];
 
 export async function OPTIONS(request: Request) {
@@ -250,13 +224,9 @@ export async function OPTIONS(request: Request) {
 }
 ```
 
----
-
 ## 7. Environment Variables
 
 ```typescript
-// ✅ Validate env vars at app startup
-// env.ts
 import { z } from 'zod';
 
 const envSchema = z.object({
@@ -266,27 +236,17 @@ const envSchema = z.object({
 });
 
 export const env = envSchema.parse(process.env);
-
-// ✅ Env var rules:
-// - NEXT_PUBLIC_* → visible on client (NEVER put secrets here)
-// - Without prefix → server only (safe)
-// - Validate with Zod at startup (fail fast)
-// - .env.local in .gitignore
-// - .env.example with placeholder values committed
 ```
 
----
+Rules: `NEXT_PUBLIC_*` is visible on client (never secrets), without prefix is server only. Validate with Zod at startup (fail fast). `.env.local` in `.gitignore`, `.env.example` committed.
 
-## Anti-patterns
+## Gotchas
 
-```typescript
-// ❌ dangerouslySetInnerHTML with unsanitized user input
-// ❌ Tokens in localStorage/sessionStorage
-// ❌ eval(), new Function(), innerHTML with dynamic data
-// ❌ CORS: Access-Control-Allow-Origin: '*' in production
-// ❌ API keys/secrets in NEXT_PUBLIC_* vars
-// ❌ Trusting only client-side validation
-// ❌ Links without rel="noopener noreferrer" for target="_blank"
-// ❌ Disabling CSP "because it causes problems" (fix the policy)
-// ❌ console.log of sensitive data
-```
+- `dangerouslySetInnerHTML` with user input without DOMPurify = direct XSS.
+- `eval()`, `new Function()`, `innerHTML` with dynamic data = attack vector.
+- `Access-Control-Allow-Origin: '*'` in production exposes the API to any origin.
+- API keys/secrets in `NEXT_PUBLIC_*` are exposed in the client bundle.
+- Trusting only client-side validation — the server MUST always re-validate.
+- Links with `target="_blank"` without `rel="noopener noreferrer"`.
+- Disabling CSP "because it causes problems" — fix the policy.
+- `console.log` of sensitive data in production.

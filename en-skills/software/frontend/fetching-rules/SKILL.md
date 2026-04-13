@@ -1,19 +1,22 @@
 ---
 name: fetching-rules
 description: >
-  Data fetching rules for React/Next.js applications. Covers TanStack Query v5,
-  SWR, Server Components fetch, cache invalidation, optimistic updates,
-  prefetching, infinite scroll, and error/loading patterns.
+  Use this skill when implementing data fetching in React/Next.js:
+  TanStack Query v5, Server Components fetch, cache invalidation,
+  optimistic updates, prefetching, infinite scroll, and
+  loading/error patterns.
 ---
 
-# 📡 Data Fetching — Rules
+# Data Fetching
 
-## Guiding Principle
+## Agent workflow
 
-> **Server Components for the initial load, TanStack Query for interactivity.**
-> Never duplicate server data in a global store.
-
----
+1. Consult decision tree to choose fetching strategy.
+2. Server Component fetch for initial render/SEO (section 1).
+3. TanStack Query for interactive data: query keys with factory, mutations with optimistic update (section 2).
+4. useInfiniteQuery + IntersectionObserver for infinite scroll (section 3).
+5. Prefetch on hover or HydrationBoundary to anticipate navigation (section 4).
+6. Consistent pattern: isLoading → skeleton, isError → error state, empty → empty state (section 5).
 
 ## Decision Tree
 
@@ -31,15 +34,10 @@ Is it real-time (chat, notifications)?
 ├── YES → WebSocket/SSE + query invalidation
 ```
 
----
-
 ## 1. Server Component Fetch (Next.js)
 
 ```tsx
-// ✅ Direct fetch in Server Components — no useEffect, no useState
-// app/products/page.tsx
 async function ProductsPage() {
-  // Parallel fetch — no waterfall
   const [products, categories] = await Promise.all([
     db.product.findMany({ orderBy: { createdAt: 'desc' }, take: 20 }),
     db.category.findMany(),
@@ -53,25 +51,20 @@ async function ProductsPage() {
   );
 }
 
-// ✅ Fetch with cache tags for granular invalidation
 async function getProduct(id: string) {
   return fetch(`${env.API_URL}/products/${id}`, {
     next: { tags: [`product-${id}`, 'products'] },
   }).then((r) => r.json());
 }
 
-// Invalidate in Server Action:
 // revalidateTag(`product-${id}`);
 ```
-
----
 
 ## 2. TanStack Query — Client-Side Fetching
 
 ### Setup
 
 ```tsx
-// shared/providers/QueryProvider.tsx
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -84,10 +77,10 @@ export function QueryProvider({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000,        // 1 min before refetch
-            gcTime: 5 * 60 * 1000,       // 5 min in cache
-            retry: 1,                     // 1 retry on error
-            refetchOnWindowFocus: false,  // No refetch on tab focus
+            staleTime: 60 * 1000,
+            gcTime: 5 * 60 * 1000,
+            retry: 1,
+            refetchOnWindowFocus: false,
           },
         },
       }),
@@ -105,8 +98,6 @@ export function QueryProvider({ children }: { children: ReactNode }) {
 ### Queries
 
 ```tsx
-// ✅ Query with factory pattern (organized keys)
-// features/products/queries/productQueries.ts
 export const productKeys = {
   all: ['products'] as const,
   lists: () => [...productKeys.all, 'list'] as const,
@@ -119,7 +110,7 @@ export function useProducts(filters: ProductFilters) {
   return useQuery({
     queryKey: productKeys.list(filters),
     queryFn: () => fetchProducts(filters),
-    placeholderData: keepPreviousData, // No flash when changing filters
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -127,7 +118,7 @@ export function useProduct(id: string) {
   return useQuery({
     queryKey: productKeys.detail(id),
     queryFn: () => fetchProduct(id),
-    enabled: !!id, // Only fetch if there's an id
+    enabled: !!id,
   });
 }
 ```
@@ -135,7 +126,6 @@ export function useProduct(id: string) {
 ### Mutations with Optimistic Updates
 
 ```tsx
-// ✅ Mutation with optimistic update
 export function useToggleFavorite() {
   const queryClient = useQueryClient();
 
@@ -143,7 +133,6 @@ export function useToggleFavorite() {
     mutationFn: (productId: string) =>
       fetch(`/api/favorites/${productId}`, { method: 'POST' }),
 
-    // Optimistic: update UI immediately
     onMutate: async (productId) => {
       await queryClient.cancelQueries({ queryKey: productKeys.lists() });
 
@@ -155,17 +144,15 @@ export function useToggleFavorite() {
         ),
       );
 
-      return { previousProducts }; // Context for rollback
+      return { previousProducts };
     },
 
-    // Rollback on failure
     onError: (_err, _productId, context) => {
       if (context?.previousProducts) {
         queryClient.setQueryData(productKeys.lists(), context.previousProducts);
       }
     },
 
-    // Always refetch to sync
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
     },
@@ -173,12 +160,9 @@ export function useToggleFavorite() {
 }
 ```
 
----
-
 ## 3. Infinite Scroll
 
 ```tsx
-// ✅ Infinite query with Intersection Observer
 export function useInfiniteProducts(filters: ProductFilters) {
   return useInfiniteQuery({
     queryKey: [...productKeys.list(filters), 'infinite'],
@@ -189,7 +173,6 @@ export function useInfiniteProducts(filters: ProductFilters) {
   });
 }
 
-// Hook for automatic trigger
 function useIntersectionObserver(
   onIntersect: () => void,
   enabled: boolean,
@@ -201,7 +184,7 @@ function useIntersectionObserver(
 
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry?.isIntersecting) onIntersect(); },
-      { rootMargin: '200px' }, // Pre-fetch 200px before reaching
+      { rootMargin: '200px' },
     );
 
     observer.observe(ref.current);
@@ -234,12 +217,9 @@ function InfiniteProductList() {
 }
 ```
 
----
-
 ## 4. Prefetching
 
 ```tsx
-// ✅ Prefetch on hover (anticipates navigation)
 function ProductCard({ product }: { product: Product }) {
   const queryClient = useQueryClient();
 
@@ -247,7 +227,7 @@ function ProductCard({ product }: { product: Product }) {
     queryClient.prefetchQuery({
       queryKey: productKeys.detail(product.id),
       queryFn: () => fetchProduct(product.id),
-      staleTime: 5 * 60 * 1000, // No re-fetch if < 5 min
+      staleTime: 5 * 60 * 1000,
     });
   }
 
@@ -258,8 +238,6 @@ function ProductCard({ product }: { product: Product }) {
   );
 }
 
-// ✅ Prefetch in Server Component (hydration)
-// app/products/page.tsx
 import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
 
 export default async function ProductsPage() {
@@ -272,18 +250,15 @@ export default async function ProductsPage() {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ProductList />  {/* Client Component uses useProducts() — already has data */}
+      <ProductList />
     </HydrationBoundary>
   );
 }
 ```
 
----
-
 ## 5. Loading and Error Patterns
 
 ```tsx
-// ✅ Consistent pattern for queries
 function ProductList() {
   const { data, isLoading, isError, error } = useProducts(filters);
 
@@ -293,36 +268,12 @@ function ProductList() {
 
   return <ProductGrid products={data} />;
 }
-
-// ❌ NEVER: manual loading boolean + useEffect fetch
-// ❌ NEVER: API data in useState/Zustand
 ```
 
----
+## Gotchas
 
-## Anti-patterns
-
-```tsx
-// ❌ Fetch in useEffect without cleanup
-useEffect(() => {
-  fetch('/api/products').then(r => r.json()).then(setData);
-}, []); // ❌ No AbortController, no loading, no error
-
-// ❌ Storing API response in Zustand/Redux
-const useStore = create((set) => ({
-  products: [],
-  fetchProducts: async () => { // ❌ Duplicating TanStack Query cache
-    const data = await fetch('/api/products').then(r => r.json());
-    set({ products: data });
-  },
-}));
-
-// ❌ Query keys as magic strings
-useQuery({ queryKey: ['products', 'list', filters] });  // ❌ Prone to typos
-useQuery({ queryKey: productKeys.list(filters) });       // ✅ Factory
-
-// ❌ Waterfall of fetches in Server Components
-const user = await getUser();           // 500ms
-const products = await getProducts();    // 800ms — waits for user unnecessarily
-// ✅ Promise.all([getUser(), getProducts()])  — parallel: 800ms total
-```
+- `fetch` in `useEffect` without AbortController or loading/error states produces race conditions and memory leaks — use TanStack Query.
+- Storing API response in Zustand/Redux duplicates TanStack Query's cache — let TQ be the single source of truth for server data.
+- Query keys as magic strings (`['products', 'list']`) are prone to typos — use factory pattern (`productKeys.list(filters)`).
+- Sequential fetches in Server Components (`await A; await B;`) create waterfalls — use `Promise.all` to parallelize.
+- Manual loading boolean + `useState` for API data is a poor reimplementation of TanStack Query — use `isLoading`/`isError` from the hook.

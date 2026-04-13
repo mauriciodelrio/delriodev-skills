@@ -1,52 +1,43 @@
 ---
 name: package-management-rules
 description: >
-  Reglas para gestión de paquetes con pnpm. Cubre instalación y actualización
-  de dependencias, lockfile management, auditoría de seguridad, estrategia
-  de versionado, overrides/patches, y limpieza de dependencias.
+  Usa esta skill cuando gestiones dependencias con pnpm: instalación,
+  actualización, lockfile, auditoría de seguridad, versionado,
+  overrides/patches, y limpieza de dependencias.
 ---
 
-# 📦 Gestión de Paquetes (pnpm)
+# Gestión de Paquetes (pnpm)
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **pnpm por defecto.** Lockfile siempre en Git. Auditar antes de deploy.
-> Cada dependencia agregada debe justificarse.
-
----
+1. Evaluar si la dependencia es necesaria (checklist sección 5) antes de agregarla.
+2. Usar rangos según criticidad: pin exacto para React/Next/TS, caret para utilidades (sección 3).
+3. Mantener `.npmrc` configurado y `packageManager` declarado en `package.json` (sección 2).
+4. Siempre `--frozen-lockfile` en CI, `pnpm audit` antes de deploy (sección 7).
+5. Overrides para vulnerabilidades en sub-dependencias, patches para bugs upstream (sección 4).
 
 ## 1. Comandos Esenciales
 
 ```bash
-# Instalar dependencias (respeta lockfile)
 pnpm install --frozen-lockfile   # CI — falla si lockfile no coincide
 
-# Agregar dependencia
 pnpm add react-hook-form         # dependencies
 pnpm add -D vitest               # devDependencies
 pnpm add -D -w eslint            # workspace root (monorepo)
 
-# Actualizar
 pnpm update                      # Según rango del package.json
 pnpm update --latest             # Última versión (ignora rango)
-pnpm update react --latest       # Solo react
+pnpm update react --latest
 
-# Eliminar
 pnpm remove lodash
+pnpm outdated
 
-# Ver outdated
-pnpm outdated                    # Lista deps con versiones nuevas
+pnpm audit
+pnpm audit --fix
 
-# Auditar seguridad
-pnpm audit                       # Vulnerabilidades conocidas
-pnpm audit --fix                 # Auto-fix cuando es posible
-
-# Limpiar
-pnpm store prune                 # Limpiar store global de pnpm
-pnpm dedupe                      # Reducir duplicados en lockfile
+pnpm store prune
+pnpm dedupe
 ```
-
----
 
 ## 2. Configuración de pnpm
 
@@ -63,7 +54,6 @@ prefer-frozen-lockfile=true
 ```
 
 ```json
-// package.json — Motor requerido
 {
   "packageManager": "pnpm@9.15.0",
   "engines": {
@@ -72,13 +62,6 @@ prefer-frozen-lockfile=true
   }
 }
 ```
-
-```javascript
-// .nvmrc o .node-version
-// 20.18.0
-```
-
----
 
 ## 3. Estrategia de Versionado
 
@@ -98,12 +81,9 @@ DevDependencies (ESLint, Prettier, Vitest):
 Regla: Si un update rompe algo, NUNCA ignorar — investigar y fixear.
 ```
 
----
-
 ## 4. Overrides y Patches
 
 ```json
-// package.json — Forzar versiones de sub-dependencias
 {
   "pnpm": {
     "overrides": {
@@ -118,14 +98,9 @@ Regla: Si un update rompe algo, NUNCA ignorar — investigar y fixear.
 ```
 
 ```bash
-# Crear patch para un paquete
 pnpm patch buggy-lib@1.2.3
-# Editar archivos en la carpeta temporal...
 pnpm patch-commit <carpeta-temporal>
-# Genera patches/buggy-lib@1.2.3.patch automáticamente
 ```
-
----
 
 ## 5. Evaluación de Dependencias (Antes de Instalar)
 
@@ -138,13 +113,6 @@ Antes de `pnpm add <paquete>`:
 5. **Tree-shakeable** — ¿Exporta ESM? ¿Soporta named imports?
 6. **Tipos** — ¿Incluye TypeScript types o existe `@types/*`?
 7. **Licencia** — ¿Compatible con el proyecto? (MIT, Apache 2.0 → OK)
-
-```bash
-# Verificar tamaño de bundle antes de instalar
-npx import-cost   # VS Code extension alternativa
-```
-
----
 
 ## 6. Scripts de package.json
 
@@ -169,12 +137,9 @@ npx import-cost   # VS Code extension alternativa
 }
 ```
 
----
-
 ## 7. CI — Pipeline de Dependencias
 
 ```yaml
-# .github/workflows/ci.yml (fragmento)
 - name: Install pnpm
   uses: pnpm/action-setup@v4
 
@@ -194,17 +159,11 @@ npx import-cost   # VS Code extension alternativa
   run: pnpm test:ci
 ```
 
----
+## Gotchas
 
-## Anti-patrones
-
-```bash
-# ❌ npm install en proyecto pnpm (genera package-lock.json conflictivo)
-# ❌ No commitear pnpm-lock.yaml
-# ❌ pnpm install sin --frozen-lockfile en CI
-# ❌ Agregar dependencias sin evaluar tamaño/mantenimiento
-# ❌ Dependencias de runtime en devDependencies (o viceversa)
-# ❌ Ignorar pnpm audit warnings en producción
-# ❌ node_modules en el repo (agregar a .gitignore)
-# ❌ Versiones flotantes sin caret/tilde: "*" o "latest"
-```
+- `npm install` en proyecto pnpm genera `package-lock.json` conflictivo — usar siempre `pnpm install`.
+- No commitear `pnpm-lock.yaml` causa builds no reproducibles.
+- `pnpm install` sin `--frozen-lockfile` en CI puede instalar versiones distintas a las testeadas.
+- Dependencias de runtime en `devDependencies` (o viceversa) rompe builds de producción.
+- Ignorar `pnpm audit` warnings en producción expone vulnerabilidades conocidas.
+- Versiones flotantes (`"*"` o `"latest"`) causan builds impredecibles.

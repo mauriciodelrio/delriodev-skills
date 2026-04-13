@@ -1,21 +1,25 @@
 ---
 name: state-management-rules
 description: >
-  State management rules for React applications. Covers tool selection
+  Use this skill when managing state in React: tool selection
   (useState, useReducer, Context, Zustand, Jotai, Signals), store patterns,
-  derived state, server vs client state, and common anti-patterns.
+  derived state, server vs client state, and common gotchas.
 ---
 
-# 🗃️ State Management
+# State Management
 
-## Guiding Principle
+## Agent workflow
 
-> **The best state is the state that doesn't exist.** Derive everything you can from the render.
-> Only persist in state what cannot be calculated.
+1. Consult the decision tree to choose a tool based on scope and change frequency.
+2. Simple local state → `useState` / `useReducer` (section 1-2).
+3. Global UI state → Zustand with selectors (section 3). Split into slices as it grows.
+4. Atomic/composable state → Jotai (section 4). Granular reactive → Signals (section 5).
+5. Infrequent state (theme, locale) → Context (section 6).
+6. Server state → TanStack Query (see `fetching-rules`), never in a global store.
+7. Derive everything calculable. Only persist what cannot be derived (section 7).
+8. Consult comparison table (section 8) when in doubt.
 
----
-
-## Decision Tree — Which Tool to Use?
+## Decision Tree
 
 ```
 Is the state for a single component?
@@ -28,7 +32,7 @@ Is it global UI state (theme, sidebar, modal)?
 ├── YES → Zustand (lightweight) or Context (if it changes infrequently)
 │
 Is it server state (API data)?
-├── YES → TanStack Query / SWR (NEVER in a global store)
+├── YES → TanStack Query / SWR (not in a global store)
 │
 Is it atomic reactive state (complex forms, real-time)?
 ├── YES → Jotai (atoms) or Signals (@preact/signals-react)
@@ -37,35 +41,25 @@ Is it complex state with many transitions?
 ├── YES → useReducer or Zustand with slices
 ```
 
----
-
 ## 1. useState — Simple Local State
 
 ```tsx
-// ✅ A single value, simple transitions
 const [isOpen, setIsOpen] = useState(false);
 const [query, setQuery] = useState('');
 
-// ✅ Lazy initialization (when the initial computation is expensive)
+// Lazy initialization (expensive initial computation)
 const [data, setData] = useState(() => parseExpensiveData(raw));
 
-// ✅ Functional update to avoid stale closures
+// Functional update to avoid stale closures
 setCount((prev) => prev + 1);
 
-// ❌ NEVER multiple related useState
-const [firstName, setFirstName] = useState('');
-const [lastName, setLastName] = useState('');
-const [email, setEmail] = useState('');
-// ✅ Use an object or useReducer
+// Group related values in an object or useReducer
 const [form, setForm] = useState({ firstName: '', lastName: '', email: '' });
 ```
-
----
 
 ## 2. useReducer — Complex Transitions
 
 ```tsx
-// ✅ When there are multiple actions modifying the same state
 interface TodoState {
   items: Todo[];
   filter: 'all' | 'active' | 'completed';
@@ -103,17 +97,13 @@ function todoReducer(state: TodoState, action: TodoAction): TodoState {
   }
 }
 
-// Usage in component
 const [state, dispatch] = useReducer(todoReducer, { items: [], filter: 'all' });
 dispatch({ type: 'ADD', payload: { text: 'New todo' } });
 ```
 
----
-
 ## 3. Zustand — Lightweight Global State
 
 ```tsx
-// ✅ Zustand Store — simple, no boilerplate
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 
@@ -133,31 +123,25 @@ export const useUIStore = create<UIStore>()(
         toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
         setTheme: (theme) => set({ theme }),
       }),
-      { name: 'ui-store' }, // localStorage key
+      { name: 'ui-store' },
     ),
-    { name: 'UIStore' }, // DevTools name
+    { name: 'UIStore' },
   ),
 );
 
-// ✅ ALWAYS use selectors — avoid unnecessary re-renders
+// ALWAYS use selectors — avoid unnecessary re-renders
 function Sidebar() {
-  // ✅ Only re-renders when sidebarOpen changes
   const isOpen = useUIStore((s) => s.sidebarOpen);
   const toggle = useUIStore((s) => s.toggleSidebar);
-
   return isOpen ? <nav>...</nav> : null;
 }
-
-// ❌ NEVER destructure the entire store
-function BadComponent() {
-  const { sidebarOpen, theme, toggleSidebar } = useUIStore(); // ❌ Re-renders on ANY change
-}
 ```
+
+**Gotcha:** Do not destructure the entire store (`const { ... } = useUIStore()`). It causes re-renders on any change.
 
 ### Zustand with Slices (large stores)
 
 ```tsx
-// ✅ Split large stores into slices
 interface AuthSlice {
   user: User | null;
   setUser: (user: User | null) => void;
@@ -186,22 +170,19 @@ export const useAppStore = create<AuthSlice & NotificationSlice>()((...a) => ({
 }));
 ```
 
----
-
 ## 4. Jotai — Atomic State
 
 ```tsx
-// ✅ Independent atoms that compose together
 import { atom, useAtom, useAtomValue } from 'jotai';
 
 // Base atoms
 const countAtom = atom(0);
 const multiplierAtom = atom(2);
 
-// Derived atom (read-only, automatically recalculated)
+// Derived (read-only, automatically recalculated)
 const multipliedAtom = atom((get) => get(countAtom) * get(multiplierAtom));
 
-// Async atom (fetch)
+// Async
 const userAtom = atom(async () => {
   const res = await fetch('/api/user');
   return res.json() as Promise<User>;
@@ -210,7 +191,7 @@ const userAtom = atom(async () => {
 // Usage
 function Counter() {
   const [count, setCount] = useAtom(countAtom);
-  const multiplied = useAtomValue(multipliedAtom); // Read-only
+  const multiplied = useAtomValue(multipliedAtom);
 
   return (
     <div>
@@ -221,43 +202,31 @@ function Counter() {
 }
 ```
 
----
-
 ## 5. Signals — Granular Reactive State
 
 ```tsx
-// ✅ Signals with @preact/signals-react
 import { signal, computed, effect } from '@preact/signals-react';
 
-// Global signals — reactive without re-rendering the entire component
 const count = signal(0);
 const doubled = computed(() => count.value * 2);
 
-// The component does NOT re-render when count changes,
-// only the text where .value is used updates
 function Counter() {
   return (
     <div>
-      <p>Count: {count}</p>          {/* Auto-subscribe */}
+      <p>Count: {count}</p>
       <p>Doubled: {doubled}</p>
       <button onClick={() => count.value++}>+1</button>
     </div>
   );
 }
-
-// ✅ When to use Signals:
-// - Complex forms with many fields
-// - Real-time dashboards with frequent updates
-// - When you need granular updates without memo/selector
 ```
 
----
+Ideal for complex forms, real-time dashboards, and granular updates without memo/selector.
 
 ## 6. Context — Only for State That Changes Infrequently
 
 ```tsx
-// ✅ Context for values that change INFREQUENTLY
-// Themes, locale, feature flags, current user
+// Context for values that change infrequently: theme, locale, feature flags
 
 interface AppContextValue {
   locale: string;
@@ -271,39 +240,31 @@ export function useAppContext() {
   if (!ctx) throw new Error('useAppContext must be used within AppProvider');
   return ctx;
 }
-
-// ❌ NEVER put frequently changing state in Context
-// Every change re-renders ALL consumers
-// For frequent state → Zustand, Jotai, or Signals
 ```
 
----
+**Gotcha:** Do not put frequently changing state in Context — every change re-renders all consumers. For frequent state use Zustand, Jotai, or Signals.
 
-## Derived State — The Golden Rule
+## 7. Derived State — The Golden Rule
+
+If you can calculate it, don’t store it in state.
 
 ```tsx
-// ✅ If you can calculate it, DON'T store it in state
 function ProductList({ products, searchQuery }: Props) {
-  // ✅ Derived — recalculated on every render (cheap)
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // ✅ Expensive derived — useMemo
+  // Expensive derived → useMemo
   const sortedProducts = useMemo(
     () => [...filteredProducts].sort((a, b) => a.price - b.price),
     [filteredProducts],
   );
-
-  // ❌ NEVER:
-  // const [filteredProducts, setFiltered] = useState(products);
-  // useEffect(() => setFiltered(products.filter(...)), [products, query]);
 }
 ```
 
----
+**Gotcha:** Do not sync derived state with `useState` + `useEffect`. Calculate directly in render.
 
-## Comparison Table
+## 8. Comparison Table
 
 | Tool | Scope | Re-renders | Boilerplate | When |
 |------|-------|------------|-------------|------|
@@ -315,14 +276,9 @@ function ProductList({ products, searchQuery }: Props) {
 | `Signals` | Global (granular) | Only DOM nodes | Minimal | Frequent updates |
 | `TanStack Query` | Server | Per query key | Medium | API data |
 
----
-
 ## Related Skills
 
-> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
+Consult [`frontend/SKILL.md`](../SKILL.md) for the full chain.
 
-| Skill | Why |
-|-------|-----|
-| `testing-rules` | Unit tests for stores, selectors, state hooks |
-| `clean-code-principles` | Atomic selectors, named exports, JSDoc |
-| `fetching-rules` | TanStack Query for server state |
+- `testing-rules` — tests for stores and selectors
+- `fetching-rules` — TanStack Query for server state
