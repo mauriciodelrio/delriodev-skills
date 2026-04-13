@@ -1,23 +1,22 @@
 ---
 name: project-structure
 description: >
-  Folder and module organization for Node.js backend. Covers NestJS structure
-  (modules, providers, controllers), Express (layers, routers), and shared
-  patterns (feature-based, dependency injection, barrel exports).
-  The agent adapts the structure based on the project's framework.
+  Use this skill when creating a new Node.js backend project or reorganizing
+  folders and modules. Applies NestJS structure (modules, providers,
+  controllers) or Express (layers, routers) based on the framework.
+  Includes feature-based organization, dependency injection, and barrel exports.
 ---
 
-# 📂 Project Structure — Backend Organization
+# Project Structure — Backend Organization
 
-## Principle
+## Agent workflow
 
-> **The structure should communicate the project's intent.**
-> Someone opening the repository for the first time should understand
-> what each folder does without reading code.
+**1.** Detect the project framework (NestJS or Express) by checking `package.json`.
+**2.** Apply the corresponding folder structure from sections 1 or 2.
+**3.** Verify the code follows the rules in section 3.
+**4.** Ensure configuration is typed and validated at startup (section 4).
 
----
-
-## NestJS — Recommended Structure
+## 1. NestJS — Recommended Structure
 
 ```
 src/
@@ -107,7 +106,7 @@ test/
     └── user.fixture.ts
 ```
 
-## Express — Recommended Structure
+## 2. Express — Recommended Structure
 
 ```
 src/
@@ -173,44 +172,21 @@ src/
     └── logger.ts
 ```
 
----
+## 3. Structure Rules
 
-## Structure Rules
+**Feature-based, not layer-based.** Group `modules/users/` with controller + service + dto together, don't separate by layer (`controllers/users.ts` + `services/users.ts`). Exception: Express can use layers if the project is small (< 5 features).
 
-```
-1. FEATURE-BASED, NOT LAYER-BASED
-   ✅ modules/users/ (controller + service + dto together)
-   ❌ controllers/users.ts + services/users.ts + dto/users.ts
-   → Exception: Express can use layers if the project is small (< 5 features)
+**One module per feature (NestJS).** Each feature has its own module with controller, service, DTOs. The module declares imports and exports explicitly.
 
-2. ONE MODULE PER FEATURE (NestJS)
-   Each feature has its own module with controller, service, DTOs.
-   The module declares imports and exports explicitly.
+**Separate concerns into layers.** Controller receives request, delegates to service, returns response. Service contains business logic, does not know about HTTP. Repository handles data access (optional, the service can use ORM directly).
 
-3. SEPARATE CONCERNS INTO LAYERS
-   Controller → receives request, delegates to service, returns response
-   Service → business logic, does not know about HTTP
-   Repository → data access, queries (optional, the service can use ORM directly)
+**common/ only for shared.** If something is used in 1 module, it goes in that module. If used in 2+, it goes in common/. Don't put everything in common "just in case".
 
-4. COMMON/ ONLY FOR SHARED
-   If something is used in 1 module → it goes in that module.
-   If it's used in 2+ modules → it goes in common/.
-   Don't put everything in common "just in case".
+**No massive barrel exports.** Use direct import: `import { UsersService } from './users.service'`. Exception: `common/decorators/index.ts` and `common/guards/index.ts` are acceptable.
 
-5. NO MASSIVE BARREL EXPORTS
-   ✅ Direct import: import { UsersService } from './users.service'
-   ❌ Giant barrel: import { UsersService, OrdersService, ... } from './services'
-   Exception: common/decorators/index.ts and common/guards/index.ts are ok.
+**Config separate from code.** Environment variables in config module/folder. Never `process.env` directly in services. Always typed and validated at startup.
 
-6. CONFIG SEPARATE FROM CODE
-   Environment variables → config module/folder.
-   Never use process.env directly in services.
-   Always typed and validated at startup.
-```
-
----
-
-## Typed Config
+## 4. Typed Config
 
 ```typescript
 // NestJS — config module with validation
@@ -238,16 +214,12 @@ export function validateEnv() {
 }
 ```
 
----
+## 5. Gotchas
 
-## Anti-patterns
-
-```
-❌ Empty folders "for structure" → create when there's content
-❌ God service (a service with 50+ methods) → split by domain
-❌ Controller with business logic → move to service
-❌ Service with HTTP logic (req, res) → that belongs in the controller
-❌ process.env directly in code → use config module with validation
-❌ Circular dependencies between modules → refactor shared logic to common
-❌ A single file per layer (routes.ts with 500 lines) → split by feature
-```
+- Empty folders "for structure" — create them when there's real content, not before.
+- God service (50+ methods) — split by domain; each service covers one feature.
+- Controller with business logic — logic belongs in the service, controller only orchestrates.
+- Service with HTTP logic (req, res) — that belongs in the controller.
+- `process.env` directly in code — always use config module with validation.
+- Circular dependencies between modules — extract shared logic to common/.
+- A single file per layer (routes.ts with 500 lines) — split by feature.
