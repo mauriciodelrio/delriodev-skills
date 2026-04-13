@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.1](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.4.0...v0.4.1) (2026-04-13)
+
+In version 0.4.1 of "delriodev-skills," we've enhanced the testing skill by clarifying the coverage configuration process and introducing new steps to improve user understanding. Additionally, we've strengthened the cross-references between testing, data validation, and security in the backend skills, addressing gaps identified during real project implementation. These updates aim to ensure better quality control and security practices in your development workflow.
+
+### Pull Requests
+
+- [#11](https://github.com/mauriciodelrio/delriodev-skills/pull/11) fix(backend): improve cross-references between testing, data-validation, and orchestrator
+- [#12](https://github.com/mauriciodelrio/delriodev-skills/pull/12) fix(testing): clarify coverage config step and required devDependency
+
 ## [0.4.0](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.3.2...v0.4.0) (2026-04-13)
 
 In version 0.4.0 of "delriodev-skills," all backend, architecture, frontend, software, and GRC skills have been optimized for improved agent consumption, adhering to agentskills.io best practices. This release features imperative frontmatter descriptions, streamlined agent workflow sections with step-by-step instructions, and the removal of decorative elements for clarity. Additionally, a new root orchestrator has been introduced for the software domain, enhancing the overall functionality and usability of the CLI.
