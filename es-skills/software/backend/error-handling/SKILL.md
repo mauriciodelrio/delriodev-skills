@@ -1,51 +1,31 @@
 ---
 name: error-handling
 description: >
-  Manejo de errores en backend Node.js. Cubre error classes custom,
-  exception filters NestJS, error handler express, diferencia entre
-  errores operacionales y de programación, graceful shutdown,
-  y formato consistente de error responses.
+  Usa esta skill cuando implementes manejo de errores en un backend
+  Node.js. Cubre error classes custom, exception filters NestJS, error
+  handler Express, errores operacionales vs programación, graceful
+  shutdown y formato consistente de error responses.
 ---
 
-# 💥 Error Handling — Manejo de Errores
+# Error Handling — Manejo de Errores
 
-## Principio
+## Flujo de trabajo del agente
 
-> **Los errores son ciudadanos de primera clase.**
-> Un error bien manejado es invisible para el usuario y visible para el dev.
-> Un error mal manejado es visible para el usuario e invisible para el dev.
+**1.** Crear error classes custom extendiendo `AppError` (sección 2).
+**2.** Implementar global error handler / exception filter (secciones 3–4).
+**3.** Configurar unhandled rejections y graceful shutdown (secciones 5–6).
+**4.** Wrappear errores de servicios externos (sección 7).
+**5.** Verificar contra la lista de gotchas (sección 8).
 
----
+## 1. Tipos de Errores
 
-## Tipos de Errores
+**Operacionales (esperados, recuperables):**
+Input inválido (400), no autenticado (401), sin permisos (403), recurso no encontrado (404), conflicto/duplicado (409), rate limit (429), servicio externo caído (502/503). Se manejan con catch, handler, retry o fallback. Se comunican al cliente con código y mensaje descriptivo.
 
-```
-OPERACIONALES (esperados, recuperables):
-  - Input inválido → 400
-  - No autenticado → 401
-  - Sin permisos → 403
-  - Recurso no encontrado → 404
-  - Conflicto (duplicate) → 409
-  - Rate limit → 429
-  - Servicio externo caído → 502/503
-  
-  → SE MANEJAN: catch, handler, retry, fallback
-  → SE COMUNICAN al cliente con código y mensaje descriptivo
+**Programación (bugs, no deberían pasar):**
+TypeError, ReferenceError, null pointer access, missing env variable en runtime. Se loguean como critical/error. Se comunican al cliente como 500 genérico (**nunca** exponer detalle). Se arreglan en código.
 
-PROGRAMACIÓN (bugs, no deberían pasar):
-  - TypeError, ReferenceError
-  - Null pointer access
-  - Array index out of bounds
-  - Missing env variable en runtime
-  
-  → SE LOGUEAN como critical/error
-  → SE COMUNICAN al cliente como 500 genérico (NUNCA exponer detalle)
-  → SE ARREGLAN en código
-```
-
----
-
-## Error Classes Custom
+## 2. Error Classes Custom
 
 ```typescript
 // Base error class
@@ -99,9 +79,7 @@ export class ForbiddenError extends AppError {
 }
 ```
 
----
-
-## Express — Global Error Handler
+## 3. Express — Global Error Handler
 
 ```typescript
 // DEBE ser el ÚLTIMO middleware registrado
@@ -163,9 +141,7 @@ function errorHandler(err: Error, req: Request, res: Response, next: NextFunctio
 app.use(errorHandler);
 ```
 
----
-
-## NestJS — Exception Filter Global
+## 4. NestJS — Exception Filter Global
 
 ```typescript
 @Catch()
@@ -251,9 +227,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 }
 ```
 
----
-
-## Unhandled Rejections y Uncaught Exceptions
+## 5. Unhandled Rejections y Uncaught Exceptions
 
 ```typescript
 // En el entry point (main.ts / index.ts)
@@ -272,9 +246,7 @@ process.on('uncaughtException', (error: Error) => {
 });
 ```
 
----
-
-## Graceful Shutdown
+## 6. Graceful Shutdown
 
 ```typescript
 async function gracefulShutdown() {
@@ -309,9 +281,7 @@ for (const signal of signals) {
 }
 ```
 
----
-
-## Errores en Servicios Externos
+## 7. Errores en Servicios Externos
 
 ```typescript
 // Wrapping de errores de servicios externos
@@ -342,28 +312,20 @@ const paymentResult = await callExternalService('Stripe', () =>
 );
 ```
 
----
+## 8. Gotchas
 
-## Anti-patrones
+- try/catch en cada controller — usar exception filter/error handler global.
+- `throw new Error('message')` genérico — usar `AppError` con code y status.
+- Exponer stack trace al cliente en producción — solo `INTERNAL_ERROR`.
+- Silenciar errores con catch vacío — loguear como mínimo.
+- Retornar 200 con `{ success: false }` — usar HTTP status codes.
+- Distintos formatos de error en distintos endpoints — formato consistente.
+- No manejar `unhandledRejection` — el proceso muere sin logs.
+- `process.exit(1)` sin graceful shutdown — requests en vuelo se pierden.
+- Lanzar strings: `throw 'error'` — siempre `throw new Error/AppError`.
+- Mezclar errores operacionales y de programación — tratarlos distinto.
 
-```
-❌ try/catch en cada controller → usar exception filter/error handler global
-❌ throw new Error('message') genérico → usar AppError con code y status
-❌ Exponer stack trace al cliente en producción → solo INTERNAL_ERROR
-❌ Silenciar errores con catch vacío → loguear como mínimo
-❌ Retornar 200 con { success: false } → usar HTTP status codes
-❌ Distintos formatos de error en distintos endpoints → formato consistente
-❌ No manejar unhandledRejection → el proceso muere sin logs
-❌ process.exit(1) sin graceful shutdown → requests en vuelo se pierden
-❌ Lanzar strings: throw 'error' → siempre throw new Error/AppError
-❌ Mezclar errores operacionales y de programación → tratarlos distinto
-```
-
----
-
-## Skills Relacionadas
-
-> **Consultar el índice maestro [`backend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para la cadena completa.
+## 9. Skills Relacionadas
 
 | Skill | Por qué |
 |-------|--------|
