@@ -1,41 +1,21 @@
 ---
 name: owasp-top-10
 description: >
-  Skill de OWASP Top 10:2021 — Las 10 vulnerabilidades de seguridad más críticas en aplicaciones
-  web. Activa esta skill SIEMPRE que escribas código que maneje input de usuarios, autenticación,
-  acceso a datos, configuración de servidores o cualquier endpoint HTTP. Esta es la skill más
-  fundamental de seguridad aplicada al código.
+  Usa este skill SIEMPRE que escribas código que maneje input de usuarios,
+  autenticación, acceso a datos, configuración de servidores o cualquier endpoint
+  HTTP. OWASP Top 10 es el estándar de seguridad de aplicaciones web más
+  reconocido globalmente y debe aplicarse como base de seguridad para cualquier
+  software web independientemente de la ubicación geográfica. Cubre las 10
+  vulnerabilidades críticas: Broken Access Control, Cryptographic Failures,
+  Injection, Insecure Design, Security Misconfiguration, Vulnerable Components,
+  Authentication Failures, Data Integrity Failures, Logging Failures y SSRF.
 ---
 
-# 🔥 OWASP Top 10:2021 — Vulnerabilidades Críticas en Aplicaciones Web
+# OWASP Top 10:2021 — Vulnerabilidades Críticas en Aplicaciones Web
 
-## Descripción General
+OWASP Top 10 lista las 10 categorías de riesgos de seguridad más críticas en aplicaciones web, basado en datos reales de brechas e incidentes. Debe aplicarse como base de seguridad para cualquier software web — si el código es resistente a estas 10 categorías, cubre la gran mayoría de ataques comunes.
 
-El **OWASP Top 10** es el documento de referencia más importante del mundo sobre seguridad en aplicaciones web, publicado por la Open Web Application Security Project. Lista las 10 categorías de riesgos de seguridad más críticos, basado en datos reales de brechas e incidentes.
-
-**¿Por qué es fundamental?** Porque la mayoría de las brechas de seguridad explotan vulnerabilidades que están en este Top 10. Si tu código es resistente a estas 10 categorías, estás cubierto contra la gran mayoría de ataques comunes.
-
----
-
-## Cuándo Activar esta Skill
-
-Activa esta skill **SIEMPRE** que:
-
-- Escribas **cualquier endpoint HTTP** (REST, GraphQL, WebSocket)
-- Proceses **cualquier input de usuario** (formularios, query params, headers, cookies)
-- Implementes **autenticación o autorización**
-- Trabajes con **bases de datos** (queries, ORM, raw SQL)
-- Configures un **servidor web** o middleware
-- Implementes **upload de archivos**
-- Trabajes con **sesiones, tokens o cookies**
-- Renderices **contenido dinámico** en el frontend
-- Consumas o expongas **APIs de terceros**
-
-**En resumen: SIEMPRE que escribas código web.**
-
----
-
-## Las 10 Vulnerabilidades
+## Implementación
 
 ### A01:2021 — Broken Access Control (Control de Acceso Roto)
 
@@ -832,34 +812,21 @@ export function sanitizeInput(req: Request, _res: Response, next: NextFunction) 
 
 ---
 
-## Buenas Prácticas OWASP
+## Flujo de trabajo del agente
 
-### ✅ HACER
+1. Verificar control de acceso en toda ruta: autenticación + autorización + verificación de propiedad del recurso (A01).
+2. Aplicar criptografía correcta: bcrypt/argon2 para passwords (nunca MD5/SHA1), JWT con secret fuerte y algoritmo fijo, TLS en tránsito (A02).
+3. Usar queries parametrizadas (Prisma/ORM), validar todo input con schemas Zod, evitar exec/eval con input de usuario (A03).
+4. Diseñar con rate limiting, account lockout tras 5 intentos, reset de password con token temporal hasheado, y respuestas en tiempo constante para prevenir timing attacks (A04, A07).
+5. Aplicar middleware integral de seguridad: helmet + CSP, CORS restrictivo, rate limiting, x-powered-by desactivado, body limit 1mb, errores genéricos sin stack traces (A05).
+6. Configurar npm audit / Snyk en CI/CD, lockfile con integridad, firmar datos que vuelven del cliente con HMAC-SHA256 (A06, A08).
+7. Implementar logging de eventos de seguridad (login, acceso denegado, cambios de rol, exports) con redacción de datos sensibles (A09).
+8. Validar URLs externas: solo HTTPS, resolver DNS para bloquear IPs internas (169.254.x, 10.x, 127.x, 192.168.x), no seguir redirects, timeout 5s (A10).
+9. Validar contra el checklist de cumplimiento (A01—A10) antes de desplegar.
 
-1. **Validar TODA entrada** del usuario con schemas estrictos (Zod/Joi)
-2. **Usar ORM** (Prisma) en lugar de queries SQL raw
-3. **bcrypt/argon2** para hashing de contraseñas (NUNCA MD5/SHA1)
-4. **HTTPS + HSTS** en producción
-5. **Helmet** para headers de seguridad
-6. **CORS restrictivo** — solo orígenes específicos
-7. **Rate limiting** en todas las rutas, especialmente auth
-8. **JWT en cookie httpOnly** — NO en localStorage
-9. **Logging de eventos de seguridad** sin datos sensibles
-10. **Validar URLs** antes de hacer fetch desde el servidor
-11. **npm audit** / **Snyk** en CI/CD para dependencias
-12. **Errores genéricos** al usuario, detalles solo en logs internos
+## Gotchas
 
-### ❌ NO HACER
-
-1. **NUNCA** confiar en datos del cliente (params, body, headers, cookies)
-2. **NUNCA** construir queries SQL con concatenación de strings
-3. **NUNCA** almacenar secretos en el código fuente
-4. **NUNCA** exponer stack traces en producción
-5. **NUNCA** desactivar CSRF protection sin justificación
-6. **NUNCA** usar `eval()`, `new Function()`, o `child_process.exec()` con input de usuario
-7. **NUNCA** almacenar tokens sensibles en localStorage
-8. **NUNCA** servir contenido mixto (HTTP + HTTPS)
-9. **NUNCA** confiar en headers `X-Forwarded-For` sin validación
+Nunca confiar en datos del cliente (params, body, headers, cookies) — todo input es potencialmente malicioso. Nunca construir queries SQL con concatenación de strings; usar siempre ORM o queries parametrizadas. Nunca almacenar secretos en código fuente. Nunca exponer stack traces en producción — loggear internamente con errorId y responder genéricamente al usuario. Nunca usar eval(), new Function() o child_process.exec() con input de usuario — usar execFile con argumentos separados o librerías nativas. Nunca almacenar tokens sensibles en localStorage — usar cookies httpOnly + secure + sameSite strict. Nunca desactivar CSRF protection sin justificación. JWT debe tener algoritmo fijo (prevenir algorithm confusion attack), expiresIn corto (15min para access token), y el secret debe tener mínimo 256 bits desde variable de entorno. El refresh token va en cookie httpOnly con path restringido a la ruta de refresh. Las respuestas de login/reset deben ser idénticas para email válido e inválido (prevenir user enumeration). Para SSRF, resolver DNS antes de hacer fetch — las IPs privadas y link-local (169.254.x para AWS metadata) deben bloquearse. No confiar en headers X-Forwarded-For sin validación. No servir contenido mixto HTTP + HTTPS.
 
 ---
 

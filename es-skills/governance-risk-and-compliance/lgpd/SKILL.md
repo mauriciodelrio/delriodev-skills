@@ -1,79 +1,20 @@
 ---
 name: lgpd
 description: >
-  Skill de cumplimiento LGPD — Lei Geral de Proteção de Dados (Brasil). Activa esta skill cuando
-  desarrolles software que recolecte, procese o almacene datos personales de personas en Brasil.
-  La LGPD aplica independientemente de dónde esté ubicada tu empresa. Cubre bases legales de
-  tratamiento, derechos del titular, consentimiento, ANPD reporting e RIPD (evaluación de impacto).
+  Usa este skill cuando desarrolles software que recolecte, procese o almacene
+  datos personales y necesites implementar protección de datos conforme a LGPD.
+  Aunque LGPD es legislación brasileña, este skill se aplica como estándar de
+  protección de datos para cualquier software independientemente de la ubicación
+  geográfica de los usuarios. Cubre las 10 bases legales de tratamiento,
+  consentimiento granular, derechos del titular (Art. 18), RIPD (evaluación de
+  impacto), notificación de incidentes a la ANPD y modelo de datos Prisma.
 ---
 
-# 🇧🇷 LGPD — Lei Geral de Proteção de Dados
+# LGPD — Lei Geral de Proteção de Dados
 
-## Descripción General
+LGPD (Lei N° 13.709/2018) es la ley brasileña de protección de datos y debe aplicarse como estándar de protección de datos personales para cualquier software, independientemente de la ubicación geográfica de los usuarios. A diferencia de GDPR que define 6 bases legales, LGPD define 10: consentimiento, obligación legal, administración pública, estudios por órgano de investigación, ejecución de contrato, ejercicio de derechos, protección de la vida, tutela de la salud, interés legítimo y protección del crédito. Requiere un Encarregado (DPO) para todo controlador. Los datos sensibles (origen racial/étnico, convicción religiosa, opinión política, afiliación sindical, salud, vida sexual, genéticos, biométricos) requieren consentimiento específico.
 
-La **LGPD** (Lei Geral de Proteção de Dados Pessoais — Ley N° 13.709/2018) es la ley de protección de datos personales de Brasil, vigente desde septiembre de 2020. Es similar al GDPR europeo pero con particularidades propias del marco legal brasileño.
-
-**Autoridad de control:** ANPD (Autoridade Nacional de Proteção de Dados)
-
-**Diferencias clave con GDPR:**
-
-| Aspecto | GDPR | LGPD |
-|---------|------|------|
-| **Bases legales** | 6 bases | 10 bases legales |
-| **DPO/Encarregado** | Obligatorio en ciertos casos | Obligatorio para todo controlador |
-| **Transferencia internacional** | Mecanismos específicos (SCCs, adequacy) | Similar pero con decisión de la ANPD |
-| **Sanciones** | Hasta 4% ingreso global o €20M | Hasta 2% facturación en Brasil, máximo R$50M por infracción |
-| **Territorial** | Datos de residentes UE | Datos tratados en Brasil o de personas en Brasil |
-
----
-
-## Cuándo Activar esta Skill
-
-Activa esta skill cuando:
-
-- Tu aplicación tenga **usuarios en Brasil**
-- **Recolectes datos personales** de personas localizadas en Brasil
-- El **tratamiento de datos** se realice en territorio brasileño
-- **Ofrezcas bienes o servicios** al mercado brasileño
-- Necesites implementar las **10 bases legales** de la LGPD
-- Implementes **consentimiento** según estándares brasileños
-- Debas nombrar un **Encarregado (DPO)** e informar datos a la ANPD
-
----
-
-## Conceptos Fundamentales LGPD
-
-### Las 10 Bases Legales (Art. 7)
-
-A diferencia del GDPR que tiene 6, la LGPD define **10 bases legales** para tratar datos personales:
-
-| # | Base Legal | Descripción | Uso típico |
-|---|-----------|-------------|------------|
-| 1 | **Consentimiento** | Manifestación libre, informada e inequívoca | Marketing, newsletters, cookies no esenciales |
-| 2 | **Obligación legal/regulatoria** | Cumplir con leyes y regulaciones | Datos fiscales, reportes a reguladores |
-| 3 | **Administración pública** | Ejecución de políticas públicas | Solo gobierno |
-| 4 | **Estudios por órgano de investigación** | Investigación (datos anonimizados cuando posible) | Investigación académica |
-| 5 | **Ejecución de contrato** | Necesario para cumplir un contrato con el titular | Servicio contratado, entregas |
-| 6 | **Ejercicio de derechos** | En procedimiento judicial, administrativo o arbitral | Defensa legal |
-| 7 | **Protección de la vida** | Proteger vida o integridad física | Emergencias médicas |
-| 8 | **Tutela de la salud** | Procedimientos realizados por profesionales de salud | Hospitales, clínicas |
-| 9 | **Interés legítimo** | Interés legítimo del controlador (con balance de derechos) | Analytics, seguridad, prevención de fraude |
-| 10 | **Protección del crédito** | Protección del crédito (ej: Serasa/SPC) | Scoring crediticio |
-
-### Datos Personales Sensibles (Art. 11)
-
-Tratamiento solo con **consentimiento específico** o sin consentimiento en casos excepcionales:
-
-- Origen racial o étnico
-- Convicción religiosa
-- Opinión política
-- Afiliación sindical
-- Datos de salud o vida sexual
-- Datos genéticos o biométricos
-
----
-
-## Requisitos Técnicos de Implementación
+## Implementación
 
 ### 1. Modelo de Datos para LGPD
 
@@ -829,31 +770,19 @@ export class LGPDIncidenteService {
 
 ---
 
-## Buenas Prácticas LGPD
+## Flujo de trabajo del agente
 
-### ✅ HACER
+1. Definir las bases legales aplicables para cada finalidad de tratamiento del sistema (Art. 7, las 10 bases).
+2. Implementar modelo de datos con schema Prisma que registre consentimientos por finalidad, solicitudes de titulares y estados.
+3. Implementar servicio de consentimiento granular: registro por finalidad específica (Art. 8 §4), revocación facilitada (Art. 8 §5), y evidencia almacenada (Art. 8 §2).
+4. Implementar los 9 derechos del titular (Art. 18): confirmación, acceso, corrección, anonimización/bloqueo, portabilidad en formato estructurado, eliminación, información de compartilhamento, y revocación.
+5. Elaborar RIPD (Relatório de Impacto) cuando el tratamiento pueda generar riesgo alto (Art. 38).
+6. Implementar servicio de evaluación y notificación de incidentes a la ANPD y titulares (Art. 48).
+7. Validar contra el checklist de cumplimiento (bases legales, derechos del titular, gobernanza, seguridad) antes de desplegar.
 
-1. **Nombrar un Encarregado (DPO)** y publicar sus datos de contacto
-2. **Mapear todas las bases legales** para cada finalidad de tratamiento
-3. **Consentimiento granular** — por finalidad, no genérico (Art. 8 §4)
-4. **Facilitar la revocación** de consentimiento — tan fácil como fue darlo
-5. **Responder solicitudes de titulares** en 15 días útiles (Art. 18 §5)
-6. **Elaborar RIPD** cuando el tratamiento pueda generar riesgo alto
-7. **Comunicar incidentes** de seguridad a la ANPD y titulares cuando haya riesgo relevante
-8. **Minimizar datos** — solo recolectar lo necesario para la finalidad
-9. **Mantener registro de tratamiento** (Art. 37: registro de operaciones)
-10. **Portabilidad en formato estructurado** legible por máquina
+## Gotchas
 
-### ❌ NO HACER
-
-1. **NO** tratar datos sin base legal definida
-2. **NO** obtener consentimiento genérico o en bloque
-3. **NO** dificultar la revocación del consentimiento
-4. **NO** transferir datos internacionalmente sin garantías adecuadas
-5. **NO** ignorar solicitudes de titulares
-6. **NO** retener datos más allá de lo necesario para la finalidad
-7. **NO** tratar datos sensibles sin consentimiento específico y destacado
-8. **NO** omitir la elaboración del RIPD cuando sea necesario
+El consentimiento genérico o en bloque es nulo bajo LGPD (Art. 8 §4) — implementar siempre consentimiento granular por finalidad. La revocación del consentimiento debe ser tan fácil como fue otorgarlo (Art. 8 §5); no dificultar el proceso. El plazo de respuesta a solicitudes de titulares es de 15 días útiles (Art. 18 §5), no calendario — calcular excluyendo fines de semana. No tratar datos sin base legal definida. No tratar datos sensibles sin consentimiento específico y destacado (Art. 11). La carga de la prueba del consentimiento recae en el controlador (Art. 8 §2) — almacenar textoMostrado, ipAddress, userAgent y timestamp. El derecho de eliminación (Art. 18 VI) solo aplica a datos tratados con base en consentimiento; datos con base en obligación legal se mantienen (ej: registros fiscales 7 años). El Encarregado (DPO) es obligatorio para todo controlador, no opcional como en GDPR. La notificación de incidentes a la ANPD es requerida cuando haya "risco ou dano relevante" — datos sensibles comprometidos o más de 1000 titulares afectados. No transferir datos internacionalmente sin garantías adecuadas.
 
 ---
 

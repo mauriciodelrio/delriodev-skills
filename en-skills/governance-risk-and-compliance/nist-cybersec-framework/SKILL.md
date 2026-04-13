@@ -1,56 +1,21 @@
 ---
 name: nist-cybersec-framework
 description: >
-  NIST Cybersecurity Framework (CSF) 2.0 skill. Activate this skill when implementing
-  cybersecurity controls following the Govern, Identify, Protect, Detect,
-  Respond, and Recover functions. Covers risk management, infrastructure protection, threat
-  detection, incident response, and service recovery.
+  Use this skill when implementing cybersecurity controls following the Govern,
+  Identify, Protect, Detect, Respond, and Recover functions. Although the NIST
+  CSF was developed by the U.S. government, this skill applies as a
+  cybersecurity framework for any software regardless of geographic location.
+  Covers security governance, asset inventory and risk assessment, protection
+  (MFA, headers, health checks), threat detection (brute force, impossible
+  travel, SQLi, XSS, path traversal), automated response with playbooks and
+  incidents, and recovery with RTO/RPO.
 ---
 
-# 🛡️ NIST Cybersecurity Framework (CSF) 2.0
+# NIST Cybersecurity Framework (CSF) 2.0
 
-## General Description
+NIST CSF 2.0 (2024) is the most widely adopted cybersecurity framework globally and should be applied as a security reference for any software, regardless of geographic location. It is organized into 6 functions: Govern (strategy, policies, risk, supply chain), Identify (asset inventory, risk assessment), Protect (access, MFA, encryption, secure configuration), Detect (continuous monitoring, anomaly and attack detection), Respond (playbooks, containment, forensic analysis), and Recover (restoration, validation, lessons learned).
 
-The **NIST Cybersecurity Framework** is the most widely adopted cybersecurity framework in the world, developed by the U.S. National Institute of Standards and Technology. Version 2.0 (2024) adds a sixth function: **Govern**, and expands its scope beyond critical infrastructure to any organization.
-
-The framework is not legally mandatory (except for U.S. federal agencies), but it is widely adopted as a best practice and frequently referenced in contracts and regulations.
-
----
-
-## When to Activate this Skill
-
-Activate this skill **whenever** you:
-
-- Design the **security architecture** of an application
-- Implement **threat detection** (IDS, WAF, anomalies)
-- Configure **security monitoring and alerting**
-- Develop **incident response plans**
-- Implement **disaster recovery**
-- Assess **cybersecurity risks** in your stack
-- Need a **comprehensive framework** to organize security controls
-
----
-
-## The 6 Functions of NIST CSF 2.0
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    GOVERN (GV)                          │
-│             Strategy, policies, oversight               │
-├──────────┬──────────┬──────────┬──────────┬────────────┤
-│ IDENTIFY │ PROTECT  │  DETECT  │ RESPOND  │  RECOVER   │
-│   (ID)   │   (PR)   │   (DE)   │   (RS)   │   (RC)     │
-│          │          │          │          │            │
-│ What do  │ How do   │ How do   │ What do  │ How do    │
-│ we have? │ we       │ we       │ we do    │ we return │
-│          │ protect  │ detect   │ when it  │ to normal │
-│          │ it?      │ problems?│ happens? │ ?         │
-└──────────┴──────────┴──────────┴──────────┴────────────┘
-```
-
----
-
-## Technical Requirements by Function
+## Implementation
 
 ### 1. GOVERN (GV) — Govern
 
@@ -974,28 +939,19 @@ export class RecoveryService {
 
 ---
 
-## NIST CSF Best Practices
+## Agent workflow
 
-### ✅ DO
+1. Define security governance: policies, risk matrix with acceptable tolerance, and supply chain requirements (GV).
+2. Maintain asset inventory with classification, criticality, dependencies, and data types; assess risks using impact × likelihood formula (ID).
+3. Implement protection: MFA for sensitive operations, security headers (Cache-Control, HSTS, nosniff), pre-startup secure configuration validation, and dependency health checks (PR).
+4. Implement detection: authentication monitor (brute force >5 attempts/15min, impossible travel >2 IPs/2h), SQLi/XSS/path traversal detection in middleware (DE).
+5. Configure automated response with playbooks per incident type (brute force, data exfiltration, DDoS) that execute actions like block IP, lock account, revoke sessions (RS).
+6. Implement recovery service with phased plan (assessment → containment → eradication → restoration → validation → monitoring → lessons learned) and defined RTO/RPO (RC).
+7. Validate against the compliance checklist (GV + ID + PR + DE + RS + RC) before deploying.
 
-1. **Maintain an updated asset inventory** (ID.AM)
-2. **Periodic risk assessments** (ID.RA)
-3. **Mandatory MFA** for privileged access (PR.AA)
-4. **Continuous security monitoring** in real time (DE.CM)
-5. **Response playbooks** documented and tested (RS.MA)
-6. **Automated backups** with restoration tests (RC.RP)
-7. **Blameless post-mortems** after every incident (RC + lessons)
-8. **Security metrics** — MTTD, MTTR, incident frequency
-9. **Threat modeling** for new features before implementation
-10. **Defense in depth** — multiple layers of security
+## Gotchas
 
-### ❌ DO NOT
-
-1. **DO NOT** rely solely on perimeter security
-2. **DO NOT** ignore security alerts (alert fatigue management)
-3. **DO NOT** skip the Recover function — most organizations neglect it
-4. **DO NOT** have a single point of failure in detection
-5. **DO NOT** respond to incidents without a defined playbook
+Do not rely solely on perimeter security — apply defense in depth with multiple layers. The Recover function is the most neglected by most organizations; do not skip it. Do not respond to incidents without a defined playbook — each incident type must have automated actions and a documented runbook. Manage alert fatigue: configure appropriate thresholds to avoid ignoring legitimate alerts. Residual risk is reduced by existing controls but never by more than 50% — do not overestimate mitigation. Verify default credentials and JWT_SECRET (minimum 32 characters) before starting in production. Do not have a single point of failure in detection. Post-mortems must be blameless and scheduled within 72 hours. Key metrics to track: MTTD (mean time to detect), MTTR (mean time to recover), and incident frequency. Perform threat modeling for new features before implementation.
 
 ---
 

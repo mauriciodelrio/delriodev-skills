@@ -1,41 +1,21 @@
 ---
 name: owasp-top-10
 description: >
-  OWASP Top 10:2021 skill — The 10 most critical security vulnerabilities in web applications.
-  Activate this skill WHENEVER you write code that handles user input, authentication,
-  data access, server configuration, or any HTTP endpoint. This is the most fundamental
-  applied code security skill.
+  Use this skill WHENEVER you write code that handles user input,
+  authentication, data access, server configuration, or any HTTP endpoint.
+  OWASP Top 10 is the most globally recognized web application security
+  standard and should be applied as the security foundation for any web
+  software regardless of geographic location. Covers the 10 critical
+  vulnerabilities: Broken Access Control, Cryptographic Failures, Injection,
+  Insecure Design, Security Misconfiguration, Vulnerable Components,
+  Authentication Failures, Data Integrity Failures, Logging Failures, and SSRF.
 ---
 
-# 🔥 OWASP Top 10:2021 — Critical Web Application Vulnerabilities
+# OWASP Top 10:2021 — Critical Web Application Vulnerabilities
 
-## General Description
+OWASP Top 10 lists the 10 most critical security risk categories in web applications, based on real breach and incident data. It should be applied as the security foundation for any web software — if the code is resistant to these 10 categories, it covers the vast majority of common attacks.
 
-The **OWASP Top 10** is the world's most important reference document on web application security, published by the Open Web Application Security Project. It lists the 10 most critical security risk categories, based on real breach and incident data.
-
-**Why is it fundamental?** Because the majority of security breaches exploit vulnerabilities that are in this Top 10. If your code is resistant to these 10 categories, you are covered against the vast majority of common attacks.
-
----
-
-## When to Activate this Skill
-
-Activate this skill **WHENEVER**:
-
-- You write **any HTTP endpoint** (REST, GraphQL, WebSocket)
-- You process **any user input** (forms, query params, headers, cookies)
-- You implement **authentication or authorization**
-- You work with **databases** (queries, ORM, raw SQL)
-- You configure a **web server** or middleware
-- You implement **file uploads**
-- You work with **sessions, tokens, or cookies**
-- You render **dynamic content** on the frontend
-- You consume or expose **third-party APIs**
-
-**In summary: WHENEVER you write web code.**
-
----
-
-## The 10 Vulnerabilities
+## Implementation
 
 ### A01:2021 — Broken Access Control
 
@@ -832,34 +812,21 @@ export function sanitizeInput(req: Request, _res: Response, next: NextFunction) 
 
 ---
 
-## OWASP Best Practices
+## Agent workflow
 
-### ✅ DO
+1. Verify access control on every route: authentication + authorization + resource ownership verification (A01).
+2. Apply correct cryptography: bcrypt/argon2 for passwords (never MD5/SHA1), JWT with strong secret and fixed algorithm, TLS in transit (A02).
+3. Use parameterized queries (Prisma/ORM), validate all input with Zod schemas, avoid exec/eval with user input (A03).
+4. Design with rate limiting, account lockout after 5 attempts, password reset with hashed temporary token, and constant-time responses to prevent timing attacks (A04, A07).
+5. Apply integral security middleware: helmet + CSP, restrictive CORS, rate limiting, x-powered-by disabled, body limit 1mb, generic errors without stack traces (A05).
+6. Configure npm audit / Snyk in CI/CD, lockfile with integrity, sign data returning from client with HMAC-SHA256 (A06, A08).
+7. Implement security event logging (login, access denied, role changes, exports) with sensitive data redaction (A09).
+8. Validate external URLs: HTTPS only, resolve DNS to block internal IPs (169.254.x, 10.x, 127.x, 192.168.x), don't follow redirects, 5s timeout (A10).
+9. Validate against the compliance checklist (A01—A10) before deploying.
 
-1. **Validate ALL user input** with strict schemas (Zod/Joi)
-2. **Use an ORM** (Prisma) instead of raw SQL queries
-3. **bcrypt/argon2** for password hashing (NEVER MD5/SHA1)
-4. **HTTPS + HSTS** in production
-5. **Helmet** for security headers
-6. **Restrictive CORS** — only specific origins
-7. **Rate limiting** on all routes, especially auth
-8. **JWT in httpOnly cookie** — NOT in localStorage
-9. **Security event logging** without sensitive data
-10. **Validate URLs** before fetching from the server
-11. **npm audit** / **Snyk** in CI/CD for dependencies
-12. **Generic errors** to the user, details only in internal logs
+## Gotchas
 
-### ❌ DO NOT
-
-1. **NEVER** trust client data (params, body, headers, cookies)
-2. **NEVER** build SQL queries with string concatenation
-3. **NEVER** store secrets in source code
-4. **NEVER** expose stack traces in production
-5. **NEVER** disable CSRF protection without justification
-6. **NEVER** use `eval()`, `new Function()`, or `child_process.exec()` with user input
-7. **NEVER** store sensitive tokens in localStorage
-8. **NEVER** serve mixed content (HTTP + HTTPS)
-9. **NEVER** trust `X-Forwarded-For` headers without validation
+Never trust client data (params, body, headers, cookies) — all input is potentially malicious. Never build SQL queries with string concatenation; always use ORM or parameterized queries. Never store secrets in source code. Never expose stack traces in production — log internally with errorId and respond generically to the user. Never use eval(), new Function(), or child_process.exec() with user input — use execFile with separate arguments or native libraries. Never store sensitive tokens in localStorage — use httpOnly + secure + sameSite strict cookies. Never disable CSRF protection without justification. JWT must have a fixed algorithm (prevent algorithm confusion attack), short expiresIn (15min for access token), and the secret must be at least 256 bits from an environment variable. The refresh token goes in an httpOnly cookie with path restricted to the refresh route. Login/reset responses must be identical for valid and invalid emails (prevent user enumeration). For SSRF, resolve DNS before fetching — private and link-local IPs (169.254.x for AWS metadata) must be blocked. Do not trust X-Forwarded-For headers without validation. Do not serve mixed HTTP + HTTPS content.
 
 ---
 

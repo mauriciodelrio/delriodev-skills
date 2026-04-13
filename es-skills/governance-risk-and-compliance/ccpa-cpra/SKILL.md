@@ -1,73 +1,20 @@
 ---
 name: ccpa-cpra
 description: >
-  Skill de cumplimiento CCPA/CPRA — California Consumer Privacy Act y California Privacy Rights Act.
-  Activa esta skill cuando desarrolles software que recolecte, almacene o procese información personal
-  de residentes de California. Aplica si tu empresa tiene ingresos > $25M, maneja datos de > 100k
-  consumidores/hogares, o gana > 50% de ingresos vendiendo datos personales.
+  Usa este skill cuando desarrolles software que recolecte, almacene o procese
+  información personal de usuarios. Aunque CCPA/CPRA es legislación de California,
+  este skill se aplica como estándar de privacidad para cualquier software
+  independientemente de la ubicación geográfica de los usuarios. Cubre derechos
+  del consumidor (know, delete, correct, portability, opt-out), modelo de datos,
+  opt-out DNSS con GPC, notice at collection, menores de edad, y checklist de
+  cumplimiento.
 ---
 
-# 🏛️ CCPA/CPRA — California Consumer Privacy Act & Privacy Rights Act
+# CCPA/CPRA — California Consumer Privacy Act & Privacy Rights Act
 
-## Descripción General
+CCPA (2020) y CPRA (2023) definen estándares de privacidad que deben aplicarse a cualquier software que maneje información personal, independientemente de la geografía de los usuarios. El modelo opera con opt-out (no requiere consentimiento previo para recolectar), tiene definición amplísima de "venta" de datos (incluye compartir para publicidad), y las penalidades originales son $2,500 por violación o $7,500 por violación intencional. La autoridad de referencia es la California Privacy Protection Agency (CPPA).
 
-La **CCPA** (California Consumer Privacy Act, 2020) y su enmienda **CPRA** (California Privacy Rights Act, 2023) otorgan a los residentes de California amplios derechos sobre sus datos personales. Es la ley de privacidad más estricta de Estados Unidos y se usa como referencia para otros estados.
-
-**Diferencias clave con GDPR:**
-| Aspecto | GDPR | CCPA/CPRA |
-|---------|------|-----------|
-| **Aplica a** | Residentes de la UE | Residentes de California |
-| **Base legal** | 6 bases legales (consentimiento, interés legítimo, etc.) | Opt-out (no requiere consentimiento previo para recolectar) |
-| **"Venta" de datos** | Transferencia a terceros | Definición amplísima: incluye compartir datos para publicidad |
-| **Datos sensibles** | Categorías especiales (Art. 9) | "Sensitive Personal Information" (SPI) con opt-out separado |
-| **Penalidades** | Hasta 4% ingreso global | $2,500 por violación, $7,500 por violación intencional |
-| **Autoridad** | DPAs nacionales | California Privacy Protection Agency (CPPA) |
-
----
-
-## Cuándo Activar esta Skill
-
-Activa esta skill cuando:
-
-- Tu aplicación tenga **usuarios residentes de California**
-- Recolectes **información personal** (PI) de consumidores californianos
-- Tu empresa tenga **ingresos brutos > $25 millones**
-- Compres, recibas, vendas o compartas PI de **> 100,000 consumidores/hogares**
-- Generes **> 50% de ingresos** de la venta/compartición de información personal
-- Implementes **publicidad basada en comportamiento** (behavioral advertising)
-- Trabajes con **data brokers** o terceros que reciban datos de usuarios
-
----
-
-## Conceptos Fundamentales
-
-### Información Personal (PI) bajo CCPA/CPRA
-
-La definición de "personal information" es *extremadamente* amplia:
-
-- Identificadores: nombre, email, dirección, teléfono, IP, SSN, DL
-- Datos comerciales: historial de compras, records de transacciones
-- Datos biométricos: huellas, reconocimiento facial
-- Actividad online: historial de navegación, búsquedas, interacciones con publicidad
-- Geolocalización precisa
-- Datos de empleo
-- Inferencias: perfiles creados desde cualquiera de los anteriores
-
-### Sensitive Personal Information (SPI) — CPRA
-
-Categoría especial con protecciones adicionales. Los consumidores pueden limitar su uso:
-
-- SSN, driver's license, pasaporte
-- Login + credenciales financieras
-- Geolocalización precisa
-- Raza, etnia, religión, orientación sexual
-- Contenido de emails, mensajes de texto
-- Datos genéticos y biométricos
-- Datos de salud
-
----
-
-## Requisitos Técnicos de Implementación
+## Implementación
 
 ### 1. Modelo de Datos de Privacidad
 
@@ -775,31 +722,19 @@ export class CCPAMinorsService {
 
 ---
 
-## Buenas Prácticas CCPA/CPRA
+## Flujo de trabajo del agente
 
-### ✅ HACER
+1. Identificar si la aplicación recolecta PI de residentes de California y si cumple los umbrales de aplicabilidad ($25M ingresos, 100k+ consumidores, o 50%+ ingresos por venta de datos).
+2. Implementar el modelo de datos de privacidad con perfiles de consumidor y solicitudes DSAR.
+3. Implementar el servicio de derechos del consumidor cubriendo todos los derechos aplicables (know, delete, correct, portability, opt-out sale, opt-out sharing, limit SPI).
+4. Agregar middleware de opt-out con detección de Global Privacy Control (GPC) y verificación antes de compartir datos con terceros.
+5. Configurar el Notice at Collection con categorías de PI, propósitos, políticas de retención y links obligatorios.
+6. Implementar protección de menores con opt-in verificado para menores de 16 años.
+7. Validar contra el checklist de cumplimiento antes de desplegar.
 
-1. **Link "Do Not Sell or Share My Personal Information"** visible en toda página del sitio
-2. **Respetar Global Privacy Control** (GPC) como señal válida de opt-out
-3. **Verificar identidad** antes de procesar solicitudes de derechos (pero NO pedir login para opt-out)
-4. **Responder en 45 días** a solicitudes de consumidores (máximo 90 con extensión notificada)
-5. **Acusar recibo** de solicitudes dentro de 10 días hábiles
-6. **Mantener registro** de todas las solicitudes por 24 meses
-7. **Notice at Collection** — informar antes de recolectar datos, no después
-8. **Contratos con Service Providers** — cláusulas que prohíban uso de PI fuera del servicio
-9. **Opt-in para menores** de 16 años antes de vender/compartir datos
-10. **Retención mínima** — no conservar PI más tiempo del necesario
+## Gotchas
 
-### ❌ NO HACER
-
-1. **NO** exigir cuenta/login para ejercer el derecho de opt-out
-2. **NO** discriminar al consumidor por ejercer sus derechos (no cobrar más, no degradar servicio)
-3. **NO** vender datos de menores de 16 sin opt-in verificado
-4. **NO** ignorar la señal GPC del navegador
-5. **NO** hacer el proceso de opt-out intencionalmente difícil (dark patterns)
-6. **NO** recolectar más datos de los necesarios para el propósito declarado
-7. **NO** retener PI indefinidamente sin justificación
-8. **NO** compartir datos con terceros sin contratos de service provider
+El opt-out de venta/compartición NO debe requerir login ni autenticación — cualquier consumidor puede ejercerlo. La señal GPC (`Sec-GPC: 1`) es legalmente vinculante bajo CCPA/CPRA y debe respetarse como opt-out automático. Las solicitudes de consumidor deben acusarse en 10 días hábiles y resolverse en 45 días (extensible a 90 con notificación). El consumidor puede hacer máximo 2 solicitudes Right to Know por período de 12 meses. No discriminar al consumidor por ejercer sus derechos (no cobrar más ni degradar servicio). Los menores de 13 requieren consentimiento parental, y los de 13-15 requieren consentimiento del propio menor (opt-in) antes de vender o compartir su PI. Mantener registro de todas las solicitudes por 24 meses. Los contratos con service providers deben incluir cláusulas que prohíban uso de PI fuera del servicio contratado. Evitar dark patterns en el proceso de opt-out.
 
 ---
 

@@ -886,31 +886,21 @@ export function SecurePaymentPage({ amount, currency }: { amount: number; curren
 
 ---
 
-## Buenas Prácticas PCI DSS
+## Flujo de trabajo del agente
 
-### ✅ HACER
+1. Implementar tokenización con procesador PCI Level 1 (Stripe): el backend nunca toca el PAN, solo tokens (Req. 3).
+2. Configurar schema Prisma almacenando solo datos tokenizados (stripePaymentMethodId, last4, brand, fingerprint) — nunca PAN, CVV, PIN o banda magnética.
+3. Configurar TLS 1.2+ con cipher suites fuertes (AES-256-GCM, CHACHA20), HSTS, y redirect HTTP→HTTPS en producción (Req. 4).
+4. Implementar validación estricta con Zod para operaciones de pago: montos en centavos (min 50, max 99999999), tokens con regex pm_*, y .strict() para rechazar campos no declarados (Req. 6).
+5. Implementar middleware de detección de PAN con algoritmo de Luhn que bloquea requests conteniendo números de tarjeta (Req. 3.4).
+6. Implementar audit logging PCI completo: ID usuario, tipo evento, fecha/hora, éxito/fallo, origen, recurso afectado; con redacción de PAN/CVV/passwords; retención 12 meses (Req. 10).
+7. Segmentar el CDE con redes Docker aisladas: payment-service y payment-db en red interna sin acceso a internet (Req. 1).
+8. Usar Stripe Elements en frontend para que datos de tarjeta nunca toquen el servidor — reduce alcance PCI de SAQ D a SAQ A (Req. 3).
+9. Validar contra el checklist de cumplimiento (Req. 1-12) antes de desplegar.
 
-1. **Usar tokenización** — delegarle el manejo de PAN a un procesador PCI Level 1
-2. **Stripe Elements / Hosted Fields** en frontend para reducir alcance PCI a SAQ A
-3. **TLS 1.2+** obligatorio para toda transmisión de datos de pago
-4. **Segmentar el CDE** — aislar la infraestructura de pagos
-5. **Audit log completo** de toda operación de pago
-6. **Escaneos de vulnerabilidades** trimestrales (ASV para externos)
-7. **Penetration testing** anual del CDE
-8. **Rotar claves de encriptación** anualmente
-9. **Monitoreo en tiempo real** de transacciones sospechosas
-10. **Validación de entrada estricta** — detectar PANs en inputs
+## Gotchas
 
-### ❌ NO HACER
-
-1. **NUNCA** almacenar CVV/CVC después de la autorización
-2. **NUNCA** almacenar datos de banda magnética o PIN
-3. **NUNCA** loggear números de tarjeta completos
-4. **NUNCA** enviar datos de tarjeta por email, chat o canales no seguros
-5. **NUNCA** almacenar PAN sin encriptar (si debes almacenarlo)
-6. **NUNCA** usar cuentas/contraseñas por defecto en sistemas del CDE
-7. **NUNCA** permitir acceso al CDE sin MFA
-8. **NUNCA** copiar datos de producción (con PAN) a ambientes de test
+Nunca almacenar CVV/CVC después de la autorización — está explícitamente prohibido por PCI DSS. Nunca almacenar datos de banda magnética o PIN. Nunca loggear números de tarjeta completos — configurar redact en pino para paths como *.cardNumber, *.pan, *.cvv. Nunca enviar datos de tarjeta por email, chat o canales no seguros. Si debes almacenar PAN, debe estar encriptado — pero la tokenización es preferida porque reduce drásticamente el alcance PCI. Nunca usar credenciales por defecto en sistemas del CDE. El acceso al CDE siempre requiere MFA. Nunca copiar datos de producción con PAN a ambientes de test. Las claves de encriptación deben rotarse anualmente. Los escaneos de vulnerabilidades deben ser trimestrales (ASV para externos) y el penetration testing anual. Los logs de auditoría deben retenerse 12 meses con 3 meses inmediatamente accesibles. El PAN debe enmascararse en displays mostrando solo los últimos 4 dígitos. El monitoreo de transacciones sospechosas debe ser en tiempo real.
 
 ---
 

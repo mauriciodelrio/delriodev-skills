@@ -1,79 +1,19 @@
 ---
 name: gdpr
 description: >
-  Skill de cumplimiento GDPR (Reglamento General de Protección de Datos). Activa esta skill
-  cuando el software procese datos personales de ciudadanos o residentes de la Unión Europea
-  o el Espacio Económico Europeo. Incluye consentimiento, derechos ARCO+, bases legales,
-  evaluaciones de impacto (DPIA), transferencias internacionales y medidas técnicas.
+  Usa este skill cuando el software procese datos personales de usuarios.
+  Aunque GDPR es legislación de la UE, este skill se aplica como estándar de
+  protección de datos para cualquier software independientemente de la ubicación
+  geográfica de los usuarios. Cubre sistema de consentimiento granular, derechos
+  del interesado (ARCO+), encriptación y pseudonimización, política de retención,
+  cookie banner, y checklist de cumplimiento.
 ---
 
-# 🇪🇺 GDPR — Reglamento General de Protección de Datos
+# GDPR — Reglamento General de Protección de Datos
 
-## Descripción General
+GDPR (Reglamento UE 2016/679) define el estándar de protección de datos más riguroso a nivel global y debe aplicarse a cualquier software que procese datos personales, independientemente de la geografía de los usuarios. Toda implementación debe respetar los 7 principios del Art. 5: licitud/lealtad/transparencia, limitación de finalidad, minimización de datos, exactitud, limitación del almacenamiento, integridad/confidencialidad, y responsabilidad proactiva. Cada tratamiento requiere una base legal válida (Art. 6): consentimiento, contrato, obligación legal, intereses vitales, interés público, o interés legítimo. Los datos sensibles (Art. 9) requieren bases legales adicionales.
 
-El **GDPR** (General Data Protection Regulation - Reglamento UE 2016/679) es la normativa de protección de datos más influyente del mundo. Aplica a cualquier organización que procese datos personales de individuos en la UE/EEE, independientemente de dónde esté ubicada la organización.
-
-**Multas**: Hasta €20 millones o 4% de la facturación anual global (lo que sea mayor).
-
----
-
-## Cuándo Activar esta Skill
-
-Activa esta skill **siempre** que:
-
-- Recolectes, almacenes o proceses datos de usuarios en la UE/EEE
-- Implementes formularios de registro, login o perfiles de usuario
-- Configures cookies, analytics o tracking
-- Diseñes schemas de base de datos con datos personales
-- Implementes funcionalidades de exportación o eliminación de datos
-- Trabajes con APIs que reciban o envíen datos personales
-- Configures transferencias de datos fuera de la UE
-- Implementes sistemas de email marketing o notificaciones
-- Desarrolles features de búsqueda que indexen datos personales
-
----
-
-## Conceptos Fundamentales
-
-### ¿Qué son Datos Personales?
-
-Cualquier información que pueda identificar directa o indirectamente a una persona:
-
-| Categoría | Ejemplos | Nivel de Sensibilidad |
-|-----------|----------|----------------------|
-| **Identificadores directos** | Nombre, email, teléfono, DNI | Alto |
-| **Identificadores indirectos** | Dirección IP, cookies, device ID, geolocalización | Medio-Alto |
-| **Datos sensibles (Art. 9)** | Salud, biométricos, orientación sexual, creencias religiosas, afiliación política | **Crítico** |
-| **Datos financieros** | Número de cuenta, historial de transacciones | Alto |
-| **Datos de comportamiento** | Historial de navegación, preferencias, hábitos de compra | Medio |
-
-### Las 7 Bases Legales (Art. 6)
-
-```typescript
-enum BaseLegalGDPR {
-  CONSENTIMIENTO = 'consent',           // El usuario dio consentimiento explícito
-  CONTRATO = 'contract',                // Necesario para ejecutar un contrato
-  OBLIGACION_LEGAL = 'legal_obligation', // Requerido por ley
-  INTERESES_VITALES = 'vital_interests', // Proteger la vida de alguien
-  INTERES_PUBLICO = 'public_interest',   // Tarea de interés público
-  INTERES_LEGITIMO = 'legitimate_interest', // Interés legítimo del responsable
-  // Art. 9 - Datos sensibles requieren bases adicionales
-}
-```
-
-### Los Principios del GDPR (Art. 5)
-
-1. **Licitud, lealtad y transparencia**: Procesamiento legal, justo y transparente
-2. **Limitación de la finalidad**: Datos recolectados para fines específicos y explícitos
-3. **Minimización de datos**: Solo los datos estrictamente necesarios
-4. **Exactitud**: Datos precisos y actualizados
-5. **Limitación del almacenamiento**: No conservar más tiempo del necesario
-6. **Integridad y confidencialidad**: Seguridad adecuada de los datos
-7. **Responsabilidad proactiva**: Poder demostrar el cumplimiento
-
----
-
-## Requisitos Técnicos de Implementación
+## Implementación
 
 ### 1. Sistema de Consentimiento
 
@@ -1077,40 +1017,20 @@ export function setConsentAwareCookie(
 
 ---
 
-## Buenas Prácticas GDPR
+## Flujo de trabajo del agente
 
-### ✅ HACER
+1. Identificar qué datos personales procesa la aplicación y documentar la base legal (Art. 6) para cada tratamiento.
+2. Implementar el sistema de consentimiento granular con schema Prisma, servicio y middleware de verificación.
+3. Implementar el servicio de derechos del interesado (acceso, rectificación, supresión, limitación, portabilidad, oposición).
+4. Agregar la API REST de privacidad con los endpoints de datos, borrado, portabilidad y gestión de consentimientos.
+5. Implementar encriptación de datos personales en reposo (AES-256-GCM) y pseudonimización donde corresponda.
+6. Configurar la política de retención de datos como cron job con acciones por modelo (anonymize/delete/archive).
+7. Implementar cookie banner con consentimiento granular por categoría (essential/functional/analytics/advertising).
+8. Validar contra el checklist de cumplimiento antes de desplegar.
 
-1. **Implementar Privacy by Design y Privacy by Default** (Art. 25)
-   - Cada nueva feature debe evaluarse contra GDPR antes de implementarse
-   - Los ajustes de privacidad más restrictivos son los predeterminados
+## Gotchas
 
-2. **Mantener un Registro de Actividades de Tratamiento** (Art. 30)
-   - Documentar qué datos se procesan, para qué fines, bases legales, etc.
-
-3. **Realizar DPIAs** (Data Protection Impact Assessment, Art. 35)
-   - Obligatorio cuando hay alto riesgo para los derechos de los individuos
-   - Procesamiento a gran escala, perfilado, nuevas tecnologías
-
-4. **Implementar notificación de brechas** (Art. 33-34)
-   - Notificar a la autoridad supervisora en 72 horas
-   - Notificar a los afectados sin dilación indebida si hay alto riesgo
-
-5. **Usar HTTPS siempre** — cifrado en tránsito es obligatorio
-
-6. **Logs de auditoría para todo acceso a datos personales**
-
-7. **Minimizar los datos recolectados** — solo pedir lo estrictamente necesario
-
-### ❌ NO HACER
-
-1. **NO** recopilar datos "por si acaso" — viola minimización
-2. **NO** usar consentimiento pre-marcado — debe ser acción afirmativa
-3. **NO** dificultar la revocación del consentimiento
-4. **NO** transferir datos fuera de la UE sin mecanismo legal (SCCs, adecuación, BCRs)
-5. **NO** almacenar datos sin fecha de expiración o política de retención
-6. **NO** loggear datos personales en texto plano
-7. **NO** usar datos personales en ambientes de desarrollo/testing sin anonimizar
+Implementar Privacy by Design y Privacy by Default (Art. 25): cada nueva feature debe evaluarse contra GDPR antes de implementarse, y los ajustes de privacidad más restrictivos son los predeterminados. No usar consentimiento pre-marcado — debe ser acción afirmativa clara (Art. 7). La revocación del consentimiento debe ser tan fácil como otorgarlo. Mantener un Registro de Actividades de Tratamiento (ROPA, Art. 30). Realizar DPIAs (Art. 35) para procesamiento a gran escala, perfilado o nuevas tecnologías. Las brechas de seguridad deben notificarse a la autoridad supervisora en 72 horas (Art. 33) y a los afectados sin dilación si hay alto riesgo (Art. 34). No transferir datos fuera de la UE sin mecanismo legal (SCCs, adecuación, BCRs). No almacenar datos sin política de retención. No loggear datos personales en texto plano. No usar datos personales en ambientes de desarrollo/testing sin anonimizar.
 
 ---
 

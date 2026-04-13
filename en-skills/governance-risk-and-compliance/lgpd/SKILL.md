@@ -1,79 +1,20 @@
 ---
 name: lgpd
 description: >
-  LGPD compliance skill — Lei Geral de Proteção de Dados (Brazil). Activate this skill when
-  developing software that collects, processes, or stores personal data from individuals in Brazil.
-  LGPD applies regardless of where your company is located. Covers legal bases for processing,
-  data subject rights, consent, ANPD reporting, and RIPD (impact assessment).
+  Use this skill when developing software that collects, processes, or stores
+  personal data and you need to implement data protection per LGPD. Although
+  LGPD is Brazilian legislation, this skill applies as a data protection
+  standard for any software regardless of the geographic location of its users.
+  Covers the 10 legal bases for processing, granular consent, data subject
+  rights (Art. 18), RIPD (impact assessment), ANPD incident notification,
+  and Prisma data model.
 ---
 
-# 🇧🇷 LGPD — Lei Geral de Proteção de Dados
+# LGPD — Lei Geral de Proteção de Dados
 
-## General Description
+LGPD (Law No. 13,709/2018) is Brazil's data protection law and should be applied as a personal data protection standard for any software, regardless of the geographic location of its users. Unlike GDPR which defines 6 legal bases, LGPD defines 10: consent, legal obligation, public administration, research by research body, contract execution, exercise of rights, protection of life, health protection, legitimate interest, and credit protection. Requires an Encarregado (DPO) for every controller. Sensitive data (racial/ethnic origin, religious conviction, political opinion, union affiliation, health, sex life, genetic, biometric) requires specific consent.
 
-The **LGPD** (Lei Geral de Proteção de Dados Pessoais — Law No. 13,709/2018) is Brazil's personal data protection law, in force since September 2020. It is similar to Europe's GDPR but with characteristics unique to the Brazilian legal framework.
-
-**Supervisory authority:** ANPD (Autoridade Nacional de Proteção de Dados)
-
-**Key differences from GDPR:**
-
-| Aspect | GDPR | LGPD |
-|--------|------|------|
-| **Legal bases** | 6 bases | 10 legal bases |
-| **DPO/Encarregado** | Required in certain cases | Required for every controller |
-| **International transfer** | Specific mechanisms (SCCs, adequacy) | Similar but with ANPD decision |
-| **Penalties** | Up to 4% global revenue or €20M | Up to 2% revenue in Brazil, maximum R$50M per violation |
-| **Territorial** | EU resident data | Data processed in Brazil or of individuals in Brazil |
-
----
-
-## When to Activate this Skill
-
-Activate this skill when:
-
-- Your application has **users in Brazil**
-- You **collect personal data** from individuals located in Brazil
-- **Data processing** takes place in Brazilian territory
-- You **offer goods or services** to the Brazilian market
-- You need to implement the **10 legal bases** of LGPD
-- You implement **consent** according to Brazilian standards
-- You must appoint an **Encarregado (DPO)** and report data to ANPD
-
----
-
-## Fundamental LGPD Concepts
-
-### The 10 Legal Bases (Art. 7)
-
-Unlike GDPR which has 6, LGPD defines **10 legal bases** for processing personal data:
-
-| # | Legal Basis | Description | Typical Use |
-|---|------------|-------------|-------------|
-| 1 | **Consent** | Free, informed, and unambiguous expression of will | Marketing, newsletters, non-essential cookies |
-| 2 | **Legal/regulatory obligation** | Comply with laws and regulations | Tax data, regulatory reports |
-| 3 | **Public administration** | Execution of public policies | Government only |
-| 4 | **Research by research body** | Research (anonymized data when possible) | Academic research |
-| 5 | **Contract execution** | Necessary to fulfill a contract with the data subject | Contracted service, deliveries |
-| 6 | **Exercise of rights** | In judicial, administrative, or arbitration proceedings | Legal defense |
-| 7 | **Protection of life** | Protect life or physical integrity | Medical emergencies |
-| 8 | **Health protection** | Procedures performed by health professionals | Hospitals, clinics |
-| 9 | **Legitimate interest** | Controller's legitimate interest (balanced with rights) | Analytics, security, fraud prevention |
-| 10 | **Credit protection** | Credit protection (e.g., Serasa/SPC) | Credit scoring |
-
-### Sensitive Personal Data (Art. 11)
-
-Processing only with **specific consent** or without consent in exceptional cases:
-
-- Racial or ethnic origin
-- Religious conviction
-- Political opinion
-- Union affiliation
-- Health or sex life data
-- Genetic or biometric data
-
----
-
-## Technical Implementation Requirements
+## Implementation
 
 ### 1. Data Model for LGPD
 
@@ -829,31 +770,19 @@ export class LGPDIncidenteService {
 
 ---
 
-## LGPD Best Practices
+## Agent workflow
 
-### ✅ DO
+1. Define applicable legal bases for each processing purpose of the system (Art. 7, all 10 bases).
+2. Implement data model with Prisma schema that records consents per purpose, data subject requests, and statuses.
+3. Implement granular consent service: registration per specific purpose (Art. 8 §4), facilitated revocation (Art. 8 §5), and stored evidence (Art. 8 §2).
+4. Implement all 9 data subject rights (Art. 18): confirmation, access, correction, anonymization/blocking, portability in structured format, deletion, sharing information, and revocation.
+5. Prepare RIPD (Impact Report) when processing may generate high risk (Art. 38).
+6. Implement incident assessment and notification service to ANPD and data subjects (Art. 48).
+7. Validate against the compliance checklist (legal bases, data subject rights, governance, security) before deploying.
 
-1. **Appoint an Encarregado (DPO)** and publish their contact information
-2. **Map all legal bases** for each processing purpose
-3. **Granular consent** — per purpose, not generic (Art. 8 §4)
-4. **Facilitate consent revocation** — as easy as it was to give it
-5. **Respond to data subject requests** within 15 business days (Art. 18 §5)
-6. **Prepare RIPD** when processing may generate high risk
-7. **Report security incidents** to ANPD and data subjects when there is relevant risk
-8. **Minimize data** — only collect what is necessary for the purpose
-9. **Maintain processing records** (Art. 37: record of operations)
-10. **Portability in structured format** readable by machines
+## Gotchas
 
-### ❌ DO NOT
-
-1. **DO NOT** process data without a defined legal basis
-2. **DO NOT** obtain generic or blanket consent
-3. **DO NOT** make consent revocation difficult
-4. **DO NOT** transfer data internationally without adequate guarantees
-5. **DO NOT** ignore data subject requests
-6. **DO NOT** retain data beyond what is necessary for the purpose
-7. **DO NOT** process sensitive data without specific and prominent consent
-8. **DO NOT** skip preparing the RIPD when necessary
+Generic or blanket consent is void under LGPD (Art. 8 §4) — always implement granular consent per purpose. Consent revocation must be as easy as granting it (Art. 8 §5); do not make the process difficult. The response deadline for data subject requests is 15 business days (Art. 18 §5), not calendar days — calculate excluding weekends. Do not process data without a defined legal basis. Do not process sensitive data without specific and prominent consent (Art. 11). The burden of proof for consent falls on the controller (Art. 8 §2) — store textoMostrado, ipAddress, userAgent, and timestamp. The right to deletion (Art. 18 VI) only applies to data processed based on consent; data with a legal obligation basis is retained (e.g., tax records for 7 years). The Encarregado (DPO) is mandatory for every controller, not optional as in GDPR. Incident notification to ANPD is required when there is "risco ou dano relevante" — sensitive data compromised or more than 1,000 affected data subjects. Do not transfer data internationally without adequate guarantees.
 
 ---
 
