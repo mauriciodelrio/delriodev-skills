@@ -1,19 +1,22 @@
 ---
 name: i18n-rules
 description: >
-  Internationalization rules for React/Next.js applications. Covers next-intl,
-  react-i18next, ICU MessageFormat, pluralization, date/number/currency formatting,
+  Use this skill when implementing internationalization in React/Next.js:
+  next-intl, ICU MessageFormat, pluralization, date/number/currency formatting,
   locale detection, RTL support, and translation file organization.
 ---
 
-# 🌍 Internationalization (i18n)
+# Internationalization (i18n)
 
-## Guiding Principle
+## Agent workflow
 
-> **i18n from day 1.** Never hardcode user-visible strings.
-> All text MUST go through the translation system, even if there's only one language today.
-
----
+1. Configure next-intl with routing and message files (section 1).
+2. Use `useTranslations` in Server/Client Components, `getTranslations` in Server Actions (section 2).
+3. ICU MessageFormat for plurals and gender select (section 3).
+4. `useFormatter` for dates, numbers, currency, and lists (section 4).
+5. Split translations by feature in large projects (section 5).
+6. Logical CSS properties (`ms-`, `ps-`, `text-start`) for RTL support (section 6).
+7. Middleware for locale detection: URL → Cookie → Accept-Language → default (section 7).
 
 ## 1. Setup with next-intl (Recommended for Next.js)
 
@@ -26,7 +29,6 @@ messages/
 ```
 
 ```json
-// messages/es.json
 {
   "common": {
     "save": "Guardar",
@@ -49,7 +51,6 @@ messages/
 ```
 
 ```tsx
-// i18n/request.ts — next-intl configuration
 import { getRequestConfig } from 'next-intl/server';
 import { routing } from './routing';
 
@@ -71,16 +72,13 @@ import { defineRouting } from 'next-intl/routing';
 export const routing = defineRouting({
   locales: ['es', 'en', 'pt'],
   defaultLocale: 'es',
-  localePrefix: 'as-needed', // Only prefix for non-default: /en/products
+  localePrefix: 'as-needed',
 });
 ```
-
----
 
 ## 2. Usage in Components
 
 ```tsx
-// ✅ Server Component — useTranslations
 import { useTranslations } from 'next-intl';
 
 export default function ProductsPage() {
@@ -94,7 +92,6 @@ export default function ProductsPage() {
   );
 }
 
-// ✅ Client Component — same syntax
 'use client';
 import { useTranslations } from 'next-intl';
 
@@ -103,16 +100,12 @@ export function AddToCartButton() {
   return <Button>{t('save')}</Button>;
 }
 
-// ✅ Server-side (outside components): API routes, Server Actions
 import { getTranslations } from 'next-intl/server';
 
 export async function createProduct(formData: FormData) {
   const t = await getTranslations('products');
-  // Use t() in validations, error messages, etc.
 }
 ```
-
----
 
 ## 3. ICU MessageFormat — Plurals and Interpolation
 
@@ -129,13 +122,10 @@ export async function createProduct(formData: FormData) {
 ```
 
 ```tsx
-// Usage
 t('notifications.unread', { count: 0 });   // "You have no notifications"
 t('notifications.unread', { count: 1 });   // "You have 1 unread notification"
 t('notifications.unread', { count: 5 });   // "You have 5 unread notifications"
 ```
-
----
 
 ## 4. Date, Number, and Currency Formatting
 
@@ -147,32 +137,18 @@ export function ProductPrice({ price, date }: { price: number; date: Date }) {
 
   return (
     <div>
-      {/* Currency — adapts to locale */}
       <p>{format.number(price, { style: 'currency', currency: 'USD' })}</p>
-      {/* es: US$1.234,56 | en: $1,234.56 */}
-
-      {/* Relative date */}
       <p>{format.relativeTime(date)}</p>
-      {/* es: "hace 3 días" | en: "3 days ago" */}
-
-      {/* Formatted date */}
       <p>{format.dateTime(date, { dateStyle: 'long' })}</p>
-      {/* es: "11 de abril de 2026" | en: "April 11, 2026" */}
-
-      {/* Lists */}
       <p>{format.list(['React', 'Next.js', 'TypeScript'], { type: 'conjunction' })}</p>
-      {/* es: "React, Next.js y TypeScript" | en: "React, Next.js, and TypeScript" */}
     </div>
   );
 }
 ```
 
----
-
 ## 5. Translation File Organization
 
 ```
-// ✅ For large projects: split by feature
 messages/
 ├── es/
 │   ├── common.json       # Shared texts
@@ -183,7 +159,6 @@ messages/
 ├── en/
 │   └── ...
 
-// ✅ Merge in config
 import deepmerge from 'deepmerge';
 
 const messages = deepmerge.all([
@@ -192,8 +167,6 @@ const messages = deepmerge.all([
   await import(`./messages/${locale}/products.json`),
 ]);
 ```
-
----
 
 ## 6. RTL (Right-to-Left) Support
 
@@ -214,22 +187,19 @@ export default async function LocaleLayout({ children }: { children: ReactNode }
   );
 }
 
-// ✅ Tailwind RTL utilities
-<div className="ml-4 rtl:mr-4 rtl:ml-0">  {/* Right margin in RTL */}
-<div className="text-left rtl:text-right">  {/* Adapted alignment */}
+// Tailwind RTL utilities (functional but verbose)
+<div className="ml-4 rtl:mr-4 rtl:ml-0">
+<div className="text-left rtl:text-right">
 
-// ✅ Better: use logical properties (no rtl: prefix needed)
-<div className="ms-4">          {/* margin-inline-start */}
-<div className="ps-4">          {/* padding-inline-start */}
-<div className="text-start">    {/* Automatically adapts */}
+// Prefer logical properties
+<div className="ms-4">
+<div className="ps-4">
+<div className="text-start">
 ```
-
----
 
 ## 7. Locale Detection
 
 ```tsx
-// middleware.ts — detection and redirect
 import createMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
 
@@ -238,60 +208,19 @@ export default createMiddleware(routing);
 export const config = {
   matcher: ['/', '/(es|en|pt)/:path*'],
 };
-
-// Detection priority order:
-// 1. URL prefix (/en/products)
-// 2. Cookie (NEXT_LOCALE)
-// 3. Accept-Language header
-// 4. Default locale
 ```
 
----
+## Gotchas
 
-## Mandatory Rules
+- Hardcoded strings in components break i18n — all visible text must go through `t()`.
+- Ternaries for plurals (`count === 1 ? 'product' : 'products'`) fail in languages with >2 plural forms — use ICU MessageFormat.
+- Concatenating translations (`t('greeting') + ' ' + name`) fails because word order varies by language — use interpolation `t('greeting', { name })`.
+- `toLocaleDateString` is inconsistent across environments — use `useFormatter` from next-intl.
+- Cryptic keys (`msg_42`) are impossible to maintain — use descriptive keys (`products.emptyState`).
+- `ml-`/`mr-` don't adapt to RTL — use logical properties (`ms-`, `me-`, `ps-`, `pe-`).
 
-1. **NEVER** hardcode user-visible strings in components
-2. **ALWAYS** use ICU MessageFormat for plurals (no manual ternaries)
-3. **ALWAYS** format dates/numbers with the i18n formatter (not `toLocaleDateString`)
-4. **NEVER** concatenate strings to form sentences (`t('hello') + name`) — use interpolation
-5. **ALWAYS** provide context for translators with comments in the JSON
-6. **Keys MUST** be descriptive: `products.emptyState` not `msg_42`
-7. Use **logical CSS properties** (`ms-`, `me-`, `ps-`, `pe-`) over `ml-`/`mr-`
+## Related skills
 
----
-
-## Anti-patterns
-
-```tsx
-// ❌ Hardcoded strings
-<button>Save</button>                        // ❌
-<button>{t('common.save')}</button>          // ✅
-
-// ❌ Ternaries for plurals
-{count === 1 ? 'product' : 'products'}       // ❌ Doesn't work in languages with >2 plural forms
-{t('products.count', { count })}             // ✅
-
-// ❌ Concatenating translated strings
-t('greeting') + ' ' + name                   // ❌ Word order varies by language
-t('greeting', { name })                      // ✅
-
-// ❌ Dates with toLocaleDateString
-new Date().toLocaleDateString('es')          // ❌ Inconsistent
-format.dateTime(date, { dateStyle: 'long' }) // ✅
-
-// ❌ Numeric or cryptic keys
-{ "msg_1": "Hello", "msg_2": "Goodbye" }    // ❌ Impossible to maintain
-```
-
----
-
-## Related Skills
-
-> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
-
-| Skill | Why |
-|-------|-----|
-| `a11y-rules` | `lang` attribute, translations of aria-labels, RTL layout |
-| `forms-and-validation-rules` | Translated error messages, i18n labels |
-| `error-handling-rules` | Translated error messages and toasts |
-| `seo-rules` | hreflang, canonical URLs per locale |
+- `a11y-rules` — `lang` attribute, aria-label translations, RTL layout
+- `forms-and-validation-rules` — translated error messages, i18n labels
+- `seo-rules` — hreflang, canonical URLs per locale
