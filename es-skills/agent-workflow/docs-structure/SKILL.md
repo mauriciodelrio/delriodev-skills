@@ -1,304 +1,190 @@
 ---
 name: docs-structure
 description: >
-  Convención de la carpeta .docs/ dentro de cada proyecto. Define qué sub-carpetas
-  existen, qué va en cada una, reglas de naming, y cuándo crear o actualizar archivos.
-  Esta carpeta es el centro nervioso de la comunicación entre desarrollador y agente.
+  Usa este skill cuando el usuario quiera organizar la documentación de un proyecto,
+  crear o mantener la carpeta .docs/, o definir dónde van features, reglas de negocio,
+  bitácoras de iteración o historial de implementación. Aplica también cuando el agente
+  necesite saber dónde leer contexto del proyecto o dónde registrar decisiones y trabajo
+  completado, incluso si el usuario no menciona ".docs/" explícitamente.
 ---
 
-# 📁 Docs Structure — Convención de la Carpeta `.docs/`
+# Docs Structure — Convención de la Carpeta `.docs/`
 
-## Principio
+> `.docs/` es el contrato entre el desarrollador y el agente.
+> Todo lo que el agente necesita saber está aquí. Todo lo que produce como documentación va aquí.
 
-> **`.docs/` es el contrato entre el desarrollador y el agente.**
-> Todo lo que el agente necesita saber sobre el proyecto está aquí.
-> Todo lo que el agente produce como documentación va aquí.
+## Flujo de trabajo del agente
 
----
+1. **Al iniciar trabajo** → leer `rules/` y el `memory/` del mes actual para contexto
+2. **Al recibir un feature** → leer `.docs/features/<nombre>/feature.md` y verificar que tenga A/C
+3. **Durante implementación** → crear o actualizar `context/iteration-YYYY-MM-DD.md` con progreso
+4. **Al completar un feature** → agregar entry en `memory/YYYY-MM.md` con el template obligatorio
+5. **Si `.docs/` no existe** → preguntar al desarrollador si debe crearla con la estructura estándar
 
 ## Estructura
 
 ```
 .docs/
-├── features/                    ← User Stories / Features a implementar
-│   ├── auth-login/
-│   │   └── feature.md
-│   ├── user-profile/
-│   │   └── feature.md
-│   └── payment-checkout/
-│       └── feature.md
-│
-├── brainstorming/               ← Ideas en exploración (pre-feature)
-│   ├── gamification-ideas.md
-│   └── notification-system.md
-│
-├── rules/                       ← Reglas específicas del proyecto
-│   ├── business-rules.md
-│   ├── api-conventions.md
-│   └── naming-conventions.md
-│
-├── context/                     ← Bitácora de iteración actual
-│   ├── iteration-2026-04-11.md
-│   └── iteration-2026-04-08.md
-│
-└── memory/                      ← Historial de lo implementado
-    ├── 2026-04.md
-    └── 2026-03.md
+├── features/          ← Features a implementar (solo el developer escribe)
+├── brainstorming/     ← Ideas en exploración (el agente colabora si se le pide)
+├── rules/             ← Reglas del proyecto (consultar ANTES de decidir)
+├── context/           ← Bitácora de iteración (el agente escribe aquí)
+└── memory/            ← Historial permanente (el agente escribe aquí)
 ```
 
 ---
 
 ## Carpeta: `features/`
 
-```
-Quién escribe:  El desarrollador
-Quién consume:  El agente
-Cuándo se crea: Cuando hay un feature definido listo para implementar
+**Escribe:** el desarrollador. **Consume:** el agente. El agente NUNCA edita features/, pero puede proponer cambios como sugerencias.
 
-Estructura interna: ver sub-skill requirements-format
+Cada feature tiene su propia carpeta con un archivo `feature.md`. Estructura interna: ver sub-skill `requirements-format`.
 
-Naming de carpetas:
-  ✅ kebab-case descriptivo: auth-login, user-profile, payment-checkout
-  ❌ IDs crípticos: US-001, feat-23
-  ❌ Nombres vagos: update, changes, new-stuff
+Naming: kebab-case descriptivo (`auth-login`, `user-profile`). Evitar IDs crípticos (`US-001`) o nombres vagos (`update`, `changes`).
 
-Cada feature tiene su propia carpeta con un archivo feature.md.
-Opcionalmente puede incluir archivos adicionales:
-  - wireframes/ (imágenes de referencia)
-  - api-spec.md (contratos de API específicos del feature)
-  - data-model.md (schema o modelo de datos)
-```
+Archivos opcionales por feature:
+- `wireframes/` — imágenes de referencia
+- `api-spec.md` — contratos de API del feature
+- `data-model.md` — schema o modelo de datos
 
 ---
 
 ## Carpeta: `brainstorming/`
 
+**Escribe:** el desarrollador inicia, el agente colabora cuando se le pide. **Consume:** ambos.
+
+Se crea cuando una idea necesita exploración antes de ser feature. Formato libre, con esta estructura sugerida:
+
+```markdown
+# [Nombre de la idea]
+
+## Contexto
+[Por qué estamos explorando esto]
+
+## Ideas iniciales
+- Idea A: ...
+- Idea B: ...
+
+## Preguntas abiertas
+- ¿...?
+
+## Q&A con agente
+**Dev:** [pregunta o escenario]
+**Agente:** [respuesta, análisis, propuesta]
+
+## Conclusiones
+[Lo que se decidió]
+
+## → Feature derivado
+[Link al feature en .docs/features/ cuando se gradúe]
 ```
-Quién escribe:  El desarrollador (inicio) + El agente (colaboración)
-Quién consume:  Ambos
-Cuándo se crea: Cuando hay una idea que necesita exploración antes de ser feature
 
-Formato: libre, pero con estructura sugerida:
-
-  # [Nombre de la idea]
-
-  ## Contexto
-  [Por qué estamos explorando esto]
-
-  ## Ideas iniciales
-  - Idea A: ...
-  - Idea B: ...
-
-  ## Preguntas abiertas
-  - ¿...?
-  - ¿...?
-
-  ## Q&A con agente
-  **Dev:** [pregunta o escenario]
-  **Agente:** [respuesta, análisis, propuesta]
-
-  ## Conclusiones
-  [Lo que se decidió]
-
-  ## → Feature derivado
-  [Link al feature en .docs/features/ cuando se gradúe]
-
-Regla: cuando un brainstorming madura lo suficiente para tener
-overview + goals + A/C claros → se gradúa a feature.
-El brainstorming original se mantiene como referencia histórica.
-```
+Cuando un brainstorming tiene overview + goals + A/C claros → se gradúa a `features/`. El original se mantiene como referencia histórica.
 
 ---
 
 ## Carpeta: `rules/`
 
-```
-Quién escribe:  El desarrollador
-Quién consume:  El agente
-Cuándo se crea: Cuando hay reglas específicas del proyecto
+**Escribe:** el desarrollador. **Consume:** el agente. Consultar SIEMPRE antes de tomar decisiones técnicas o de negocio.
 
-Contenido típico:
-  - Reglas de negocio de alto nivel
-  - Convenciones de API del proyecto (naming, versionado, response format)
-  - Restricciones técnicas ("no usar librería X", "máximo N dependencias")
-  - Decisiones arquitectónicas ya tomadas y su justificación
-  - Glosario de dominio (términos del negocio y su significado)
+Un archivo por dominio de reglas con bullet points concisos. Contenido típico:
+- Reglas de negocio de alto nivel
+- Convenciones de API (naming, versionado, response format)
+- Restricciones técnicas ("no usar librería X")
+- Decisiones arquitectónicas y su justificación
+- Glosario de dominio
 
-Formato:
-  Un archivo por dominio de reglas. Bullet points concisos.
-  El agente consulta esta carpeta ANTES de tomar decisiones técnicas.
+Ejemplo — `business-rules.md`:
 
-Ejemplo — business-rules.md:
+```markdown
+# Reglas de Negocio
 
-  # Reglas de Negocio
+## Usuarios
+- Un usuario puede tener máximo 3 workspaces activos
+- El plan free tiene límite de 5 miembros por workspace
+- Los emails son case-insensitive y se normalizan a lowercase
 
-  ## Usuarios
-  - Un usuario puede tener máximo 3 workspaces activos
-  - El plan free tiene límite de 5 miembros por workspace
-  - Los emails son case-insensitive y se normalizan a lowercase
-
-  ## Pagos
-  - Los precios siempre se almacenan en centavos (integer)
-  - Las suscripciones se cobran al inicio del período
-  - No hay reembolsos automáticos — requieren aprobación manual
+## Pagos
+- Precios siempre en centavos (integer)
+- Suscripciones se cobran al inicio del período
+- No hay reembolsos automáticos — requieren aprobación manual
 ```
 
 ---
 
 ## Carpeta: `context/`
 
-```
-Quién escribe:  El agente (principalmente)
-Quién consume:  El agente (al retomar), el desarrollador (para supervisar)
-Cuándo se crea: Al inicio de cada sesión de trabajo significativa
-Cuándo se actualiza: Durante la implementación, al terminar bloques
+**Escribe:** el agente. **Consume:** el agente (al retomar), el desarrollador (para supervisar).
 
-Propósito: bitácora de la iteración ACTUAL. Qué se está haciendo,
-qué decisiones se tomaron, qué queda pendiente.
+Bitácora de la iteración actual. Se crea al inicio de cada sesión de trabajo significativa. Naming: `iteration-YYYY-MM-DD.md` (uno por día o sesión).
 
-Naming: iteration-YYYY-MM-DD.md (una por día o sesión)
+**REGLA CRÍTICA:** actualizar context/ DURANTE el trabajo, no solo al final. Si el agente se desconecta a mitad de tarea, context/ debe reflejar exactamente dónde quedó.
 
-Formato:
+Template:
 
-  # Iteración — 2026-04-11
+```markdown
+# Iteración — YYYY-MM-DD
 
-  ## Objetivo
-  Implementar feature: auth-login
+## Objetivo
+[Feature o tarea en implementación]
 
-  ## Estado
-  🟢 Completado | 🟡 En progreso | 🔴 Bloqueado
+## Estado
+🟢 Completado | 🟡 En progreso | 🔴 Bloqueado
 
-  ## Trabajo realizado
-  - [x] Crear componente LoginForm
-  - [x] Implementar endpoint POST /auth/login
-  - [ ] Agregar validación de 2FA
-  - [ ] Tests de integración
+## Trabajo realizado
+- [x] Tarea completada
+- [ ] Tarea pendiente
 
-  ## Decisiones tomadas
-  - Se usó bcrypt en vez de argon2 por compatibilidad con hosting
-  - El token JWT expira en 15 min con refresh token de 7 días
+## Decisiones tomadas
+- [Decisión y justificación]
 
-  ## Bloqueantes / Preguntas pendientes
-  - ¿El 2FA es obligatorio o opcional por usuario?
+## Bloqueantes / Preguntas pendientes
+- [Pregunta para el desarrollador]
 
-  ## Próximos pasos
-  - Resolver pregunta de 2FA
-  - Completar tests
-
-REGLA: el agente actualiza context/ DURANTE el trabajo, no solo al final.
-Si el agente se desconecta a mitad de tarea, context/ debe reflejar
-exactamente dónde quedó.
+## Próximos pasos
+- [Lo que sigue]
 ```
 
 ---
 
 ## Carpeta: `memory/`
 
+**Escribe:** el agente. **Consume:** el agente (al retomar proyecto). Append-only: las entries pasadas NO se editan.
+
+Historial PERMANENTE de lo implementado. Solo hechos consumados — nunca planes ni TODOs.
+
+Naming: `YYYY-MM.md` (un archivo por mes).
+
+Template obligatorio:
+
+```markdown
+# Memory — YYYY-MM
+
+## YYYY-MM-DD — [nombre-del-feature]
+- **Feature:** [Descripción breve]
+- **Implementado:**
+  - [Lista de lo construido]
+- **Decisiones:**
+  - [Por qué X y no Y]
+- **Archivos principales:**
+  - [Rutas de archivos clave]
 ```
-Quién escribe:  El agente
-Quién consume:  El agente (al retomar proyecto)
-Cuándo se crea: Al completar un feature o bloque de trabajo
-Cuándo se actualiza: Append-only — nunca editar entries anteriores
 
-Propósito: historial PERMANENTE de lo implementado. No tiene próximos
-pasos ni pendientes — solo hechos consumados.
-
-Naming: YYYY-MM.md (un archivo por mes)
-
-Formato (template obligatorio):
-
-  # Memory — 2026-04
-
-  ## 2026-04-11 — auth-login
-  - **Feature:** Login con email y password
-  - **Implementado:**
-    - Componente LoginForm con validación Zod
-    - Endpoint POST /api/auth/login
-    - JWT con refresh token (15min / 7d)
-    - Middleware de autenticación
-    - Tests unitarios y de integración
-  - **Decisiones:**
-    - bcrypt sobre argon2 (compatibilidad)
-    - Token en httpOnly cookie (no localStorage)
-  - **Archivos principales:**
-    - src/components/auth/LoginForm.tsx
-    - src/app/api/auth/login/route.ts
-    - src/middleware.ts
-
-  ## 2026-04-08 — project-setup
-  - **Feature:** Setup inicial del proyecto
-  - **Implementado:**
-    - Next.js 15 + TypeScript + Tailwind
-    - Estructura de carpetas base
-    - ESLint + Prettier + Husky
-    - CI workflow (lint + test + build)
-  - **Decisiones:**
-    - App Router (no Pages)
-    - pnpm como package manager
-  - **Archivos principales:**
-    - package.json, tsconfig.json, .eslintrc.js
-
-REGLAS:
-  - Solo registrar lo que efectivamente se implementó
-  - NO incluir planes futuros ni TODOs
-  - Incluir decisiones técnicas relevantes (por qué X y no Y)
-  - Listar archivos principales creados/modificados
-  - Fecha exacta de cada entry
-  - Append-only: las entries pasadas NO se editan
-```
+Reglas de memory:
+- Solo registrar lo efectivamente implementado
+- Incluir decisiones técnicas relevantes
+- Listar archivos principales creados/modificados
+- Fecha exacta en cada entry
 
 ---
 
-## Gitignore
+## Gotchas
 
-```
-La inclusión de .docs/ en el repositorio es DECISIÓN del desarrollador.
-
-Si se incluye en git (default recomendado):
-  ✅ El equipo comparte contexto de features y reglas
-  ✅ El historial de decisiones queda versionado
-  ✅ Nuevos miembros del equipo tienen onboarding
-
-Si se excluye del git:
-  ✅ Documentación personal del dev
-  ✅ Brainstorming privados
-  ⚠️ Se pierde si no hay backup
-
-Opción mixta (recomendada para equipos):
-  # .gitignore
-  .docs/brainstorming/     # Ideas personales
-  .docs/context/           # Bitácora de sesión local
-  # NO ignorar:
-  # .docs/features/        # Compartido
-  # .docs/rules/           # Compartido
-  # .docs/memory/          # Compartido
-```
-
----
-
-## Reglas del Agente sobre `.docs/`
-
-```
-1. NUNCA borrar archivos de .docs/ sin confirmación explícita
-2. NUNCA editar features/ — eso lo escribe el desarrollador
-3. SÍ puede proponer cambios a features/ con sugerencias
-4. SÍ escribe en context/ y memory/ como parte de su flujo
-5. SÍ colabora en brainstorming/ cuando se le pide
-6. SIEMPRE consultar rules/ antes de decisiones técnicas/negocio
-7. Si .docs/ no existe, preguntar si debe crearla con la estructura estándar
-```
-
----
-
-## Anti-patrones
-
-```
-❌ Features sin A/C → el agente no debe implementar sin criterios de aceptación
-❌ Memory con TODOs o next steps → memory es solo hechos consumados
-❌ Context desactualizado → el agente debe actualizar context/ DURANTE el trabajo
-❌ Brainstorming que nunca se gradúa → si tiene overview + goals + A/C → mover a features/
-❌ Rules vacías o genéricas → mejor no tener rules que tener "ser consistente"
-❌ Un solo archivo context.md gigante → un archivo por iteración/día
-❌ Memory sin fechas → imposible reconstruir timeline
-❌ El agente editando features del desarrollador sin pedirlo
-```
+- El agente tiende a crear un solo `context.md` global — debe ser un archivo por iteración/día: `iteration-YYYY-MM-DD.md`
+- El agente puede querer editar `features/` directamente — eso es exclusivo del desarrollador; solo proponer cambios como sugerencias
+- Memory NO es para TODOs ni próximos pasos — solo hechos consumados con fecha exacta
+- No implementar features sin criterios de aceptación (A/C) definidos
+- Rules vacías o genéricas ("ser consistente") no aportan valor — mejor no tener rules
+- Si un brainstorming tiene overview + goals + A/C → debe graduarse a `features/`, no quedarse indefinidamente
+- NUNCA borrar archivos de `.docs/` sin confirmación explícita del desarrollador
+- Memory sin fechas hace imposible reconstruir la timeline del proyecto

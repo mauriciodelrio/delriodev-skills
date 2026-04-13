@@ -1,78 +1,34 @@
 ---
 name: project-documentation
 description: >
-  Rules for public project documentation (README, API docs, Storybook, etc.).
-  The agent does NOT create additional READMEs unless the developer explicitly
-  requests it. One single README per project, concise, in English, oriented so
-  that someone can clone, install, and run the project in minutes. Detailed
-  technical documentation goes in specialized tools, not in loose
-  markdown files.
+  Use this skill when the agent needs to create, update, or decide about a project's
+  public documentation (README, API docs, Storybook). Applies when creating new
+  projects, adding scripts/env vars, or when the agent considers creating an additional
+  README. Also applies if the user asks to document something and you need to decide
+  where it goes, even if they don't mention "README" explicitly.
 ---
 
-# 📄 Project Documentation — README and Public Documentation
+# Project Documentation — README and Public Documentation
 
-## Principle
+## Fundamental rules
 
-> **A README is not a book — it's a quick start guide.**
-> If someone clones the repo, the README tells them what it is, how to install it,
-> and how to run it. Nothing more. Everything else has its specific place.
+1. **One single README.md** at the project root, always in English. Optionally `README.es.md` if the developer asks.
+2. **NEVER create additional READMEs** in subfolders without explicit developer request. Exception: monorepos where each package/app can have its own, only if the dev asks.
+3. **README.md is a quick start guide**, not exhaustive documentation. Goal: someone can clone, install, and run the project in minutes.
+4. **Detailed documentation goes in specialized tools**: API → Swagger/OpenAPI, Components → Storybook, Architecture → `.docs/`, DB Schema → diagram tools.
 
----
+## When to update the README
 
-## Rule #1: ONE Single README
+**Do update:**
+- New script in package.json
+- New required environment variable
+- Tech stack change (fundamental dependency)
+- Significant folder structure change
+- New prerequisite
 
-```
-Each project has ONE README.md file at the root.
-That's it.
+**Don't update:** new feature (goes in `.docs/memory/`), bug fix, internal refactor, implementation detail changes.
 
-  ✅ /README.md                        ← the only one
-  ✅ /README.es.md                     ← Spanish version (if the dev wants)
-
-  ❌ /src/README.md
-  ❌ /src/components/README.md
-  ❌ /src/features/auth/README.md
-  ❌ /docs/README.md
-  ❌ /packages/api/README.md            ← except in monorepos (see below)
-
-EXCEPTION — Monorepos:
-  In monorepos with multiple packages/apps, each package/app
-  CAN have its own README.md if the developer requests it.
-  But the agent NEVER creates them on its own initiative.
-
-  ✅ /README.md                        ← monorepo overview
-  ✅ /apps/web/README.md               ← only if the dev asks
-  ✅ /packages/ui/README.md            ← only if the dev asks
-
-The agent NEVER creates an additional README without the
-developer EXPLICITLY requesting it.
-```
-
----
-
-## Rule #2: Language
-
-```
-README.md → ALWAYS in English.
-  It's the industry standard. Facilitates collaboration,
-  open source, onboarding of international devs.
-
-README.es.md → OPTIONAL Spanish version.
-  When creating a new project, the agent asks:
-  "Do you want a Spanish version of the README (README.es.md)?"
-
-  If yes: keep both synchronized.
-  If no: only README.md in English.
-
-.docs/ → The language of .docs/ is the developer's decision.
-  Not necessarily in English. Can be in Spanish or another language.
-  It's internal dev↔agent documentation, not public.
-```
-
----
-
-## Rule #3: README Structure
-
-A concise and well-indexed README. No unnecessary prose.
+## README Template
 
 ```markdown
 # Project Name
@@ -109,21 +65,12 @@ Brief description in 1-2 sentences. What it does and who it's for.
 ## Getting Started
 
 \```bash
-# Clone
 git clone https://github.com/org/project.git
 cd project
-
-# Install
 pnpm install
-
-# Environment
 cp .env.example .env.local
 # Fill in the required values
-
-# Database
 pnpm db:migrate
-
-# Run
 pnpm dev
 \```
 
@@ -173,98 +120,25 @@ See `.env.example` for all variables.
 4. Open PR with description
 ```
 
-### What to Include and What NOT
-
-```
-INCLUDE:
-  ✅ What the project is (1-2 sentences)
-  ✅ Tech stack (concise list)
-  ✅ How to install and run
-  ✅ Available scripts
-  ✅ Folder structure (high level, not every file)
-  ✅ Required environment variables
-  ✅ Links to specialized documentation
-  ✅ How to contribute (brief)
-
-DO NOT INCLUDE:
-  ❌ Detailed explanation of each feature
-  ❌ Complete API documentation → Swagger/OpenAPI
-  ❌ Component catalog → Storybook
-  ❌ Architecture guides → .docs/
-  ❌ Changelog → CHANGELOG.md or GitHub Releases
-  ❌ Excessive decorative badges (maximum 3-4 relevant ones)
-  ❌ Screenshots of every page
-  ❌ Deploy instructions → CI/CD docs or .docs/
-  ❌ Business rules → .docs/rules/
-```
+Do not include in the README: detailed feature explanations, complete API documentation, component catalogs, changelog, screenshots of every page, deploy instructions, business rules. If the README exceeds ~150 lines, something is extra.
 
 ---
 
-## Rule #4: Detailed Technical Documentation
+## New project setup
 
-```
-Detailed documentation does NOT go in READMEs — it goes in specialized
-tools depending on the type:
-
-| Documentation type | Tool | Where |
-|--------------------|------|-------|
-| REST/GraphQL API | Swagger / OpenAPI | /api-docs (auto-generated) |
-| UI Components | Storybook | pnpm storybook |
-| Architecture / decisions | .docs/ | .docs/memory/, .docs/rules/ |
-| Features / US | .docs/features/ | .docs/features/{name}/ |
-| DB Schema | Auto-generated diagram | Prisma Studio, dbdocs.io |
-| Runbooks / operations | .docs/ or internal wiki | Depending on the team |
-
-Rule: if the documentation has its own tool,
-use the tool. Don't duplicate in markdown.
-```
+1. Create `README.md` with the template above (in English)
+2. Ask: "Do you want a Spanish version of the README (README.es.md)?"
+3. Create `.env.example` with the necessary variables
+4. Do NOT create any other README in subfolders
 
 ---
 
-## Rule #5: When to Update the README
+## Gotchas
 
-```
-The agent updates the README when:
-  ✅ A new script is added to package.json
-  ✅ A new required environment variable is added
-  ✅ The tech stack changes (new fundamental dependency)
-  ✅ The folder structure changes significantly
-  ✅ A new prerequisite is added
-
-The agent does NOT update the README when:
-  ❌ A new feature is implemented (that goes in .docs/memory/)
-  ❌ A bug is fixed
-  ❌ An internal refactor is done
-  ❌ Implementation details change
-```
-
----
-
-## New Project Setup
-
-```
-When creating a new project, the agent:
-
-  1. Creates README.md with the standard structure (in English)
-  2. Asks: "Do you want a Spanish version of the README (README.es.md)?"
-  3. If yes → creates README.es.md with the same translated content
-  4. Creates .env.example with the necessary variables
-  5. Does NOT create any other README in subfolders
-```
-
----
-
-## Anti-patterns
-
-```
-❌ README per feature ("I added auth so I'm creating src/auth/README.md")
-❌ README per folder (a README in every directory)
-❌ README as API documentation (that's what Swagger is for)
-❌ README as changelog (that's what CHANGELOG.md or Releases is for)
-❌ README as a step-by-step tutorial for each feature
-❌ README over 500+ lines (if it exceeds ~150 lines, something is extra)
-❌ README in Spanish without an English version (English is the primary one)
-❌ README without a "Getting Started" section (the main purpose)
-❌ README with extensive code examples (one brief example per section is enough)
-❌ The agent creating READMEs on its own initiative without the dev asking
-```
+- The agent tends to create READMEs in subfolders when implementing features — NEVER do this without explicit request
+- The agent may want to document new features in the README — that goes in `.docs/memory/`, not the README
+- If there's a Spanish version (`README.es.md`), keep both synchronized when updating
+- README in Spanish without an English version is incorrect — English is always primary
+- README without "Getting Started" loses its main purpose
+- Extensive code examples in the README are unnecessary — one brief example per section is enough
+- If documentation has its own tool (Swagger, Storybook, etc.), use the tool — don't duplicate in markdown

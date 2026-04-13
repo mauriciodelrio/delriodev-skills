@@ -1,301 +1,190 @@
 ---
 name: docs-structure
 description: >
-  Convention for the .docs/ folder within each project. Defines what sub-folders
-  exist, what goes in each one, naming rules, and when to create or update files.
-  This folder is the nerve center of communication between developer and agent.
+  Use this skill when the user wants to organize project documentation, create or
+  maintain the .docs/ folder, or define where features, business rules, iteration logs,
+  or implementation history should go. Also applies when the agent needs to know where
+  to read project context or where to record decisions and completed work, even if the
+  user doesn't explicitly mention ".docs/".
 ---
 
-# 📁 Docs Structure — `.docs/` Folder Convention
+# Docs Structure — `.docs/` Folder Convention
 
-## Principle
+> `.docs/` is the contract between the developer and the agent.
+> Everything the agent needs to know is here. Everything it produces as documentation goes here.
 
-> **`.docs/` is the contract between the developer and the agent.**
-> Everything the agent needs to know about the project is here.
-> Everything the agent produces as documentation goes here.
+## Agent workflow
 
----
+1. **When starting work** → read `rules/` and the current month's `memory/` for context
+2. **When receiving a feature** → read `.docs/features/<name>/feature.md` and verify it has A/C
+3. **During implementation** → create or update `context/iteration-YYYY-MM-DD.md` with progress
+4. **When completing a feature** → add entry in `memory/YYYY-MM.md` using the mandatory template
+5. **If `.docs/` doesn't exist** → ask the developer whether to create it with the standard structure
 
 ## Structure
 
 ```
 .docs/
-├── features/                    ← User Stories / Features to implement
-│   ├── auth-login/
-│   │   └── feature.md
-│   ├── user-profile/
-│   │   └── feature.md
-│   └── payment-checkout/
-│       └── feature.md
-│
-├── brainstorming/               ← Ideas under exploration (pre-feature)
-│   ├── gamification-ideas.md
-│   └── notification-system.md
-│
-├── rules/                       ← Project-specific rules
-│   ├── business-rules.md
-│   ├── api-conventions.md
-│   └── naming-conventions.md
-│
-├── context/                     ← Current iteration log
-│   ├── iteration-2026-04-11.md
-│   └── iteration-2026-04-08.md
-│
-└── memory/                      ← History of what was implemented
-    ├── 2026-04.md
-    └── 2026-03.md
+├── features/          ← Features to implement (only the developer writes here)
+├── brainstorming/     ← Ideas under exploration (agent collaborates when asked)
+├── rules/             ← Project rules (consult BEFORE making decisions)
+├── context/           ← Iteration log (the agent writes here)
+└── memory/            ← Permanent history (the agent writes here)
 ```
 
 ---
 
 ## Folder: `features/`
 
-```
-Who writes:   The developer
-Who consumes: The agent
-When created: When there is a defined feature ready to implement
+**Writes:** the developer. **Consumes:** the agent. The agent NEVER edits features/, but can propose changes as suggestions.
 
-Internal structure: see sub-skill requirements-format
+Each feature has its own folder with a `feature.md` file. Internal structure: see sub-skill `requirements-format`.
 
-Folder naming:
-  ✅ Descriptive kebab-case: auth-login, user-profile, payment-checkout
-  ❌ Cryptic IDs: US-001, feat-23
-  ❌ Vague names: update, changes, new-stuff
+Naming: descriptive kebab-case (`auth-login`, `user-profile`). Avoid cryptic IDs (`US-001`) or vague names (`update`, `changes`).
 
-Each feature has its own folder with a feature.md file.
-Optionally it can include additional files:
-  - wireframes/ (reference images)
-  - api-spec.md (API contracts specific to the feature)
-  - data-model.md (schema or data model)
-```
+Optional files per feature:
+- `wireframes/` — reference images
+- `api-spec.md` — API contracts for the feature
+- `data-model.md` — schema or data model
 
 ---
 
 ## Folder: `brainstorming/`
 
+**Writes:** the developer initiates, the agent collaborates when asked. **Consumes:** both.
+
+Created when an idea needs exploration before becoming a feature. Free-form format, with this suggested structure:
+
+```markdown
+# [Idea Name]
+
+## Context
+[Why we're exploring this]
+
+## Initial Ideas
+- Idea A: ...
+- Idea B: ...
+
+## Open Questions
+- ...?
+
+## Q&A with Agent
+**Dev:** [question or scenario]
+**Agent:** [answer, analysis, proposal]
+
+## Conclusions
+[What was decided]
+
+## → Derived Feature
+[Link to the feature in .docs/features/ when it graduates]
 ```
-Who writes:   The developer (initiates) + The agent (collaborates)
-Who consumes: Both
-When created: When there is an idea that needs exploration before becoming a feature
 
-Format: free-form, but with suggested structure:
-
-  # [Idea Name]
-
-  ## Context
-  [Why we're exploring this]
-
-  ## Initial Ideas
-  - Idea A: ...
-  - Idea B: ...
-
-  ## Open Questions
-  - ...?
-  - ...?
-
-  ## Q&A with Agent
-  **Dev:** [question or scenario]
-  **Agent:** [answer, analysis, proposal]
-
-  ## Conclusions
-  [What was decided]
-
-  ## → Derived Feature
-  [Link to the feature in .docs/features/ when it graduates]
-
-Rule: when a brainstorming matures enough to have
-overview + goals + clear A/C → it graduates to a feature.
-The original brainstorming is kept as historical reference.
-```
+When a brainstorming has clear overview + goals + A/C → it graduates to `features/`. The original is kept as historical reference.
 
 ---
 
 ## Folder: `rules/`
 
-```
-Who writes:   The developer
-Who consumes: The agent
-When created: When there are project-specific rules
+**Writes:** the developer. **Consumes:** the agent. ALWAYS consult before making technical or business decisions.
 
-Typical content:
-  - High-level business rules
-  - Project API conventions (naming, versioning, response format)
-  - Technical restrictions ("don't use library X", "maximum N dependencies")
-  - Architectural decisions already made and their justification
-  - Domain glossary (business terms and their meaning)
+One file per rules domain with concise bullet points. Typical content:
+- High-level business rules
+- API conventions (naming, versioning, response format)
+- Technical restrictions ("don't use library X")
+- Architectural decisions and their justification
+- Domain glossary
 
-Format:
-  One file per rules domain. Concise bullet points.
-  The agent consults this folder BEFORE making technical decisions.
+Example — `business-rules.md`:
 
-Example — business-rules.md:
+```markdown
+# Business Rules
 
-  # Business Rules
+## Users
+- A user can have a maximum of 3 active workspaces
+- The free plan has a limit of 5 members per workspace
+- Emails are case-insensitive and normalized to lowercase
 
-  ## Users
-  - A user can have a maximum of 3 active workspaces
-  - The free plan has a limit of 5 members per workspace
-  - Emails are case-insensitive and normalized to lowercase
-
-  ## Payments
-  - Prices are always stored in cents (integer)
-  - Subscriptions are charged at the beginning of the period
-  - There are no automatic refunds — they require manual approval
+## Payments
+- Prices always stored in cents (integer)
+- Subscriptions charged at the beginning of the period
+- No automatic refunds — they require manual approval
 ```
 
 ---
 
 ## Folder: `context/`
 
-```
-Who writes:   The agent (primarily)
-Who consumes: The agent (when resuming), the developer (for oversight)
-When created: At the start of each significant work session
-When updated: During implementation, upon completing blocks
+**Writes:** the agent. **Consumes:** the agent (when resuming), the developer (for oversight).
 
-Purpose: log of the CURRENT iteration. What is being done,
-what decisions were made, what remains pending.
+Log of the current iteration. Created at the start of each significant work session. Naming: `iteration-YYYY-MM-DD.md` (one per day or session).
 
-Naming: iteration-YYYY-MM-DD.md (one per day or session)
+**CRITICAL RULE:** update context/ DURING work, not just at the end. If the agent disconnects mid-task, context/ must reflect exactly where it left off.
 
-Format:
+Template:
 
-  # Iteration — 2026-04-11
+```markdown
+# Iteration — YYYY-MM-DD
 
-  ## Objective
-  Implement feature: auth-login
+## Objective
+[Feature or task being implemented]
 
-  ## Status
-  🟢 Completed | 🟡 In Progress | 🔴 Blocked
+## Status
+🟢 Completed | 🟡 In Progress | 🔴 Blocked
 
-  ## Work Done
-  - [x] Create LoginForm component
-  - [x] Implement POST /auth/login endpoint
-  - [ ] Add 2FA validation
-  - [ ] Integration tests
+## Work Done
+- [x] Completed task
+- [ ] Pending task
 
-  ## Decisions Made
-  - Used bcrypt instead of argon2 for hosting compatibility
-  - JWT token expires in 15 min with 7-day refresh token
+## Decisions Made
+- [Decision and justification]
 
-  ## Blockers / Pending Questions
-  - Is 2FA mandatory or optional per user?
+## Blockers / Pending Questions
+- [Question for the developer]
 
-  ## Next Steps
-  - Resolve 2FA question
-  - Complete tests
-
-RULE: the agent updates context/ DURING work, not just at the end.
-If the agent disconnects mid-task, context/ must reflect
-exactly where it left off.
+## Next Steps
+- [What follows]
 ```
 
 ---
 
 ## Folder: `memory/`
 
+**Writes:** the agent. **Consumes:** the agent (when resuming project). Append-only: past entries are NOT edited.
+
+PERMANENT history of what was implemented. Only accomplished facts — never plans or TODOs.
+
+Naming: `YYYY-MM.md` (one file per month).
+
+Mandatory template:
+
+```markdown
+# Memory — YYYY-MM
+
+## YYYY-MM-DD — [feature-name]
+- **Feature:** [Brief description]
+- **Implemented:**
+  - [List of what was built]
+- **Decisions:**
+  - [Why X and not Y]
+- **Key files:**
+  - [Paths to key files]
 ```
-Who writes:   The agent
-Who consumes: The agent (when resuming project)
-When created: Upon completing a feature or work block
-When updated: Append-only — never edit previous entries
 
-Purpose: PERMANENT history of what was implemented. It has no next
-steps or pending items — only accomplished facts.
-
-Naming: YYYY-MM.md (one file per month)
-
-Format (mandatory template):
-
-  # Memory — 2026-04
-
-  ## 2026-04-11 — auth-login
-  - **Feature:** Login with email and password
-  - **Implemented:**
-    - LoginForm component with Zod validation
-    - POST /api/auth/login endpoint
-    - JWT with refresh token (15min / 7d)
-    - Authentication middleware
-    - Unit and integration tests
-  - **Decisions:**
-    - bcrypt over argon2 (compatibility)
-    - Token in httpOnly cookie (not localStorage)
-  - **Key files:**
-    - src/components/auth/LoginForm.tsx
-    - src/app/api/auth/login/route.ts
-    - src/middleware.ts
-
-  ## 2026-04-08 — project-setup
-  - **Feature:** Initial project setup
-  - **Implemented:**
-    - Next.js 15 + TypeScript + Tailwind
-    - Base folder structure
-    - ESLint + Prettier + Husky
-    - CI workflow (lint + test + build)
-  - **Decisions:**
-    - App Router (not Pages)
-    - pnpm as package manager
-  - **Key files:**
-    - package.json, tsconfig.json, .eslintrc.js
-
-RULES:
-  - Only record what was actually implemented
-  - Do NOT include future plans or TODOs
-  - Include relevant technical decisions (why X and not Y)
-  - List key files created/modified
-  - Exact date for each entry
-  - Append-only: past entries are NOT edited
-```
+Memory rules:
+- Only record what was actually implemented
+- Include relevant technical decisions
+- List key files created/modified
+- Exact date on each entry
 
 ---
 
-## Gitignore
+## Gotchas
 
-```
-Including .docs/ in the repository is the DEVELOPER'S decision.
-
-If included in git (recommended default):
-  ✅ The team shares feature context and rules
-  ✅ Decision history is versioned
-  ✅ New team members have onboarding
-
-If excluded from git:
-  ✅ Personal dev documentation
-  ✅ Private brainstorming
-  ⚠️ Lost if there's no backup
-
-Mixed option (recommended for teams):
-  # .gitignore
-  .docs/brainstorming/     # Personal ideas
-  .docs/context/           # Local session log
-  # DO NOT ignore:
-  # .docs/features/        # Shared
-  # .docs/rules/           # Shared
-  # .docs/memory/          # Shared
-```
-
----
-
-## Agent Rules for `.docs/`
-
-```
-1. NEVER delete files from .docs/ without explicit confirmation
-2. NEVER edit features/ — that is written by the developer
-3. CAN propose changes to features/ with suggestions
-4. DOES write to context/ and memory/ as part of its workflow
-5. DOES collaborate on brainstorming/ when asked
-6. ALWAYS consult rules/ before technical/business decisions
-7. If .docs/ doesn't exist, ask whether to create it with the standard structure
-```
-
----
-
-## Anti-patterns
-
-```
-❌ Features without A/C → the agent must not implement without acceptance criteria
-❌ Memory with TODOs or next steps → memory is only accomplished facts
-❌ Outdated context → the agent must update context/ DURING work
-❌ Brainstorming that never graduates → if it has overview + goals + A/C → move to features/
-❌ Empty or generic rules → better to have no rules than to have "be consistent"
-```
+- The agent tends to create a single `context.md` file — it must be one file per iteration/day: `iteration-YYYY-MM-DD.md`
+- The agent may want to edit `features/` directly — that is exclusive to the developer; only propose changes as suggestions
+- Memory is NOT for TODOs or next steps — only accomplished facts with exact dates
+- Do not implement features without defined acceptance criteria (A/C)
+- Empty or generic rules ("be consistent") add no value — better to have no rules
+- If a brainstorming has overview + goals + A/C → it must graduate to `features/`, not stay indefinitely
+- NEVER delete files from `.docs/` without explicit confirmation from the developer
+- Memory without dates makes it impossible to reconstruct the project timeline

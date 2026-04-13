@@ -1,105 +1,38 @@
 ---
 name: iteration-rules
 description: >
-  Defines how the agent decomposes features into tasks, executes them sequentially,
-  documents progress in context/, updates memory/ upon completion, and applies
-  validation checkpoints between significant blocks. Includes Definition of Done,
-  no-drift rule, and task granularity protocol.
+  Use this skill when the agent is about to implement a feature or work block.
+  Defines the full cycle: decompose into tasks, present plan, execute with
+  checkpoints, handle deviations (no-drift), verify A/C, and close with context/
+  and memory/. Applies whenever there is code to implement, even if the user doesn't
+  explicitly mention "iteration" or "plan".
 ---
 
-# ⚙️ Iteration Rules — Task Execution and Documentation
-
-## Principle
-
-> **Implementing is a controlled process, not an uncontrolled sprint.**
-> Each feature is decomposed, confirmed, executed in blocks,
-> documented as progress is made, and recorded upon completion.
-
----
+# Iteration Rules — Task Execution
 
 ## Iteration Flow
 
-```
-FEATURE RECEIVED (already went through requirements-format)
-│
-├── 1. DECOMPOSITION
-│   → Split feature into atomic tasks
-│   → Order by dependency
-│   → Estimate relative complexity
-│
-├── 2. CHECKPOINT — PLAN
-│   → Present task list to the developer
-│   → Request plan confirmation
-│
-├── 3. EXECUTION (for each task)
-│   ├── Mark task as in progress
-│   ├── Implement
-│   │── Make unit and integration tests for the new code
-│   ├── If there's a relevant technical decision → mention it
-│   ├── Significant block? → Validation checkpoint
-│   ├── Drift detected? → Pause, report (no-drift)
-│   ├── Update .docs/context/ as progress is made
-│   └── Mark task as completed
-│
-├── 4. VERIFICATION
-│   → Do all A/C pass?
-│   → Do tests pass?
-│   → Are there no regressions?
-│
-└── 5. CLOSURE
-    → Update .docs/memory/ with what was implemented
-    → Mark feature as completed in context/
-```
+1. **Decomposition** → split feature into atomic tasks, order by dependency
+2. **Plan** → present task list to the developer and request confirmation — do NOT implement without confirmation
+3. **Execution** → per task: implement, write tests, checkpoint each significant block, update `context/`
+4. **Verification** → verify each A/C individually, tests pass, no regressions
+5. **Closure** → update `memory/` with what was implemented, mark feature as completed in `context/`
+
+If a deviation is detected during execution → apply no-drift rule (see section below).
 
 ---
 
 ## 1. Task Decomposition
 
-### Granularity
+Each task must be: completable in a continuous block, verifiable (clear output), independent or with explicit dependency, and describable in one sentence.
 
-```
-Each task must be:
-  ✅ Completable in a continuous work block
-  ✅ Verifiable (has clear output)
-  ✅ Independent or with explicit dependency
-  ✅ Describable in one sentence
-
-Example — Feature: auth-login
-
-  Tasks:
-  1. Create DB schema for users table (migrations)
-  2. Implement POST /api/auth/register endpoint
-  3. Implement POST /api/auth/login endpoint
-  4. Implement authentication middleware (JWT verify)
-  5. Create RegisterForm component with validation
-  6. Create LoginForm component with validation
-  7. Implement route protection (/dashboard → redirect if not auth)
-  8. Implement lockout after failed attempts
-  9. Unit tests (endpoints + middleware)
-  10. Integration tests (full flow register → login → dashboard)
-```
-
-### Dependency Order
-
-```
-Tasks are ordered bottom-up:
-  1. Data layer (schema, migrations)
-  2. Backend (endpoints, business logic)
-  3. Middleware / infrastructure
-  4. Frontend (components, pages)
-  5. Integration (connect frontend with backend)
-  6. Tests
-  7. Cleanup and documentation
-
-Never start with the UI if the backend doesn't exist.
-Never implement tests before the code they test.
-```
+Order bottom-up: data layer → backend → middleware → frontend → integration → tests. Never start with UI if the backend doesn't exist.
 
 ---
 
-## 2. Checkpoint — Plan
+## 2. Plan
 
-Before touching code, the agent presents:
+Before touching code, present the plan to the developer:
 
 ```markdown
 ## Implementation Plan — auth-login
@@ -136,254 +69,105 @@ The agent **does NOT start implementing** without plan confirmation.
 
 ## 3. Execution
 
-### Per Task
+When starting each task, announce what will be done. When completing, confirm what was done. If there were changes from the plan, explain why.
 
-```
-When starting a task:
-  → Announce: "Implementing task N: [description]"
+**Block checkpoints:** after completing a logical group of tasks (e.g. entire backend), checkpoint with summary of what was done, A/C covered, and next block. Ask if there are adjustments.
 
-During the task:
-  → Implement the code
-  → If there's a relevant technical decision → mention it
-  → If there's a question → ask BEFORE assuming
-
-When completing a task:
-  → Confirm: "✅ Task N completed: [what was done]"
-  → If there were changes vs the plan → explain why
-```
-
-### Block Checkpoints
-
-```
-After completing a logical group of tasks, checkpoint:
-
-"I've completed the backend block (tasks 1-4):
-  - Users schema created with fields: id, name, email, password_hash, ...
-  - Register endpoint validating unique email, hashing with bcrypt
-  - Login endpoint with verification, JWT with 15min expiry
-  - Middleware verifying token on protected routes
-  
-  A/C covered: AC-1, AC-2, AC-3, AC-5, AC-9
-  
-  Next block: Frontend (tasks 5-7).
-  Any adjustments before continuing?"
-```
-
-### Context Update
-
-```
-When completing each block, update .docs/context/iteration-YYYY-MM-DD.md:
-
-  ## Work Done
-  - [x] Task 1: Users schema
-  - [x] Task 2: Register endpoint
-  - [x] Task 3: Login endpoint
-  - [x] Task 4: JWT Middleware
-  - [ ] Task 5: RegisterForm     ← next
-  - [ ] Task 6: LoginForm
-  ...
-
-  ## Decisions Made
-  - bcrypt for hashing (proposed in plan, confirmed)
-  - JWT in httpOnly cookie (proposed in plan, confirmed)
-
-Frequency: at least every 2-3 completed tasks.
-Do NOT wait until everything is finished to update context.
-```
+**Context updates:** update `.docs/context/iteration-YYYY-MM-DD.md` at least every 2-3 tasks. Do NOT wait until everything is finished. Format: see skill `docs-structure`.
 
 ---
 
-## 4. Verification
+## 4. Verification and Closure
 
 ### Pre-Closure Checklist
 
-```
 Before declaring a feature as completed:
 
-☐ Each A/C verified individually
-☐ Tests pass (unit + integration if applicable)
-☐ No regressions in existing functionality
-☐ Lint and type-check pass without errors
-☐ No TODOs or commented-out code left behind
-☐ New routes/endpoints are protected if applicable
-☐ Errors are handled (no empty catches or silent errors)
+- [ ] Each A/C verified individually
+- [ ] Tests pass (unit + integration if applicable)
+- [ ] No regressions in existing functionality
+- [ ] Lint and type-check pass without errors
+- [ ] No TODOs or commented-out code left behind
+- [ ] New routes/endpoints protected if applicable
+- [ ] Errors handled (no empty catches or silent errors)
+
+### Closure
+
+Upon completion: update `memory/` with what was implemented (format: see skill `docs-structure`) and mark feature as completed in `context/` with status 🟢.
+
+---
+
+## No-Drift Rule
+
+During implementation, if the agent detects a deviation, it MUST pause and report before continuing.
+
+**Drift types:**
+
+- **Scope creep** — the task requires implementing something outside the feature → propose the minimum for the A/C, or create a derived feature
+- **Missing dependency** — something needed isn't configured → report the dependency, propose as additional task or mark A/C as blocked
+- **Inconsistency** — an A/C contradicts existing code → ask which is correct, do NOT assume existing code is right
+- **Design decision** — multiple valid options with no definition in rules/ → present options with trade-offs, let the developer decide
+
+**Report format:**
+
 ```
+⚠️ DRIFT DETECTED — Type: [scope/dependency/inconsistency/design]
+
+Context: [what I was doing]
+Problem: [what I found]
+Impact: [what's affected if I continue or not]
+
+Options:
+A) [option] — [trade-off]
+B) [option] — [trade-off]
+
+Recommendation: [which and why]
+```
+
+---
+
+## Cross-Cutting Concerns
+
+After implementing each significant block of code, walk through this checklist. For each applicable item, consult the corresponding skill and apply its rules to the newly created code. Only mark the task as completed when all applicable items are met.
+
+- [ ] **Tests** — consult `frontend/testing-rules` or `backend/testing`. Minimum coverage: 80%
+- [ ] **Clean code** — consult `clean-code-principles`. JSDoc on public interfaces, named exports, atomic functions
+- [ ] **Documentation** — consult `agent-workflow/project-documentation`. README updated if: new script, new env var, structure change
+- [ ] **Accessibility** (frontend) — consult `frontend/a11y-rules`. WCAG 2.2 AA
+- [ ] **i18n** (user-visible text) — consult `frontend/i18n-rules`. Do NOT hardcode UI strings
+- [ ] **Security** — consult `frontend/security-rules` or `backend/security` + `governance/owasp-top-10`. Validate inputs, sanitize outputs
+- [ ] **Error handling** — consult `frontend/error-handling-rules` or `backend/error-handling`. No empty catches, typed errors
+- [ ] **Logging** (backend) — consult `backend/logging`. Structured logging, no PII, correlation IDs
 
 ### Definition of Done
 
-```
 A feature is DONE when:
-  1. ✅ All A/C are met
-  2. ✅ Tests pass
-  3. ✅ Code follows .docs/rules/
-  4. ✅ No unreported deviations from the plan
-  5. ✅ Context updated with final state
-  6. ✅ Memory updated with what was implemented
-```
+
+1. All A/C are met
+2. Tests pass (coverage ≥ 80%)
+3. Code follows `clean-code-principles` and `.docs/rules/`
+4. Cross-cutting concerns checklist fulfilled
+5. No unreported deviations from the plan
+6. Context updated with final state
+7. Memory updated with what was implemented
+8. README updated if applicable
 
 ---
 
-## 5. Closure
+## Handling Large Features
 
-### Update Memory
-
-```
-Upon completing the feature, add an entry to .docs/memory/YYYY-MM.md:
-
-  ## 2026-04-11 — auth-login
-  - **Feature:** Login with email and password
-  - **Implemented:**
-    - Users schema with migration
-    - POST /api/auth/register with validation
-    - POST /api/auth/login with JWT
-    - Authentication middleware
-    - LoginForm and RegisterForm with Zod
-    - Route protection
-    - Lockout after 5 failed attempts (per email, 15 min)
-    - Unit and integration tests
-  - **Decisions:**
-    - bcrypt over argon2 (availability on edge)
-    - JWT httpOnly cookie (security over localStorage)
-    - Lockout per email (not per IP, to avoid false positives on VPN)
-  - **Key files:**
-    - src/db/schema/users.ts
-    - src/app/api/auth/register/route.ts
-    - src/app/api/auth/login/route.ts
-    - src/middleware.ts
-    - src/components/auth/LoginForm.tsx
-    - src/components/auth/RegisterForm.tsx
-
-Format: see template in docs-structure
-```
-
-### Update Context (Final)
-
-```
-Mark the iteration as completed:
-
-  ## Status
-  🟢 Completed
-
-  ## Work Done
-  - [x] Task 1: Users schema
-  - [x] Task 2: Register endpoint
-  ...all marked...
-
-  ## Feature completed: ✅
-  → Recorded in memory/2026-04.md
-```
+If a feature has > 15 tasks or > 15 A/C → propose splitting into sub-features, each with its own `feature.md` in `.docs/features/`. If the developer prefers to keep it as one, group tasks into phases with more frequent checkpoints.
 
 ---
 
-## No-Drift Rule (Detailed)
+## Gotchas
 
-```
-DURING implementation, if the agent detects:
-
-TYPE 1 — SCOPE CREEP:
-  "To complete the lockout A/C, I would need to
-   implement a general rate limiting system."
-  → PAUSE. This exceeds the feature scope.
-  → Propose: implement only the minimum for the A/C,
-    or create a derived feature for full rate limiting.
-
-TYPE 2 — MISSING DEPENDENCY:
-  "The login needs to send a verification email but there's no
-   email service configured."
-  → PAUSE. Report the dependency.
-  → Propose: configure email service as an additional task,
-    or mark A/C as blocked and continue with the rest.
-
-TYPE 3 — INCONSISTENCY:
-  "The A/C says redirect to /dashboard but the existing code
-   uses /app as the main route."
-  → PAUSE. Ask which one is correct.
-  → Do NOT assume that the existing code is correct.
-```
-
----
-
-## Mandatory Cross-Cutting Concerns
-
-> **Every implementation block must pass through this checklist.**
-> When the agent completes code (component, endpoint, module, hook, service),
-> it MUST consult the domain orchestrator skill (`frontend/SKILL.md` or
-> `backend/SKILL.md`) to verify which cross-cutting skills apply.
-
-### Post-Implementation Checklist
-
-```
-AFTER implementing each significant block of code:
-
-☐ TESTS — Were tests created for the new code?
-    → Frontend: consult frontend/testing-rules
-    → Backend: consult backend/testing
-    → Minimum coverage: 80% (statements, branches, functions, lines)
-
-☐ CLEAN CODE — Were clean code principles applied?
-    → Consult clean-code-principles
-    → JSDoc on public interfaces/types and non-obvious functions
-    → Named exports, atomic functions, guard clauses
-
-☐ DOCUMENTATION — Does documentation need updating?
-    → Consult agent-workflow/project-documentation
-    → README is updated if: new script, new env var, structure change,
-      tech stack change, new prerequisite
-
-☐ ACCESSIBILITY (if frontend)
-    → Consult frontend/a11y-rules
-    → WCAG 2.2 AA, semantic roles, aria-labels, focus management
-
-☐ i18n (if there is user-visible text)
-    → Consult frontend/i18n-rules
-    → Do NOT hardcode UI strings — use translation system
-
-☐ SECURITY
-    → Frontend: consult frontend/security-rules
-    → Backend: consult backend/security + governance/owasp-top-10
-    → Validate inputs at boundaries, sanitize outputs
-
-☐ ERROR HANDLING
-    → Frontend: consult frontend/error-handling-rules
-    → Backend: consult backend/error-handling
-    → No empty catches, typed errors, fallback UI
-
-☐ LOGGING (if backend)
-    → Consult backend/logging
-    → Structured logging, no PII in logs, correlation IDs
-```
-
-### How It Works
-
-```
-The agent does NOT need to memorize all rules from every skill.
-The flow is:
-
-  1. Implement the main task
-  2. Walk through the checklist above
-  3. For each applicable ☐, CONSULT the corresponding skill
-  4. Apply that skill's rules to the newly created code
-  5. Only mark the task as completed when all applicable ☐ are met
-
-Example — A React component <PaymentForm> was created:
-  ☐ Tests → read frontend/testing-rules → create PaymentForm.test.tsx
-  ☐ Clean code → read clean-code-principles → JSDoc on props interface
-  ☐ a11y → read frontend/a11y-rules → labels, roles, focus trap
-  ☐ i18n → read frontend/i18n-rules → extract strings to translations
-  ☐ Security → read frontend/security-rules → sanitize payment inputs
-  ☐ Error handling → read frontend/error-handling-rules → error boundary
-```
-
-### Definition of Done (Updated)
-
-```
-A feature is DONE when:
-  1. ✅ All A/C are met
-  2. ✅ Tests pass (with coverage ≥ 80%)
-  3. ✅ Code follows clean-code-principles (JSDoc included)
-  4. ✅ Cross-cutting concerns checklist fulfilled
-  5. ✅ No unreported deviations from the plan
-  6. ✅ Context updated with final state
-  7. ✅ Memory updated with what was implemented
-  8. ✅ README updated if applicable (project-documentation)
-```
+- The agent tends to start coding without presenting the plan — always request confirmation first
+- The agent may resolve a deviation silently — all drift must be reported to the developer
+- Empty tests or trivial asserts (`expect(true).toBe(true)`) don't count as tests
+- Commented-out code as "placeholder" is not valid implementation — implement fully or don't implement
+- Don't wait until finishing everything to update `context/` — do it every 2-3 tasks
+- Tasks too large ("implement the backend") are not atomic — decompose further
+- Tasks too small ("create file X") create unnecessary overhead
+- Declaring done without verifying each A/C individually is a frequent mistake
+- Memory is only for accomplished facts — never include TODOs or future plans
