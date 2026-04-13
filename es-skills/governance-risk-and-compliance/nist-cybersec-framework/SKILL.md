@@ -1,57 +1,21 @@
 ---
 name: nist-cybersec-framework
 description: >
-  Skill del NIST Cybersecurity Framework (CSF) 2.0. Activa esta skill cuando implementes
-  controles de ciberseguridad siguiendo las funciones Govern, Identify, Protect, Detect,
-  Respond y Recover. Cubre gestión de riesgos, protección de infraestructura, detección
-  de amenazas, respuesta a incidentes y recuperación de servicios.
+  Usa este skill cuando implementes controles de ciberseguridad siguiendo las
+  funciones Govern, Identify, Protect, Detect, Respond y Recover. Aunque el
+  NIST CSF fue desarrollado por el gobierno de EE.UU., este skill se aplica
+  como marco de ciberseguridad para cualquier software independientemente de
+  la ubicación geográfica. Cubre gobernanza de seguridad, inventario de activos
+  y evaluación de riesgos, protección (MFA, headers, health checks), detección
+  de amenazas (fuerza bruta, viaje imposible, SQLi, XSS, path traversal),
+  respuesta automatizada con playbooks e incidentes, y recuperación con RTO/RPO.
 ---
 
-# 🛡️ NIST Cybersecurity Framework (CSF) 2.0
+# NIST Cybersecurity Framework (CSF) 2.0
 
-## Descripción General
+NIST CSF 2.0 (2024) es el marco de ciberseguridad más adoptado globalmente y debe aplicarse como referencia de seguridad para cualquier software, independientemente de la ubicación geográfica. Se organiza en 6 funciones: Govern (estrategia, políticas, riesgo, cadena de suministro), Identify (inventario de activos, evaluación de riesgos), Protect (acceso, MFA, encriptación, configuración segura), Detect (monitoreo continuo, detección de anomalías y ataques), Respond (playbooks, contención, análisis forense) y Recover (restauración, validación, lecciones aprendidas).
 
-El **NIST Cybersecurity Framework** es el marco de ciberseguridad más adoptado en el mundo, desarrollado por el National Institute of Standards and Technology de EE.UU. La versión 2.0 (2024) añade una sexta función: **Govern** (Gobernar), y amplía su alcance más allá de infraestructura crítica a cualquier organización.
-
-El framework no es obligatorio por ley (excepto para agencias federales de EE.UU.), pero es ampliamente adoptado como mejor práctica y frecuentemente referenciado en contratos y regulaciones.
-
----
-
-## Cuándo Activar esta Skill
-
-Activa esta skill **siempre** que:
-
-- Diseñes la **arquitectura de seguridad** de una aplicación
-- Implementes **detección de amenazas** (IDS, WAF, anomalías)
-- Configures **monitoreo y alertas** de seguridad
-- Desarrolles **planes de respuesta a incidentes**
-- Implementes **recuperación ante desastres**
-- Evalúes **riesgos de ciberseguridad** en tu stack
-- Necesites un **framework integral** para organizar controles de seguridad
-
----
-
-## Las 6 Funciones del NIST CSF 2.0
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    GOVERN (GV)                          │
-│         Estrategia, políticas, supervisión              │
-├──────────┬──────────┬──────────┬──────────┬────────────┤
-│ IDENTIFY │ PROTECT  │  DETECT  │ RESPOND  │  RECOVER   │
-│   (ID)   │   (PR)   │   (DE)   │   (RS)   │   (RC)     │
-│          │          │          │          │            │
-│ ¿Qué     │ ¿Cómo lo │ ¿Cómo    │ ¿Qué     │ ¿Cómo     │
-│ tenemos? │ protege- │ detecta- │ hacemos  │ volvemos  │
-│          │ mos?     │ mos      │ cuando   │ a la      │
-│          │          │ proble-  │ ocurre?  │ normalidad│
-│          │          │ mas?     │          │ ?         │
-└──────────┴──────────┴──────────┴──────────┴────────────┘
-```
-
----
-
-## Requisitos Técnicos por Función
+## Implementación
 
 ### 1. GOVERN (GV) — Gobernar
 
@@ -975,28 +939,19 @@ export class RecoveryService {
 
 ---
 
-## Buenas Prácticas NIST CSF
+## Flujo de trabajo del agente
 
-### ✅ HACER
+1. Definir la gobernanza de seguridad: políticas, matriz de riesgos con tolerancia aceptable, y requisitos de cadena de suministro (GV).
+2. Mantener inventario de activos con clasificación, criticidad, dependencias y tipos de datos; evaluar riesgos con fórmula impacto × probabilidad (ID).
+3. Implementar protección: MFA para operaciones sensibles, headers de seguridad (Cache-Control, HSTS, nosniff), validación de configuración segura pre-arranque, y health checks de dependencias (PR).
+4. Implementar detección: monitor de autenticación (fuerza bruta >5 intentos/15min, viaje imposible >2 IPs/2h), detección de SQLi/XSS/path traversal en middleware (DE).
+5. Configurar respuesta automatizada con playbooks por tipo de incidente (brute force, data exfiltration, DDoS) que ejecuten acciones como block IP, lock account, revoke sessions (RS).
+6. Implementar servicio de recuperación con plan por fases (assessment → containment → eradication → restoration → validation → monitoring → lessons learned) y RTO/RPO definidos (RC).
+7. Validar contra el checklist de cumplimiento (GV + ID + PR + DE + RS + RC) antes de desplegar.
 
-1. **Mantener inventario de activos** actualizado (ID.AM)
-2. **Evaluaciones de riesgos** periódicas (ID.RA)
-3. **MFA obligatorio** para acceso privilegiado (PR.AA)
-4. **Monitoreo continuo** de seguridad en tiempo real (DE.CM)
-5. **Playbooks de respuesta** documentados y probados (RS.MA)
-6. **Backups automatizados** con pruebas de restauración (RC.RP)
-7. **Post-mortems** sin culpas tras cada incidente (RC + lecciones)
-8. **Métricas de seguridad** — MTTD, MTTR, frecuencia de incidentes
-9. **Threat modeling** para nuevas features antes de implementar
-10. **Defense in depth** — múltiples capas de seguridad
+## Gotchas
 
-### ❌ NO HACER
-
-1. **NO** confiar solo en la seguridad perimetral
-2. **NO** ignorar alertas de seguridad (alert fatigue management)
-3. **NO** omitir la función Recover — la mayoría de orgs la descuida
-4. **NO** tener un solo punto de falla en la detección
-5. **NO** responder a incidentes sin un playbook definido
+No confiar solo en seguridad perimetral — aplicar defense in depth con múltiples capas. La función Recover es la más descuidada por la mayoría de organizaciones; no omitirla. No responder a incidentes sin playbook definido — cada tipo de incidente debe tener acciones automatizadas y runbook documentado. Gestionar alert fatigue: configurar umbrales apropiados para evitar ignorar alertas legítimas. El riesgo residual se reduce por controles existentes pero nunca más de 50% — no sobreestimar la mitigación. Verificar credenciales por defecto y JWT_SECRET (mínimo 32 caracteres) antes de arrancar en producción. No tener un solo punto de falla en la detección. Los post-mortems deben ser blameless y programarse dentro de 72 horas. Métricas clave a rastrear: MTTD (tiempo medio de detección), MTTR (tiempo medio de recuperación) y frecuencia de incidentes. Realizar threat modeling para nuevas features antes de implementar.
 
 ---
 
