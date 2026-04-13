@@ -1,24 +1,26 @@
 ---
 name: cost-and-scaling
 description: >
-  Framework de decisiones para optimización de costos y estrategias de escalado.
-  Cubre estimación de costos por tier, ahorro con Reserved Instances y Savings Plans,
-  auto-scaling, AWS Budgets, alertas de gasto, y anti-patrones de costo. El presupuesto
-  es un constraint transversal — esta skill valida que la arquitectura propuesta
-  sea viable dentro del presupuesto del proyecto.
+  Usa esta skill cuando necesites estimar costos, optimizar gasto o definir
+  estrategias de escalado. Cubre estimación por tier, Reserved Instances,
+  Savings Plans, auto-scaling, AWS Budgets y alertas de gasto. El presupuesto
+  es un constraint de diseño transversal.
 ---
 
-# 💰 Cost & Scaling — Optimización de Costos y Escalado
+# Cost & Scaling — Optimización de Costos y Escalado
 
-## Principio
+## Flujo de trabajo del agente
 
-> **El presupuesto no es una sugerencia — es un constraint de diseño.**
-> Toda decisión arquitectónica pasa por el filtro del costo. No existe
-> la "mejor" arquitectura si no cabe en el presupuesto.
+1. Identificar el tier de presupuesto del proyecto (sección 1).
+2. Seleccionar stack según tier y fase del producto.
+3. Aplicar estrategias de ahorro correspondientes (sección 2).
+4. Configurar auto-scaling según compute elegido (sección 3).
+5. Configurar budgets, alertas y validar con el checklist (sección 4).
 
----
+> El presupuesto no es una sugerencia — es un constraint de diseño.
+> Toda decisión arquitectónica pasa por el filtro del costo.
 
-## Estimación de Costos por Tier
+## 1. Estimación de costos por tier
 
 ### Tier: Mínimo ($0–$50/mes)
 
@@ -110,12 +112,10 @@ Stack típico:
   ├── Security: WAF + Shield                             = $30–50
   └── CI/CD: GitHub Enterprise + Actions                 = $50–100
 
-Costo total: $1,500–3,000/mes
+Total cost: $1,500–$3,000/month
 ```
 
----
-
-## Estrategias de Ahorro
+## 2. Estrategias de ahorro
 
 ### 1. Serverless First (Ahorro: 50-80% vs always-on)
 
@@ -172,16 +172,9 @@ Lambda:
   - AWS Lambda Power Tuning: herramienta oficial para esto
 ```
 
-### 4. Storage Lifecycle
+### 4. Storage lifecycle
 
-```
-Configurar lifecycle policies en S3 (referencia: storage-and-cdn skill):
-  - Standard → Standard-IA a los 30-90 días
-  - Standard-IA → Glacier a los 365 días
-  - Eliminar archivos temporales automáticamente
-
-Ahorro potencial: 40-90% en archivos antiguos
-```
+Configurar lifecycle policies en S3 (referencia: storage-and-cdn skill): Standard → Standard-IA a los 30–90 días. Standard-IA → Glacier a los 365 días. Eliminar archivos temporales automáticamente. **Ahorro potencial: 40–90% en archivos antiguos.**
 
 ### 5. NAT Gateway Optimization
 
@@ -197,25 +190,16 @@ Opciones para reducir:
   4. Sin VPC: si puedes evitarlo (Lambda + DynamoDB sin VPC)
 ```
 
----
-
-## Auto-Scaling
+## 3. Auto-Scaling
 
 ### Lambda
 
-```
-Auto-scaling nativo — no necesitas configurar nada.
-Escala de 0 a 1,000 (default) concurrentes automáticamente.
+Auto-scaling nativo — escala de 0 a 1,000 concurrentes automáticamente sin configurar nada.
 
-Configuraciones:
-  - Reserved Concurrency: garantiza capacidad para funciones críticas
-  - Provisioned Concurrency: pre-calentado para evitar cold starts
-    ($$$: pagas por capacidad reservada incluso sin uso)
+- **Reserved Concurrency:** garantiza capacidad para funciones críticas.
+- **Provisioned Concurrency:** pre-calentado para evitar cold starts (pagas por capacidad reservada incluso sin uso).
 
-Cuándo activar Provisioned Concurrency:
-  ✅ API time-sensitive donde cold starts son inaceptables
-  ❌ Todo lo demás (cold start de 200ms es aceptable para la mayoría)
-```
+**Cuándo activar Provisioned Concurrency:** solo para APIs time-sensitive donde cold starts son inaceptables. Para lo demás, un cold start de 200ms es aceptable.
 
 ### ECS Fargate
 
@@ -250,20 +234,11 @@ resource "aws_appautoscaling_policy" "cpu" {
 
 ### RDS
 
-```
-Auto-scaling de storage:
-  - Configurar max_allocated_storage
-  - Se expande automáticamente cuando storage > 90%
+**Storage auto-scaling:** configurar `max_allocated_storage` — se expande automáticamente cuando storage > 90%.
 
-Read Replicas para escalar lectura:
-  - Cuándo: read-heavy workload (analytics, búsquedas)
-  - Cómo: app routing queries de lectura a replica
-  - Costo: mismo que la instancia primaria
-```
+**Read Replicas para escalar lectura:** usar cuando hay read-heavy workload (analytics, búsquedas). La app enruta queries de lectura a la replica. Costo: mismo que la instancia primaria.
 
----
-
-## AWS Budgets y Alertas
+## 4. AWS Budgets y alertas
 
 ```hcl
 # Terraform — Budget con alertas
@@ -300,24 +275,20 @@ resource "aws_budgets_budget" "monthly" {
 }
 ```
 
-### Checklist de Cost Control
+### Checklist de cost control
 
-```
-☐ AWS Budgets configurado con alertas al 80% y 100%
-☐ Cost Explorer habilitado (revisar semanalmente)
-☐ Tags en todos los recursos (Environment, Service, Owner)
-☐ Lifecycle policies en S3
-☐ Log retention configurado (no indefinido)
-☐ Dev/Staging apagado fuera de horario (o con instancias más pequeñas)
-☐ Reserved Instances evaluados después de 3 meses estables
-☐ Right-sizing review trimestral
-☐ Unused resources limpiados (AMIs, snapshots, EIPs no asociados)
-☐ NAT Gateway justificado (o eliminado si no es necesario)
-```
+- [ ] AWS Budgets configurado con alertas al 80% y 100%
+- [ ] Cost Explorer habilitado (revisar semanalmente)
+- [ ] Tags en todos los recursos (Environment, Service, Owner)
+- [ ] Lifecycle policies en S3
+- [ ] Log retention configurado (no indefinido)
+- [ ] Dev/Staging apagado fuera de horario (o con instancias más pequeñas)
+- [ ] Reserved Instances evaluados después de 3 meses estables
+- [ ] Right-sizing review trimestral
+- [ ] Unused resources limpiados (AMIs, snapshots, EIPs no asociados)
+- [ ] NAT Gateway justificado (o eliminado si no es necesario)
 
----
-
-## Herramienta de IaC — Decisión
+## 5. Herramienta de IaC — Decisión
 
 ```
 El agente recomienda IaC basándose en el equipo y proyecto:
@@ -345,54 +316,28 @@ El agente recomienda IaC basándose en el equipo y proyecto:
 REGLA: el agente propone la herramienta y justifica. No asume.
 ```
 
----
+## 6. Escalado por fase del producto
 
-## Escalado por Fase del Producto
+**Fase 1 — MVP (0–100 usuarios):** Serverless puro (Lambda + DynamoDB/Neon + S3 + Vercel). $0–50/mes. Foco en velocidad de desarrollo.
 
-```
-FASE 1: MVP (0–100 usuarios)
-  → Serverless puro: Lambda + DynamoDB/Neon + S3 + Vercel
-  → $0–50/mes
-  → Foco en velocidad de desarrollo, no en infra
+**Fase 2 — Product-Market Fit (100–1,000 usuarios):** Serverless con más servicios (Redis, SQS, Sentry). Considerar RDS si necesitas SQL. $50–300/mes. Foco en reliability y monitoring.
 
-FASE 2: Product-Market Fit (100–1,000 usuarios)
-  → Serverless con más servicios: add Redis, SQS, Sentry
-  → Considerar RDS si necesitas SQL
-  → $50–300/mes
-  → Foco en reliability y monitoring
+**Fase 3 — Growth (1,000–10,000 usuarios):** Evaluar Fargate si Lambda tiene limits. Multi-AZ para HA. CDN global, cache agresivo. $300–1,500/mes. Foco en performance y escalabilidad.
 
-FASE 3: Growth (1,000–10,000 usuarios)
-  → Evaluar Fargate si Lambda tiene limits
-  → Multi-AZ para HA
-  → CDN global, cache agresivo
-  → $300–1,500/mes
-  → Foco en performance y escalabilidad
+**Fase 4 — Scale (10,000+ usuarios):** Auto-scaling en todo. Read replicas, cache distribuido. Posibles microservicios para dominios clave. Reserved Instances/Savings Plans. $1,500+/mes. Foco en optimización de costo y resilience.
 
-FASE 4: Scale (10,000+ usuarios)
-  → Auto-scaling en todo
-  → Read replicas, cache distribuido
-  → Posibles microservicios para dominios clave
-  → Reserved Instances/Savings Plans
-  → $1,500+/mes
-  → Foco en optimización de costo y resilience
-```
+## 7. Gotchas
 
----
-
-## Anti-patrones
-
-```
-❌ Over-provisioning "por si acaso" → right-size basado en datos reales
-❌ Reserved Instances al día 1 → esperar 3+ meses de datos
-❌ NAT Gateway sin necesidad → $384/año mínimo por nada
-❌ RDS Multi-AZ en dev/staging → $0 beneficio, doble costo
-❌ Logs sin retención → crece indefinidamente
-❌ ECS tasks con más CPU/RAM de lo necesario → revisar métricas
-❌ Lambda con Provisioned Concurrency para APIs no time-sensitive
-❌ Un solo ambiente (prod) sin staging → cambios no testeados
-❌ No usar tags → no puedes saber qué servicio gasta qué
-❌ Free tier mentality en producción → limits causan outages
-❌ Kubernetes para 2 servicios → complejidad brutal sin beneficio
-❌ Microservicios para un MVP → overhead organizacional y técnico
-❌ Ignorar el storage de snapshots/backups antiguos
-```
+- Over-provisioning "por si acaso" — right-size basado en datos reales.
+- Reserved Instances al día 1 — esperar 3+ meses de datos.
+- NAT Gateway sin necesidad — $384/año mínimo por nada.
+- RDS Multi-AZ en dev/staging — $0 beneficio, doble costo.
+- Logs sin retención — crece indefinidamente.
+- ECS tasks con más CPU/RAM de lo necesario — revisar métricas.
+- Lambda con Provisioned Concurrency para APIs no time-sensitive.
+- Un solo ambiente (prod) sin staging — cambios no testeados.
+- No usar tags — no puedes saber qué servicio gasta qué.
+- Free tier mentality en producción — limits causan outages.
+- Kubernetes para 2 servicios — complejidad brutal sin beneficio.
+- Microservicios para un MVP — overhead organizacional y técnico.
+- Ignorar el storage de snapshots/backups antiguos.
