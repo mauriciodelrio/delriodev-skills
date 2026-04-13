@@ -1,18 +1,22 @@
 ---
 name: git-usage
 description: >
-  Git usage rules for software projects. Covers Conventional Commits,
-  concise commit messages, Husky + lint-staged + commitlint for pre-commit
-  validation, granular commits per task, push per feature, branch naming,
-  PR template, rebase strategy, and .gitignore.
+  Use this skill in every Git operation: commits, branches, PRs, push,
+  rebase and hook configuration. Apply Conventional Commits, granular
+  commits per task, push per feature, branch naming, Husky + lint-staged
+  + commitlint, PR template, rebase strategy and .gitignore.
 ---
 
-# 🌿 Git Usage — Rules
+# Git Usage
 
-## Guiding Principle
+## Agent workflow
 
-> **Every commit tells a story.** A clean history is living documentation.
-> Small and frequent commits, push only when the feature is complete.
+1. Every commit follows Conventional Commits (`<type>(<scope>): <description>` ≤ 150 chars, imperative)
+2. Granular commits: one commit = one logical unit of work. Never a giant commit per feature
+3. Push only when the feature is complete (not after each commit)
+4. Branches with format `<type>/<short-description>` in lowercase and hyphens
+5. Rebase on main before push. Never `--force` on shared branches
+6. Validate against the Gotchas section before executing Git operations
 
 ---
 
@@ -443,17 +447,15 @@ git commit --amend -m "new message"  # Change message
 
 ---
 
-## Anti-patterns
+## Gotchas
 
-```bash
-# ❌ git add . && git commit -m "changes"       — meaningless message
-# ❌ git commit -m "fix"                         — doesn't follow conventional commits
-# ❌ One single commit per feature with 40 files — not granular
-# ❌ Push after each commit                      — noise in CI and PRs
-# ❌ git push --force on shared branches         — rewrites others' history
-# ❌ Commits with .env files or secrets          — data leakage
-# ❌ Past-tense messages "added", "fixed"        — use imperative: "add", "fix"
-# ❌ Disabling husky with --no-verify            — bypassing validations
-# ❌ Branches with names like "test", "temp"     — use prefix + description
-# ❌ Unnecessary local merge commits             — use rebase
-```
+- Never `git add . && git commit -m "changes"` — the message must follow Conventional Commits with type, optional scope and meaningful description.
+- A giant commit with 40 files is not granular. Each commit must represent a completed logical unit.
+- Don't push after each individual commit — it creates noise in CI and PRs. Push when the feature is complete.
+- Never `git push --force` on shared branches (main, develop) — it rewrites others' history.
+- Never commit `.env` files or secrets. Verify `.gitignore` before the first commit of the project.
+- Messages in present imperative ("add", "fix"), never past tense ("added", "fixed").
+- Never disable husky with `--no-verify` — the validations exist for a reason.
+- Branches must have a descriptive prefix (`feat/`, `fix/`), never generic names like "test" or "temp".
+- Don't create unnecessary local merge commits — use rebase to keep linear history.
+- Never rebase commits already pushed to a remote branch.
