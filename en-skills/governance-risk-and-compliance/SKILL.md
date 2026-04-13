@@ -1,44 +1,27 @@
 ---
 name: governance-risk-and-compliance
 description: >
-  Master index for Governance, Risk and Compliance (GRC). Activate this skill when
-  the developer works on any aspect of regulatory compliance, data protection,
-  information security, or software auditing. Redirect to the specific skill based on
-  the applicable regulation.
+  Use this skill as the entry point when the software requires regulatory
+  compliance, data protection, information security, or auditing. Routes to the
+  specific sub-skill based on the applicable regulation. All sub-skills apply
+  regardless of geographic location.
 ---
 
-# 🛡️ Governance, Risk & Compliance (GRC) — Master Index
+# Governance, Risk & Compliance (GRC) — Master Index
 
-## General Description
+This skill acts as a router for all security regulations and standards. Each sub-skill contains detailed instructions, Node.js/TypeScript code templates, and compliance checklists. All sub-skills must be applied as security standards regardless of the geographic location of users.
 
-This skill acts as the entry point and router for all security regulations and standards implemented in this repository. Each sub-skill contains detailed instructions, code examples in **Node.js/TypeScript**, and compliance checklists.
-
-## When to Activate this Skill
-
-Activate this skill when the development context involves **any** of the following scenarios:
-
-- Handling **personal data** from users (name, email, IP address, cookies, etc.)
-- Processing **health data** (medical records, diagnoses, prescriptions)
-- Storing or transmitting **payment card data**
-- Designing **security architecture** for web applications/APIs
-- Security audits or preparation for **certifications**
-- Implementing **logging, monitoring, or incident response**
-- Developing software that operates in **regulated markets** (EU, US, Brazil, etc.)
-- Code review focused on **security vulnerabilities**
-
----
-
-## 🎯 Sub-Skill Activation Guide (Triggers)
+## Sub-Skill Activation Guide (Triggers)
 
 Use the following table to determine **which sub-skill to invoke** based on the keywords, context, or type of task the developer requests. If multiple skills apply, invoke them all.
 
 ### GDPR
-- **Keywords**: GDPR, RGPD, EU personal data, European data protection, consent, right to be forgotten, right of access, rectification, portability, DPIA, DPO, legal bases, legitimate interest, European Union, EEA, cookies, privacy policy EU
-- **Activate when**: The code processes data from users in the EU/EEA, implements consent forms for European users, handles cookies, implements data subject rights under European legislation, or configures international data transfers from the EU
+- **Keywords**: GDPR, RGPD, personal data, data protection, consent, right to be forgotten, right of access, rectification, portability, DPIA, DPO, legal bases, legitimate interest, cookies, privacy policy
+- **Activate when**: The code processes personal data from users, implements consent forms, handles cookies, implements data subject rights, or configures international data transfers
 
 ### HIPAA
 - **Keywords**: HIPAA, PHI, health information, health data, medical data, patient, ePHI, covered entity, business associate, BAA, healthcare, medical history, medical record, diagnosis, Protected Health Information, HITECH, de-identification
-- **Activate when**: The software handles patient health data in the US, integrates with health systems (EHR/EMR), implements patient portals, or any system that touches protected health information
+- **Activate when**: The software handles patient health data, integrates with health systems (EHR/EMR), implements patient portals, or any system that touches protected health information
 
 ### ISO-27001
 - **Keywords**: ISO 27001, ISO 27002, ISMS, risk management, information classification, access control ABAC/RBAC, business continuity, Annex A, security certification, security policy, asset management, operational security
@@ -54,84 +37,84 @@ Use the following table to determine **which sub-skill to invoke** based on the 
 
 ### SOC2
 - **Keywords**: SOC 2, SOC2, Trust Service Criteria, AICPA, SaaS compliance, availability, SLA, uptime, change management, access review, multi-tenant, confidentiality, processing integrity, SOC audit
-- **Activate when**: Developing a SaaS/Cloud product for B2B customers, implementing formal change management, periodic access reviews, SLA monitoring, multi-tenant isolation, or preparing for a SOC 2 audit
+- **Activate when**: Developing a SaaS/Cloud product, implementing formal change management, periodic access reviews, SLA monitoring, multi-tenant isolation, or preparing for a SOC 2 audit
 
 ### OWASP-Top-10
 - **Keywords**: OWASP, XSS, SQL injection, injection, CSRF, SSRF, broken access control, authentication, sanitization, input validation, web security, vulnerability, helmet, CORS, rate limiting, Content Security Policy, CSP, session management, deserialization
-- **Activate when**: Writing ANY HTTP endpoint, processing user input, implementing authentication/authorization, configuring an Express/Fastify server, rendering dynamic data on the frontend, fetching external URLs, or reviewing code for vulnerabilities. **This skill should be activated by default in all web development.**
+- **Activate when**: Writing ANY HTTP endpoint, processing user input, implementing authentication/authorization, configuring an Express/Fastify server, rendering dynamic data on the frontend, fetching external URLs, or reviewing code for vulnerabilities. This skill should be activated by default in all web development.
 
 ### CCPA-CPRA
-- **Keywords**: CCPA, CPRA, California privacy, Do Not Sell, Do Not Share, opt-out, Global Privacy Control, GPC, consumer rights, California personal data, right to know, right to delete, Sensitive Personal Information, SPI, CPPA, notice at collection
-- **Activate when**: The application has users in California, implements opt-out mechanisms for data sale/sharing, detects browser GPC signals, or manages California consumer rights requests
+- **Keywords**: CCPA, CPRA, Do Not Sell, Do Not Share, opt-out, Global Privacy Control, GPC, consumer rights, right to know, right to delete, Sensitive Personal Information, SPI, notice at collection
+- **Activate when**: The application implements opt-out mechanisms for data sale/sharing, detects browser GPC signals, or manages consumer rights requests
 
 ### LGPD
-- **Keywords**: LGPD, Lei Geral de Proteção de Dados, personal data, Brazil, ANPD, consent, data subject, DPO, legal basis, RIPD, data processing, Brazil data protection, data subject rights, portability
-- **Activate when**: The software processes data of people in Brazil, implements consent per the LGPD (granular by purpose), manages data subject rights (Art. 18), prepares RIPD, or needs to notify incidents to the ANPD
+- **Keywords**: LGPD, Lei Geral de Proteção de Dados, personal data, ANPD, consent, data subject, DPO, legal basis, RIPD, data processing, data protection, data subject rights, portability
+- **Activate when**: The software processes personal data, implements granular consent by purpose, manages data subject rights (Art. 18), prepares RIPD, or needs to notify incidents to the data protection authority
 
 ---
 
-## 📋 Regulations and Skills Map
+## Regulations and Skills Map
 
 ### Data Protection and Privacy
 
-| Skill | Regulation | Jurisdiction | When to Use |
-|-------|-----------|--------------|-------------|
-| [gdpr](./gdpr/SKILL.md) | General Data Protection Regulation | European Union / EEA | Personal data of EU citizens, consent, right to be forgotten |
-| [ccpa-cpra](./ccpa-cpra/SKILL.md) | California Consumer Privacy Act / California Privacy Rights Act | California, USA | Personal data of California residents, opt-out of data sale |
-| [lgpd](./lgpd/SKILL.md) | Lei Geral de Proteção de Dados | Brazil | Personal data of Brazilian citizens, legal basis for processing |
+| Skill | Regulation | When to Use |
+|-------|-----------|-------------|
+| [gdpr](./gdpr/SKILL.md) | General Data Protection Regulation | Personal data, consent, data subject rights |
+| [ccpa-cpra](./ccpa-cpra/SKILL.md) | California Consumer Privacy Act / CPRA | Opt-out of data sale/sharing, GPC signals |
+| [lgpd](./lgpd/SKILL.md) | Lei Geral de Proteção de Dados | Granular consent by purpose, data subject rights |
 
 ### Information Security
 
-| Skill | Standard | Scope | When to Use |
-|-------|----------|---------|-------------|
-| [iso-27001](./iso-27001/SKILL.md) | ISO/IEC 27001:2022 | International | Information Security Management System (ISMS), Annex A controls |
-| [nist-cybersec-framework](./nist-cybersec-framework/SKILL.md) | NIST CSF 2.0 | USA / International | Identify-Protect-Detect-Respond-Recover framework |
-| [soc2](./soc2/SKILL.md) | SOC 2 Type II | USA / International | Trust Service Criteria for SaaS and cloud services |
+| Skill | Standard | When to Use |
+|-------|----------|-------------|
+| [iso-27001](./iso-27001/SKILL.md) | ISO/IEC 27001:2022 | ISMS, Annex A controls, information classification |
+| [nist-cybersec-framework](./nist-cybersec-framework/SKILL.md) | NIST CSF 2.0 | Identify-Protect-Detect-Respond-Recover framework |
+| [soc2](./soc2/SKILL.md) | SOC 2 Type II | Trust Service Criteria for SaaS and cloud services |
 
 ### Application Security
 
-| Skill | Standard | Scope | When to Use |
-|-------|----------|---------|-------------|
-| [owasp-top-10](./owasp-top-10/SKILL.md) | OWASP Top 10:2021 | International | Critical web vulnerabilities: injection, XSS, CSRF, broken auth |
+| Skill | Standard | When to Use |
+|-------|----------|-------------|
+| [owasp-top-10](./owasp-top-10/SKILL.md) | OWASP Top 10:2021 | Web vulnerabilities: injection, XSS, CSRF, broken auth |
 
 ### Industry-Specific
 
-| Skill | Regulation | Industry | When to Use |
-|-------|-----------|-----------|-------------|
-| [hipaa](./hipaa/SKILL.md) | Health Insurance Portability and Accountability Act | Healthcare (USA) | Protected Health Information (PHI), electronic medical records |
-| [pci-compliance](./pci-compliance/SKILL.md) | PCI DSS v4.0 | Payments | Credit/debit card data, payment processing |
+| Skill | Regulation | When to Use |
+|-------|-----------|-------------|
+| [hipaa](./hipaa/SKILL.md) | HIPAA | Protected Health Information (PHI), medical records |
+| [pci-compliance](./pci-compliance/SKILL.md) | PCI DSS v4.0 | Payment card data, tokenization, payment processing |
 
 ---
 
-## 🔀 Quick Selection Guide
+## Quick Selection Guide
 
 ```
 What type of data are you handling?
 │
 ├─ Personal data (name, email, IP, cookies...)
-│  ├─ Users in the EU? ─────────────────→ GDPR
-│  ├─ Users in California? ─────────────→ CCPA-CPRA
-│  ├─ Users in Brazil? ─────────────────→ LGPD
-│  └─ Multiple jurisdictions? ──────────→ Apply ALL relevant ones
+│  ├─ Consent, data subject rights ──────────→ GDPR
+│  ├─ Opt-out of sale/sharing, GPC ──────────→ CCPA-CPRA
+│  ├─ Granular consent by purpose ───────────→ LGPD
+│  └─ Multiple regulations apply ────────────→ Apply ALL relevant ones
 │
 ├─ Health data (PHI)
-│  └─ US healthcare system? ────────────→ HIPAA
+│  └─ Medical records, diagnoses ────────────→ HIPAA
 │
 ├─ Payment card data
-│  └─ Process/store PAN data? ──────────→ PCI-compliance
+│  └─ Process/store PAN data ────────────────→ PCI-compliance
 │
 ├─ General security architecture
-│  ├─ Need formal certification? ───────→ ISO-27001
-│  ├─ Cybersecurity framework? ─────────→ NIST-Cybersec-framework
-│  └─ SaaS/Cloud service? ─────────────→ SOC2
+│  ├─ Formal certification / ISMS ───────────→ ISO-27001
+│  ├─ Cybersecurity framework ───────────────→ NIST-Cybersec-framework
+│  └─ SaaS/Cloud service ─────────────────────→ SOC2
 │
 └─ Code/application security
-   └─ Web/API development? ────────────→ OWASP-top-10
+   └─ Web/API development ────────────────────→ OWASP-top-10
 ```
 
 ---
 
-## 🏗️ Reference Technology Stack
+## Reference Technology Stack
 
 All skills use examples based on the following stack:
 
@@ -150,7 +133,7 @@ All skills use examples based on the following stack:
 
 ---
 
-## 📐 Cross-Cutting Security Principles
+## Cross-Cutting Security Principles
 
 These principles apply to **ALL** regulations and must always be followed:
 
@@ -253,12 +236,10 @@ logger.info({
 
 ---
 
-## 🔗 How to Use These Skills
+## Agent workflow
 
-1. **Identify** which regulations apply to your project using the quick selection guide
-2. **Read** each relevant skill to understand the specific requirements
-3. **Implement** following the code examples and checklists
-4. **Validate** with each skill's compliance checklists
-5. **Combine** multiple skills when your project operates across multiple jurisdictions
-
-> **⚠️ Important**: These skills are technical implementation guides. For complete legal compliance, always consult with a legal professional specialized in the corresponding regulation.
+1. Identify what type of data the software handles using the quick selection guide.
+2. Activate ALL relevant sub-skills based on triggers — if multiple regulations apply, invoke them all.
+3. Implement following the code templates and checklists from each sub-skill.
+4. Apply cross-cutting security principles (defense in depth, least privilege, secure by default, fail secure, structured logging) in every implementation.
+5. Validate with each sub-skill's compliance checklists before deploying.

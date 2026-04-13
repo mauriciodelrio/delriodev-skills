@@ -1,44 +1,27 @@
 ---
 name: governance-risk-and-compliance
 description: >
-  Índice maestro de gobernanza, riesgo y cumplimiento (GRC). Activa esta skill cuando
-  el desarrollador trabaje en cualquier aspecto de cumplimiento normativo, protección de datos,
-  seguridad de la información o auditoría de software. Redirige a la skill específica según
-  la normativa aplicable.
+  Usa este skill como punto de entrada cuando el software requiera cumplimiento
+  normativo, protección de datos, seguridad de la información o auditoría.
+  Enruta a la sub-skill específica según la normativa aplicable. Todas las
+  sub-skills se aplican independientemente de la ubicación geográfica.
 ---
 
-# 🛡️ Gobernanza, Riesgo y Cumplimiento (GRC) — Índice Maestro
+# Gobernanza, Riesgo y Cumplimiento (GRC) — Índice Maestro
 
-## Descripción General
+Esta skill actúa como enrutador para todas las normativas y estándares de seguridad. Cada sub-skill contiene instrucciones detalladas, templates de código Node.js/TypeScript y checklists de cumplimiento. Todas las sub-skills deben aplicarse como estándares de seguridad independientemente de la ubicación geográfica de los usuarios.
 
-Esta skill actúa como punto de entrada y enrutador para todas las normativas y estándares de seguridad implementados en este repositorio. Cada sub-skill contiene instrucciones detalladas, ejemplos de código en **Node.js/TypeScript** y checklists de cumplimiento.
-
-## Cuándo Activar esta Skill
-
-Activa esta skill cuando el contexto del desarrollo involucre **cualquiera** de los siguientes escenarios:
-
-- Manejo de **datos personales** de usuarios (nombre, email, dirección IP, cookies, etc.)
-- Procesamiento de **datos de salud** (historiales médicos, diagnósticos, recetas)
-- Almacenamiento o transmisión de **datos de tarjetas de pago**
-- Diseño de **arquitectura de seguridad** para aplicaciones web/API
-- Auditorías de seguridad o preparación para **certificaciones**
-- Implementación de **logging, monitoreo o respuesta a incidentes**
-- Desarrollo de software que opera en **mercados regulados** (UE, EEUU, Brasil, etc.)
-- Revisión de código enfocada en **vulnerabilidades de seguridad**
-
----
-
-## 🎯 Guía de Activación de Sub-Skills (Triggers)
+## Guía de Activación de Sub-Skills (Triggers)
 
 Usa la siguiente tabla para determinar **qué sub-skill invocar** según las palabras clave, contexto o tipo de tarea que el desarrollador solicita. Si múltiples skills aplican, invócalas todas.
 
 ### GDPR
-- **Keywords**: GDPR, RGPD, datos personales UE, protección de datos Europa, consentimiento, derecho al olvido, derecho de acceso, rectificación, portabilidad, DPIA, DPO, bases legales, interés legítimo, Unión Europea, EEE, cookies, privacy policy EU
-- **Activar cuando**: El código procesa datos de usuarios en la UE/EEE, implementa formularios de consentimiento para usuarios europeos, maneja cookies, implementa derechos del titular de datos según legislación europea, o configura transferencias internacionales de datos desde la UE
+- **Keywords**: GDPR, RGPD, datos personales, protección de datos, consentimiento, derecho al olvido, derecho de acceso, rectificación, portabilidad, DPIA, DPO, bases legales, interés legítimo, cookies, privacy policy
+- **Activar cuando**: El código procesa datos personales de usuarios, implementa formularios de consentimiento, maneja cookies, implementa derechos del titular de datos, o configura transferencias internacionales de datos
 
 ### HIPAA
 - **Keywords**: HIPAA, PHI, información de salud, health data, datos médicos, paciente, ePHI, covered entity, business associate, BAA, healthcare, historia clínica, registro médico, diagnóstico, Protected Health Information, HITECH, de-identification
-- **Activar cuando**: El software maneja datos de salud de pacientes en EEUU, integra con sistemas de salud (EHR/EMR), implementa portales de pacientes, o cualquier sistema que toque información de salud protegida
+- **Activar cuando**: El software maneja datos de salud de pacientes, integra con sistemas de salud (EHR/EMR), implementa portales de pacientes, o cualquier sistema que toque información de salud protegida
 
 ### ISO-27001
 - **Keywords**: ISO 27001, ISO 27002, SGSI, ISMS, gestión de riesgos, clasificación de información, control de acceso ABAC/RBAC, continuidad del negocio, Anexo A, certificación de seguridad, política de seguridad, gestión de activos, seguridad operacional
@@ -54,84 +37,84 @@ Usa la siguiente tabla para determinar **qué sub-skill invocar** según las pal
 
 ### SOC2
 - **Keywords**: SOC 2, SOC2, Trust Service Criteria, AICPA, SaaS compliance, disponibilidad, SLA, uptime, change management, gestión de cambios, access review, revisión de accesos, multi-tenant, confidencialidad, integridad del procesamiento, auditoría SOC
-- **Activar cuando**: Se desarrolla un producto SaaS/Cloud para clientes B2B, se implementa gestión de cambios formal, revisiones periódicas de accesos, monitoreo de SLAs, aislamiento multi-tenant, o se prepara para una auditoría SOC 2
+- **Activar cuando**: Se desarrolla un producto SaaS/Cloud, se implementa gestión de cambios formal, revisiones periódicas de accesos, monitoreo de SLAs, aislamiento multi-tenant, o se prepara para una auditoría SOC 2
 
 ### OWASP-Top-10
 - **Keywords**: OWASP, XSS, SQL injection, inyección, CSRF, SSRF, broken access control, autenticación, sanitización, validación de input, seguridad web, vulnerabilidad, helmet, CORS, rate limiting, Content Security Policy, CSP, session management, deserialización
-- **Activar cuando**: Se escribe CUALQUIER endpoint HTTP, se procesa input de usuario, se implementa autenticación/autorización, se configura un servidor Express/Fastify, se renderizan datos dinámicos en frontend, se hacen fetch a URLs externas, o se revisa código por vulnerabilidades. **Esta skill debe activarse por defecto en todo desarrollo web.**
+- **Activar cuando**: Se escribe CUALQUIER endpoint HTTP, se procesa input de usuario, se implementa autenticación/autorización, se configura un servidor Express/Fastify, se renderizan datos dinámicos en frontend, se hacen fetch a URLs externas, o se revisa código por vulnerabilidades. Esta skill debe activarse por defecto en todo desarrollo web.
 
 ### CCPA-CPRA
-- **Keywords**: CCPA, CPRA, California privacy, Do Not Sell, Do Not Share, opt-out, Global Privacy Control, GPC, consumer rights, datos personales California, right to know, right to delete, Sensitive Personal Information, SPI, CPPA, notice at collection
-- **Activar cuando**: La aplicación tiene usuarios en California, implementa mecanismos de opt-out para venta/compartición de datos, detecta señales GPC del navegador, o gestiona solicitudes de derechos de consumidores californianos
+- **Keywords**: CCPA, CPRA, Do Not Sell, Do Not Share, opt-out, Global Privacy Control, GPC, consumer rights, right to know, right to delete, Sensitive Personal Information, SPI, notice at collection
+- **Activar cuando**: La aplicación implementa mecanismos de opt-out para venta/compartición de datos, detecta señales GPC del navegador, o gestiona solicitudes de derechos de consumidores
 
 ### LGPD
-- **Keywords**: LGPD, Lei Geral de Proteção de Dados, dados pessoais, Brasil, ANPD, consentimento, titular, encarregado, base legal, RIPD, tratamento de dados, proteção de dados Brasil, direitos do titular, portabilidade
-- **Activar cuando**: El software procesa datos de personas en Brasil, implementa consentimiento según la LGPD (granular por finalidad), gestiona derechos del titular (Art. 18), elabora RIPD, o necesita notificar incidentes a la ANPD
+- **Keywords**: LGPD, Lei Geral de Proteção de Dados, dados pessoais, ANPD, consentimento, titular, encarregado, base legal, RIPD, tratamento de dados, proteção de dados, direitos do titular, portabilidade
+- **Activar cuando**: El software procesa datos personales, implementa consentimiento granular por finalidad, gestiona derechos del titular (Art. 18), elabora RIPD, o necesita notificar incidentes a la autoridad de protección de datos
 
 ---
 
-## 📋 Mapa de Normativas y Skills
+## Mapa de Normativas y Skills
 
 ### Protección de Datos y Privacidad
 
-| Skill | Normativa | Jurisdicción | Cuándo Usar |
-|-------|-----------|--------------|-------------|
-| [gdpr](./gdpr/SKILL.md) | Reglamento General de Protección de Datos | Unión Europea / EEE | Datos personales de ciudadanos UE, consentimiento, derecho al olvido |
-| [ccpa-cpra](./ccpa-cpra/SKILL.md) | California Consumer Privacy Act / California Privacy Rights Act | California, EEUU | Datos personales de residentes de California, opt-out de venta de datos |
-| [lgpd](./lgpd/SKILL.md) | Lei Geral de Proteção de Dados | Brasil | Datos personales de ciudadanos brasileños, base legal para tratamiento |
+| Skill | Normativa | Cuándo Usar |
+|-------|-----------|-------------|
+| [gdpr](./gdpr/SKILL.md) | Reglamento General de Protección de Datos | Datos personales, consentimiento, derechos del titular |
+| [ccpa-cpra](./ccpa-cpra/SKILL.md) | California Consumer Privacy Act / CPRA | Opt-out de venta/compartición de datos, señales GPC |
+| [lgpd](./lgpd/SKILL.md) | Lei Geral de Proteção de Dados | Consentimiento granular por finalidad, derechos del titular |
 
 ### Seguridad de la Información
 
-| Skill | Estándar | Alcance | Cuándo Usar |
-|-------|----------|---------|-------------|
-| [iso-27001](./iso-27001/SKILL.md) | ISO/IEC 27001:2022 | Internacional | Sistema de gestión de seguridad de la información (SGSI), controles Anexo A |
-| [nist-cybersec-framework](./nist-cybersec-framework/SKILL.md) | NIST CSF 2.0 | EEUU / Internacional | Framework Identify-Protect-Detect-Respond-Recover |
-| [soc2](./soc2/SKILL.md) | SOC 2 Type II | EEUU / Internacional | Trust Service Criteria para SaaS y servicios cloud |
+| Skill | Estándar | Cuándo Usar |
+|-------|----------|-------------|
+| [iso-27001](./iso-27001/SKILL.md) | ISO/IEC 27001:2022 | SGSI, controles Anexo A, clasificación de información |
+| [nist-cybersec-framework](./nist-cybersec-framework/SKILL.md) | NIST CSF 2.0 | Framework Identify-Protect-Detect-Respond-Recover |
+| [soc2](./soc2/SKILL.md) | SOC 2 Type II | Trust Service Criteria para SaaS y servicios cloud |
 
 ### Seguridad en Aplicaciones
 
-| Skill | Estándar | Alcance | Cuándo Usar |
-|-------|----------|---------|-------------|
-| [owasp-top-10](./owasp-top-10/SKILL.md) | OWASP Top 10:2021 | Internacional | Vulnerabilidades web críticas: inyección, XSS, CSRF, broken auth |
+| Skill | Estándar | Cuándo Usar |
+|-------|----------|-------------|
+| [owasp-top-10](./owasp-top-10/SKILL.md) | OWASP Top 10:2021 | Vulnerabilidades web: inyección, XSS, CSRF, broken auth |
 
 ### Industria Específica
 
-| Skill | Normativa | Industria | Cuándo Usar |
-|-------|-----------|-----------|-------------|
-| [hipaa](./hipaa/SKILL.md) | Health Insurance Portability and Accountability Act | Salud (EEUU) | Datos de salud protegidos (PHI), registros médicos electrónicos |
-| [pci-compliance](./pci-compliance/SKILL.md) | PCI DSS v4.0 | Pagos | Datos de tarjetas de crédito/débito, procesamiento de pagos |
+| Skill | Normativa | Cuándo Usar |
+|-------|-----------|-------------|
+| [hipaa](./hipaa/SKILL.md) | HIPAA | Datos de salud protegidos (PHI), registros médicos |
+| [pci-compliance](./pci-compliance/SKILL.md) | PCI DSS v4.0 | Datos de tarjetas de pago, tokenización, procesamiento de pagos |
 
 ---
 
-## 🔀 Guía de Selección Rápida
+## Guía de Selección Rápida
 
 ```
 ¿Qué tipo de datos estás manejando?
 │
 ├─ Datos personales (nombre, email, IP, cookies...)
-│  ├─ ¿Usuarios en la UE? ──────────────→ GDPR
-│  ├─ ¿Usuarios en California? ─────────→ CCPA-CPRA
-│  ├─ ¿Usuarios en Brasil? ─────────────→ LGPD
-│  └─ ¿Múltiples jurisdicciones? ──────→ Aplica TODAS las relevantes
+│  ├─ Consentimiento, derechos del titular ────→ GDPR
+│  ├─ Opt-out de venta/compartición, GPC ──────→ CCPA-CPRA
+│  ├─ Consentimiento granular por finalidad ───→ LGPD
+│  └─ Múltiples normativas aplican ────────────→ Aplica TODAS las relevantes
 │
 ├─ Datos de salud (PHI)
-│  └─ ¿Sistema de salud en EEUU? ──────→ HIPAA
+│  └─ Registros médicos, diagnósticos ─────────→ HIPAA
 │
 ├─ Datos de tarjetas de pago
-│  └─ ¿Procesas/almacenas datos PAN? ──→ PCI-compliance
+│  └─ Procesas/almacenas datos PAN ────────────→ PCI-compliance
 │
 ├─ Arquitectura de seguridad general
-│  ├─ ¿Necesitas certificación formal? ─→ ISO-27001
-│  ├─ ¿Framework de ciberseguridad? ────→ NIST-Cybersec-framework
-│  └─ ¿SaaS/Cloud service? ────────────→ SOC2
+│  ├─ Certificación formal / SGSI ─────────────→ ISO-27001
+│  ├─ Framework de ciberseguridad ─────────────→ NIST-Cybersec-framework
+│  └─ SaaS/Cloud service ──────────────────────→ SOC2
 │
 └─ Seguridad en código/aplicación
-   └─ ¿Desarrollo web/API? ────────────→ OWASP-top-10
+   └─ Desarrollo web/API ──────────────────────→ OWASP-top-10
 ```
 
 ---
 
-## 🏗️ Stack Tecnológico de Referencia
+## Stack Tecnológico de Referencia
 
 Todas las skills utilizan ejemplos basados en el siguiente stack:
 
@@ -150,7 +133,7 @@ Todas las skills utilizan ejemplos basados en el siguiente stack:
 
 ---
 
-## 📐 Principios Transversales de Seguridad
+## Principios Transversales de Seguridad
 
 Estos principios aplican a **TODAS** las normativas y deben seguirse siempre:
 
@@ -253,12 +236,10 @@ logger.info({
 
 ---
 
-## 🔗 Cómo Usar Estas Skills
+## Flujo de trabajo del agente
 
-1. **Identifica** qué normativas aplican a tu proyecto usando la guía de selección rápida
-2. **Lee** cada skill relevante para entender los requisitos específicos
-3. **Implementa** siguiendo los ejemplos de código y checklists
-4. **Valida** con las checklists de cumplimiento de cada skill
-5. **Combina** múltiples skills cuando tu proyecto opera en varias jurisdicciones
-
-> **⚠️ Importante**: Estas skills son guías técnicas de implementación. Para cumplimiento legal completo, siempre consulta con un profesional legal especializado en la normativa correspondiente.
+1. Identificar qué tipo de datos maneja el software usando la guía de selección rápida.
+2. Activar TODAS las sub-skills relevantes según los triggers — si múltiples normativas aplican, invocarlas todas.
+3. Implementar siguiendo los templates de código y checklists de cada sub-skill.
+4. Aplicar los principios transversales de seguridad (defensa en profundidad, mínimo privilegio, secure by default, fail secure, logging estructurado) en toda implementación.
+5. Validar con las checklists de cumplimiento de cada sub-skill antes de desplegar.
