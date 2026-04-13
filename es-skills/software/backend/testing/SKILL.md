@@ -15,8 +15,9 @@ description: >
 **2.** Elegir herramientas del stack (sección 2).
 **3.** Escribir unit tests para services/utils (sección 3) e integration tests para endpoints (secciones 4–5).
 **4.** Configurar DB testing y fixtures si necesario (secciones 6–7).
-**5.** Aplicar reglas de mocking y configuración (secciones 8–9).
-**6.** Verificar contra la lista de gotchas (sección 10).
+**5.** Aplicar reglas de mocking (sección 8).
+**6.** Configurar coverage (provider, thresholds ≥ 80%, scripts) y ajustes de vitest (sección 9).
+**7.** Verificar contra la lista de gotchas (sección 10).
 
 ## 1. Estrategia de testing por capa
 
@@ -295,6 +296,8 @@ Mockear dependencias externas (DB, Redis, APIs, email). No mockear la unidad baj
 
 ## 9. Configuración
 
+**devDependency requerida:** `@vitest/coverage-v8` (debe coincidir con la versión major de `vitest`). Sin ella, `--coverage` ejecuta pero no produce datos.
+
 ```typescript
 // vitest.config.ts
 import { defineConfig } from 'vitest/config';
@@ -342,6 +345,8 @@ export default defineConfig({
 - Snapshot tests para JSON responses — frágiles, usar assertions específicas.
 - Solo integration tests sin unit tests — el service se testea indirectamente y cualquier cambio rompe tests masivamente.
 - Solo unit tests sin integration tests — mocks pasan pero el endpoint real falla.
+- vitest.config.ts sin coverage thresholds — código se libera sin quality gate; siempre configurar `thresholds` ≥ 80%.
+- Falta paquete `@vitest/coverage-v8` — `test:cov` ejecuta silenciosamente sin datos reales de coverage.
 
 ## Skills Relacionadas
 
