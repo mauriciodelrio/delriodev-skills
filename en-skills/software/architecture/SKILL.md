@@ -1,54 +1,29 @@
 ---
 name: architecture
 description: >
-  Architectural decision framework for software projects. This skill
-  is an orchestrator: it guides the agent through a cycle of questions about the
-  business, scale, budget, and team, and then activates sub-skills for compute,
-  databases, storage, networking, messaging, observability, and costs to build
-  a complete infrastructure proposal. The agent does NOT assume technologies — everything
-  is situational. Upon completion, it presents an executive summary and asks for confirmation.
+  Use this skill when you need to design a project's architecture.
+  Orchestrates sub-skills for compute, databases, storage, networking,
+  messaging, observability, and costs. Guides the agent through discovery,
+  analysis, proposal, and implementation. The agent does NOT assume
+  technologies — everything is situational.
 ---
 
-# 🏛️ Architecture — Decision Framework
+# Architecture — Decision Framework
 
-## Guiding Principle
+## Agent workflow
 
-> **There is no "best" architecture — there is the right one for this project.**
+1. **Discovery:** ask about business, scale, budget, team, and constraints. Gather all answers before proposing anything.
+2. **Analysis:** activate relevant sub-skills based on answers, evaluate options with decision trees, consider budget as constraint.
+3. **Proposal:** present executive summary with all decisions, justify each choice, estimate monthly cost, ask for confirmation.
+4. **Implementation:** with confirmation, generate IaC/configuration, guide step by step, reference basic-workflows for PR CI/CD.
+
+> There is no "best" architecture — there is the right one for this project.
 > Every decision has a trade-off. The agent asks, proposes with justification,
 > and does not proceed without the developer's confirmation.
 
----
+## 1. Discovery questions
 
-## Agent Flow
-
-```
-PHASE 1: DISCOVERY
-  → Questions about business, scale, budget, team, constraints
-  → Gather all answers before proposing ANYTHING
-
-PHASE 2: ANALYSIS
-  → Activate relevant sub-skills based on answers
-  → Evaluate options with each sub-skill's decision trees
-  → Consider budget as a cross-cutting constraint
-
-PHASE 3: PROPOSAL
-  → Present executive summary with ALL decisions
-  → Justify each choice (why X and not Y)
-  → Estimate approximate monthly cost
-  → ASK FOR CONFIRMATION before continuing
-
-PHASE 4: IMPLEMENTATION
-  → With confirmation, generate configuration/IaC
-  → Guide step by step through service configuration
-  → Reference basic-workflows skill for PR CI/CD
-```
-
----
-
-## PHASE 1 — Discovery Questions
-
-The agent MUST ask these questions before making any decision.
-Group into blocks — don't overwhelm with all of them at once.
+The agent MUST ask these questions before making any decision. Group into blocks — don't overwhelm with all of them at once.
 
 ### Block 1: Business
 
@@ -142,9 +117,7 @@ Group into blocks — don't overwhelm with all of them at once.
     (Manual, partial CI/CD, full CI/CD, doesn't exist yet)
 ```
 
----
-
-## PHASE 2 — Routing to Sub-Skills
+## 2. Routing to sub-skills
 
 Once answers are gathered, the agent consults the sub-skills:
 
@@ -158,9 +131,7 @@ Once answers are gathered, the agent consults the sub-skills:
 | Logs, monitoring, alerts | `observability` | Always |
 | Cost optimization | `cost-and-scaling` | Always (evaluates against budget) |
 
----
-
-## PHASE 3 — Executive Summary
+## 3. Executive summary
 
 After completing the analysis, present this format:
 
@@ -205,9 +176,7 @@ After completing the analysis, present this format:
 ⚠️ Do you confirm this proposal to proceed with implementation?
 ```
 
----
-
-## PHASE 4 — Implementation
+## 4. Implementation
 
 With the developer's confirmation:
 
@@ -218,36 +187,19 @@ With the developer's confirmation:
 3. **Setup guides** — Step by step for each proposed service
 4. **Environment variables** — What secrets/configs each service needs
 
----
+## 5. Cross-cutting rules
 
-## Cross-cutting Rules
+**Budget is a constraint, not a suggestion.** Every proposal respects the user's budget tier. If the ideal solution exceeds the budget, propose alternatives.
 
-```
-1. BUDGET IS A CONSTRAINT, NOT A SUGGESTION
-   → Every proposal must respect the user's budget tier.
-   → If the "ideal" solution exceeds the budget, propose alternatives.
+**Complexity proportional to the team.** Team of 1–2: managed services, minimal custom infra. Team of 15+: can handle Kubernetes, multi-service.
 
-2. COMPLEXITY PROPORTIONAL TO THE TEAM
-   → Team of 1-2: managed services, minimal custom infra.
-   → Team of 15+: can handle Kubernetes, multi-service, etc.
+**Don't over-architect.** MVP doesn't need microservices. <1,000 users probably doesn't need distributed cache. Start simple, scale when data justifies it.
 
-3. DON'T OVER-ARCHITECT
-   → MVP doesn't need microservices.
-   → < 1,000 users probably doesn't need distributed cache.
-   → Start simple, scale when the data justifies it.
+**Security is not optional.** HTTPS everywhere, secrets in vault, IAM least privilege. If there are regulations, activate GRC skills as prerequisite.
 
-4. SECURITY IS NOT OPTIONAL
-   → HTTPS everywhere, secrets in vault, IAM least privilege.
-   → If there are regulations, activate GRC skills as a prerequisite.
+**Observability from day 1.** It's not something you "add later." Logging and monitoring go in the initial configuration.
 
-5. OBSERVABILITY FROM DAY 1
-   → It's not something you "add later." Logging and monitoring go
-     in the initial configuration.
-```
-
----
-
-## Available Sub-Skills
+## 6. Available sub-skills
 
 - `architecture/compute` — Lambda, ECS, EC2, Vercel, Cloud Run
 - `architecture/databases` — RDS, DynamoDB, MongoDB, Redis, ElastiCache

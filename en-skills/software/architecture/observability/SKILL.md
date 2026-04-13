@@ -1,33 +1,28 @@
 ---
 name: observability
 description: >
-  Decision tree for logging, monitoring, alerting, and tracing. Covers
-  CloudWatch, Datadog, Sentry, structured logging, custom metrics, dashboards,
-  and alerts. Observability is not optional — it is configured from day 1. Includes
-  criteria by budget, app complexity, and data volume.
+  Use this skill when you need to configure logging, monitoring, alerting,
+  or tracing. Covers CloudWatch, Datadog, Sentry, structured logging, custom
+  metrics, and alerts. Observability is configured from day 1, not after
+  the first incident.
 ---
 
-# 📊 Observability — Logging, Monitoring, and Alerting
+# Observability — Logging, Monitoring, and Alerting
 
-## Principle
+## Agent workflow
 
-> **If you can't observe it, you can't operate it.**
-> Observability is configured BEFORE problems occur, not after the first
-> production incident. It is part of the initial infrastructure setup.
+1. Determine observability budget (section 1).
+2. Configure structured logging (section 2).
+3. Define key metrics by layer: infra, app, business (section 3).
+4. Configure error tracking and alerts (sections 4–5).
+5. Evaluate whether distributed tracing is needed (section 6).
 
----
+> If you can't observe it, you can't operate it. Observability is part of
+> the initial setup, not something added after the first incident.
 
-## The Three Pillars
+**The three pillars:** **Logs** (What happened? → events and errors), **Metrics** (How is it doing? → health and performance), **Traces** (Where did it go? → requests between services).
 
-```
-1. LOGS    — What happened?     → Record events and errors
-2. METRICS — How is it doing?   → Measure health and performance
-3. TRACES  — Where did it go?   → Follow requests between services
-```
-
----
-
-## Decision Tree
+## 1. Decision tree
 
 ```
 Budget for observability?
@@ -53,16 +48,11 @@ Budget for observability?
         + PagerDuty + StatusPage
 ```
 
----
+## 2. Logging
 
-## Logging
+### Structured logging (mandatory)
 
-### Structured Logging (Mandatory)
-
-```
-RULE: Logs ALWAYS in structured JSON format.
-NEVER console.log("Error: " + message) in production.
-```
+**Rule:** Logs always in structured JSON format. Never `console.log("Error: " + message)` in production.
 
 ```typescript
 // ❌ BAD — unstructured logs
@@ -101,32 +91,22 @@ logger.error('Database connection failed', {
 
 ### Log Levels
 
-```
-ERROR  → Something failed and needs attention (app errors, DB down)
-WARN   → Something unusual but not failed (rate limit near, retry)
-INFO   → Important business events (login, order placed, payment)
-DEBUG  → Technical details (only in dev, disable in prod)
+- **ERROR** → Something failed and needs attention (app errors, DB down)
+- **WARN** → Something unusual but not failed (rate limit near, retry)
+- **INFO** → Important business events (login, order placed, payment)
+- **DEBUG** → Technical details (only in dev, disable in prod)
 
-Production: INFO + WARN + ERROR
-Development: DEBUG + INFO + WARN + ERROR
+**Production:** INFO + WARN + ERROR. **Development:** DEBUG + INFO + WARN + ERROR.
 
-RULE: Do not log sensitive data (passwords, tokens, full PII).
-      Mask: email → u***@email.com, card → ****1234
-```
+**Rule:** Do not log sensitive data (passwords, tokens, full PII). Mask: email → `u***@email.com`, card → `****1234`.
 
 ### CloudWatch Logs
 
-```
-Default configuration for Lambda:
-  → Logs are sent automatically to CloudWatch
-  → Log Group: /aws/lambda/{function-name}
-  → Retention: configure it! (default is INDEFINITE = growing cost)
+Lambda sends logs automatically to CloudWatch (Log Group: `/aws/lambda/{function-name}`). **Default retention is INDEFINITE** = growing cost. Always configure:
 
-Recommended retention:
-  - Production: 30–90 days in CloudWatch, then S3 if you need historical
-  - Staging: 14 days
-  - Dev: 7 days
-```
+- **Production:** 30–90 days in CloudWatch, then S3 if you need historical
+- **Staging:** 14 days
+- **Dev:** 7 days
 
 ```hcl
 # Terraform — Log group with retention
@@ -166,37 +146,15 @@ fields @timestamp, @initDuration
 | stats count(*) as coldStarts, avg(@initDuration) as avgColdStart
 ```
 
----
+## 3. Metrics
 
-## Metrics
+### Metrics that matter
 
-### Metrics That Matter
+**Infrastructure:** CPU utilization (ECS/EC2), memory utilization, Lambda duration + cold starts, Lambda concurrent executions, DB connections (RDS), DB CPU + memory (RDS), cache hit ratio (Redis), queue depth (SQS), DLQ message count (SQS).
 
-```
-Infrastructure:
-  - CPU utilization (ECS/EC2)
-  - Memory utilization
-  - Lambda duration + cold starts
-  - Lambda concurrent executions
-  - DB connections (RDS)
-  - DB CPU + memory (RDS)
-  - Cache hit ratio (Redis)
-  - Queue depth (SQS)
-  - DLQ message count (SQS)
+**Application:** Request count (per endpoint), error rate (4xx, 5xx), latency p50/p95/p99, successful/failed logins, orders placed/failed, payments processed/failed.
 
-Application:
-  - Request count (per endpoint)
-  - Error rate (4xx, 5xx)
-  - Latency p50, p95, p99
-  - Successful logins / failed logins
-  - Orders placed / failed
-  - Payments processed / failed
-
-Business:
-  - Active users (DAU, MAU)
-  - Revenue processed
-  - Feature usage
-```
+**Business:** Active users (DAU, MAU), revenue processed, feature usage.
 
 ### CloudWatch Custom Metrics
 
@@ -226,20 +184,16 @@ async function processOrder(order: Order) {
 }
 ```
 
----
+## 4. Error Tracking — Sentry
 
-## Error Tracking — Sentry
+**When to use:**
+- Frontend (React, Next.js) — captures JS errors in the browser
+- Backend — stack traces, request context
+- Intelligent error grouping
+- Release tracking (which deploy introduced which error)
+- Performance monitoring (web vitals, transactions)
 
-```
-When YES:
-  ✅ Frontend (React, Next.js) — captures JS errors in the browser
-  ✅ Backend — stack traces, request context
-  ✅ Intelligent error grouping
-  ✅ Release tracking (which deploy introduced which error)
-  ✅ Performance monitoring (web vitals, transactions)
-
-Minimum setup (Next.js):
-```
+**Minimum setup (Next.js):**
 
 ```typescript
 // sentry.client.config.ts
@@ -254,41 +208,32 @@ Sentry.init({
 });
 ```
 
-```
-Plans:
-  - Developer: free (1 user, 5K errors/month)
-  - Team: $26/month (unlimited users, 50K errors)
-  - Business: $80/month (100K errors, more features)
-```
+**Plans:** Developer free (1 user, 5K errors/month). Team $26/month (unlimited users, 50K errors). Business $80/month (100K errors, more features).
 
----
+## 5. Alerting
 
-## Alerting
+### What to alert on
 
-### What to Alert On
+**CRITICAL** (notify immediately — PagerDuty/SMS):
+- Error rate > 5% sustained for 5 min
+- API completely down (health check failing)
+- DB down or connections exhausted
+- Disk/storage > 90%
+- Payment processing failing
+- DLQ growing (messages failing)
 
-```
-🔴 CRITICAL (notify immediately — PagerDuty/SMS):
-  - Error rate > 5% sustained for 5 min
-  - API completely down (health check failing)
-  - DB down or connections exhausted
-  - Disk/storage > 90%
-  - Payment processing failing
-  - DLQ growing (messages failing)
+**WARNING** (notify on Slack/email):
+- Error rate > 1% sustained for 10 min
+- Latency p99 > 3s sustained for 10 min
+- Lambda throttling
+- DB connections > 80%
+- Cache hit ratio < 50%
+- SQS queue depth growing
 
-🟡 WARNING (notify on Slack/email):
-  - Error rate > 1% sustained for 10 min
-  - Latency p99 > 3s sustained for 10 min
-  - Lambda throttling
-  - DB connections > 80%
-  - Cache hit ratio < 50%
-  - SQS queue depth growing
-
-ℹ️ INFO (dashboard, no notification):
-  - Deploy completed
-  - Scaling events
-  - Cost approaching budget threshold
-```
+**INFO** (dashboard, no notification):
+- Deploy completed
+- Scaling events
+- Cost approaching budget threshold
 
 ### CloudWatch Alarms
 
@@ -319,9 +264,7 @@ resource "aws_sns_topic" "alerts" {
 }
 ```
 
----
-
-## Tracing (Distributed)
+## 6. Tracing (Distributed)
 
 ```
 Do you need distributed tracing?
@@ -355,9 +298,7 @@ export const handler = async (event: APIGatewayEvent) => {
 };
 ```
 
----
-
-## Recommended Stack by Budget
+## 7. Recommended stack by budget
 
 | Tier | Logging | Metrics | Errors | Alerting | Tracing |
 |------|---------|---------|--------|----------|---------|
@@ -366,51 +307,47 @@ export const handler = async (event: APIGatewayEvent) => {
 | $300–$1,500 | CW or Datadog | CW or Datadog | Sentry Pro | PagerDuty | X-Ray |
 | $1,500+ | Datadog | Datadog | Sentry/Datadog | PagerDuty | Datadog APM |
 
----
+## 8. Health Checks
 
-## Health Checks
-
-```
 Every service exposes a health endpoint:
 
-GET /health → 200 OK
-  {
-    "status": "healthy",
-    "version": "1.2.3",
-    "uptime": 3600,
-    "checks": {
-      "database": "healthy",
-      "cache": "healthy",
-      "queue": "healthy"
-    }
+```json
+// GET /health → 200 OK
+{
+  "status": "healthy",
+  "version": "1.2.3",
+  "uptime": 3600,
+  "checks": {
+    "database": "healthy",
+    "cache": "healthy",
+    "queue": "healthy"
   }
+}
+```
 
-GET /health → 503 Service Unavailable
-  {
-    "status": "unhealthy",
-    "checks": {
-      "database": "unhealthy",   ← this one failed
-      "cache": "healthy",
-      "queue": "healthy"
-    }
+```json
+// GET /health → 503 Service Unavailable
+{
+  "status": "unhealthy",
+  "checks": {
+    "database": "unhealthy",
+    "cache": "healthy",
+    "queue": "healthy"
   }
-
-Use: Route53 Health Checks, ALB Health Checks, or UptimeRobot
+}
 ```
 
----
+Use Route53 Health Checks, ALB Health Checks, or UptimeRobot.
 
-## Anti-patterns
+## 9. Gotchas
 
-```
-❌ "We'll add logging later" → from day 1
-❌ console.log in production → structured logging mandatory
-❌ Logs without configured retention → cost grows indefinitely
-❌ Alerting on everything → alert fatigue, nobody pays attention
-❌ Not alerting on anything → you find out from users
-❌ Logging PII without masking (emails, passwords, tokens)
-❌ Metrics without context (error count without knowing which endpoint)
-❌ Dashboard with 50 charts → nobody looks at it. Maximum 8-10 key charts.
-❌ Sentry without configuring environment/release → you don't know which deploy caused what
-❌ Distributed tracing in a monolith → unnecessary overhead
-```
+- "We'll add logging later" — from day 1.
+- `console.log` in production — structured logging mandatory.
+- Logs without configured retention — cost grows indefinitely.
+- Alerting on everything — alert fatigue, nobody pays attention.
+- Not alerting on anything — you find out from users.
+- Logging PII without masking (emails, passwords, tokens).
+- Metrics without context (error count without knowing which endpoint).
+- Dashboard with 50 charts — nobody looks at it; maximum 8–10 key charts.
+- Sentry without configuring environment/release — you don't know which deploy caused what.
+- Distributed tracing in a monolith — unnecessary overhead.

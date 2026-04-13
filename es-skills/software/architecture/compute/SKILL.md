@@ -1,15 +1,22 @@
 ---
 name: compute
 description: >
-  Árbol de decisiones para elegir dónde ejecutar código. Cubre AWS Lambda,
-  ECS Fargate, EC2, Vercel Functions/Edge, Cloud Run. Incluye criterios de
-  selección por escala, latencia, costo, complejidad, y patrones de deploy.
-  No asume tecnología — decide según contexto del proyecto.
+  Usa esta skill cuando necesites decidir dónde ejecutar código. Cubre
+  AWS Lambda, ECS Fargate, EC2, Vercel Functions/Edge. Incluye árboles de
+  decisión por escala, latencia, costo, complejidad, y patrones de deploy.
 ---
 
-# ⚡ Compute — Dónde Corre el Código
+# Compute — Dónde Corre el Código
 
-## Árbol de Decisión
+## Flujo de trabajo del agente
+
+1. Identificar el tipo de carga (frontend/SSR, API, worker/cron).
+2. Recorrer el árbol de decisión (sección 1) con el usuario.
+3. Consultar criterios de selección y costos de la opción elegida (sección 2).
+4. Verificar contra constraints del proyecto (presupuesto, equipo, compliance).
+5. Si hay conflicto, proponer alternativas del mismo árbol.
+
+## 1. Árbol de decisión
 
 ```
 ¿Es frontend/SSR (Next.js)?
@@ -35,43 +42,38 @@ description: >
 └── Pipeline de pasos  → Step Functions
 ```
 
----
-
-## Opciones de Compute
+## 2. Opciones de compute
 
 ### AWS Lambda
 
-```
-Cuándo SÍ:
-  ✅ APIs REST/GraphQL stateless
-  ✅ Webhooks y event handlers
-  ✅ Procesamiento de archivos (S3 triggers)
-  ✅ Cron jobs < 15 min
-  ✅ Tráfico variable con picos (autoescala a 0)
-  ✅ Presupuesto mínimo/bajo (pagas solo por ejecución)
+**Cuándo usarlo:**
+- APIs REST/GraphQL stateless
+- Webhooks y event handlers
+- Procesamiento de archivos (S3 triggers)
+- Cron jobs < 15 min
+- Tráfico variable con picos (autoescala a 0)
+- Presupuesto mínimo/bajo (pagas solo por ejecución)
 
-Cuándo NO:
-  ❌ Necesitas WebSockets persistentes
-  ❌ Cold starts inaceptables (< 100ms requerido constantemente)
-  ❌ Procesamiento > 15 minutos
-  ❌ Necesitas > 10 GB de RAM
-  ❌ Aplicación con estado en memoria
+**Cuándo NO usarlo:**
+- WebSockets persistentes requeridos
+- Cold starts inaceptables (< 100ms constante)
+- Procesamiento > 15 minutos
+- Necesitas > 10 GB de RAM
+- Aplicación con estado en memoria
 
-Specs:
-  - Timeout: hasta 15 min
-  - RAM: 128 MB – 10,240 MB
-  - Almacenamiento temporal: /tmp 512 MB – 10 GB
-  - Concurrencia: 1,000 por defecto (ajustable)
-  - Cold start: ~200ms–1s (depende de runtime y tamaño)
+| Spec | Valor |
+|------|-------|
+| Timeout | hasta 15 min |
+| RAM | 128 MB – 10,240 MB |
+| /tmp | 512 MB – 10 GB |
+| Concurrencia | 1,000 por defecto (ajustable) |
+| Cold start | ~200ms–1s (depende de runtime y tamaño) |
 
-Costo estimado:
-  - Free tier: 1M requests + 400,000 GB-s/mes
-  - Después: ~$0.20 per 1M requests + $0.0000166667/GB-s
-  - API con 100K req/mes → prácticamente gratis
-  - API con 10M req/mes → ~$20–50/mes
-
-Configuración de referencia (serverless.yml):
-```
+**Costo estimado:**
+- Free tier: 1M requests + 400,000 GB-s/mes
+- Después: ~$0.20 per 1M requests + $0.0000166667/GB-s
+- API con 100K req/mes → prácticamente gratis
+- API con 10M req/mes → ~$20–50/mes
 
 ```yaml
 # serverless.yml (Serverless Framework)
@@ -121,26 +123,24 @@ functions:
 
 ### ECS Fargate
 
-```
-Cuándo SÍ:
-  ✅ APIs que necesitan conexiones persistentes (DB pools, WebSocket)
-  ✅ Aplicaciones con estado en memoria (sessions, cache local)
-  ✅ Tráfico constante y predecible
-  ✅ Procesos de larga duración
-  ✅ Necesitas control del contenedor (Docker)
-  ✅ Múltiples servicios que se comunican internamente
+**Cuándo usarlo:**
+- APIs con conexiones persistentes (DB pools, WebSocket)
+- Aplicaciones con estado en memoria (sessions, cache local)
+- Tráfico constante y predecible
+- Procesos de larga duración
+- Control del contenedor (Docker)
+- Múltiples servicios que se comunican internamente
 
-Cuándo NO:
-  ❌ Tráfico muy variable (pagas mínimo por el container corriendo)
-  ❌ Presupuesto mínimo (Fargate tiene un piso de ~$30/mes por task)
-  ❌ Equipo sin experiencia en Docker/containers
+**Cuándo NO usarlo:**
+- Tráfico muy variable (pagas mínimo por el container corriendo)
+- Presupuesto mínimo (piso de ~$30/mes por task)
+- Equipo sin experiencia en Docker/containers
 
-Costo estimado:
-  - 0.25 vCPU + 0.5 GB: ~$9/mes (siempre encendido)
-  - 0.5 vCPU + 1 GB: ~$18/mes
-  - 1 vCPU + 2 GB: ~$36/mes
-  - Con auto-scaling: escala de 1 a N tasks
-```
+**Costo estimado:**
+- 0.25 vCPU + 0.5 GB: ~$9/mes (siempre encendido)
+- 0.5 vCPU + 1 GB: ~$18/mes
+- 1 vCPU + 2 GB: ~$36/mes
+- Con auto-scaling: escala de 1 a N tasks
 
 ```yaml
 # Ejemplo Terraform simplificado
@@ -167,77 +167,50 @@ resource "aws_ecs_service" "api" {
 
 ### Vercel
 
-```
-Cuándo SÍ:
-  ✅ Frontend Next.js (SSR, SSG, ISR) — integración nativa
-  ✅ API Routes ligeras (parte del monorepo Next.js)
-  ✅ Preview deployments automáticos por PR
-  ✅ Edge Functions (geolocalización, A/B testing, redirects)
-  ✅ Equipo pequeño que no quiere manejar infra
-  ✅ Presupuesto bajo-medio para frontend
+**Cuándo usarlo:**
+- Frontend Next.js (SSR, SSG, ISR) — integración nativa
+- API Routes ligeras (parte del monorepo Next.js)
+- Preview deployments automáticos por PR
+- Edge Functions (geolocalización, A/B testing, redirects)
+- Equipo pequeño que no quiere manejar infra
 
-Cuándo NO:
-  ❌ Backend pesado (mejor Lambda o ECS)
-  ❌ Necesitas acceso a VPC privada de AWS
-  ❌ Funciones > 300s (Pro) / 60s (Hobby)
-  ❌ Procesamiento CPU-intensivo
+**Cuándo NO usarlo:**
+- Backend pesado (mejor Lambda o ECS)
+- Acceso a VPC privada de AWS requerido
+- Funciones > 300s (Pro) / 60s (Hobby)
+- Procesamiento CPU-intensivo
 
-Planes:
-  - Hobby: gratis (uso personal)
-  - Pro: $20/dev/mes (comercial — este es el plan para proyectos reales)
-  - Enterprise: custom pricing
-```
+**Planes:**
+- Hobby: gratis (uso personal)
+- Pro: $20/dev/mes (comercial — plan para proyectos reales)
+- Enterprise: custom pricing
 
 ### EC2
 
-```
-Cuándo SÍ:
-  ✅ Necesitas control total del SO
-  ✅ Software que requiere GPU
-  ✅ Aplicaciones legacy que no se containerizaron
-  ✅ Compliance que requiere servidor dedicado
+**Cuándo usarlo:**
+- Control total del SO requerido
+- Software que requiere GPU
+- Aplicaciones legacy no containerizadas
+- Compliance que requiere servidor dedicado
 
-Cuándo NO:
-  ❌ Casi siempre — preferir Lambda o Fargate
-  ❌ Equipo sin experiencia en administración de servidores
-  ❌ No quieren manejar patching, security updates, etc.
+**Cuándo NO usarlo:**
+- Casi siempre — preferir Lambda o Fargate
+- Equipo sin experiencia en administración de servidores
 
-Regla: EC2 es el último recurso, no el primer instinto.
-```
+EC2 es el último recurso, no el primer instinto.
 
----
-
-## Patrones de Deploy
+## 3. Patrones de deploy
 
 ### Frontend (Next.js)
 
-```
-Opción A: Vercel (recomendado)
-  git push → Vercel detecta → build → deploy automático
-  Preview por PR, rollback instantáneo
-
-Opción B: AWS Amplify
-  Similar a Vercel pero dentro del ecosistema AWS
-  Útil si todo lo demás ya está en AWS
-
-Opción C: Self-hosted en ECS
-  Docker + Next.js standalone output
-  Solo si necesitas acceso a VPC privada
-```
+- **Vercel (recomendado):** git push → build → deploy automático. Preview por PR, rollback instantáneo.
+- **AWS Amplify:** similar a Vercel dentro del ecosistema AWS. Útil si todo ya está en AWS.
+- **Self-hosted en ECS:** Docker + Next.js standalone output. Solo si necesitas acceso a VPC privada.
 
 ### Backend (API)
 
-```
-Lambda:
-  GitHub Actions → build → deploy con Serverless Framework o SST
-  → Referencia: skill basic-workflows para CI checks
-
-ECS Fargate:
-  GitHub Actions → build Docker image → push a ECR → update ECS service
-  Blue/green deployment con CodeDeploy
-
-Pipeline ejemplo (GitHub Actions → Lambda):
-```
+- **Lambda:** GitHub Actions → build → deploy con Serverless Framework o SST. Referencia: skill `basic-workflows` para CI checks.
+- **ECS Fargate:** GitHub Actions → build Docker image → push a ECR → update ECS service. Blue/green deployment con CodeDeploy.
 
 ```yaml
 # .github/workflows/deploy-api.yml
@@ -272,31 +245,24 @@ jobs:
       - run: pnpm exec serverless deploy --stage production
 ```
 
----
-
-## Tabla Comparativa Rápida
+## 4. Tabla comparativa
 
 | Criterio | Lambda | ECS Fargate | Vercel | EC2 |
 |----------|--------|-------------|--------|-----|
-| Escala a 0 | ✅ | ❌ | ✅ | ❌ |
-| Cold starts | ~200ms–1s | ❌ No hay | ~50ms (edge) | ❌ No hay |
+| Escala a 0 | Sí | No | Sí | No |
+| Cold starts | ~200ms–1s | No hay | ~50ms (edge) | No hay |
 | Timeout máx | 15 min | ∞ | 5 min (Pro) | ∞ |
-| WebSockets | ❌ (via API GW) | ✅ | ❌ | ✅ |
+| WebSockets | No (via API GW) | Sí | No | Sí |
 | Costo mínimo | ~$0 | ~$30/mes | $0–$20/mes | ~$9/mes |
 | Complejidad ops | Baja | Media | Mínima | Alta |
-| Docker | No necesitas | ✅ Requerido | No necesitas | Opcional |
+| Docker | No necesitas | Requerido | No necesitas | Opcional |
 
----
+## 5. Gotchas
 
-## Anti-patrones
-
-```
-❌ Elegir EC2 por defecto "porque es lo que conozco"
-❌ Lambda para TODO (WebSockets, procesos largos, apps stateful)
-❌ ECS para APIs simples y stateless (Overkill — usar Lambda)
-❌ Vercel para backend pesado (no es su propósito)
-❌ No considerar cold starts en Lambda para APIs time-sensitive
-❌ Lambda con VPC sin necesidad (agrega cold start significativo)
-❌ Un solo container sin auto-scaling ni health checks
-❌ Deploy manual vía SSH a EC2
-```
+- Elegir EC2 por defecto "porque es lo que conozco" — evaluar Lambda o Fargate primero.
+- Lambda para todo (WebSockets, procesos largos, apps stateful) — cada servicio tiene su caso de uso.
+- ECS para APIs simples y stateless es overkill — usar Lambda.
+- Vercel no es para backend pesado — usar Lambda o ECS.
+- Lambda con VPC sin necesidad agrega cold start significativo (~1-5s extra).
+- Un solo container sin auto-scaling ni health checks no es producción.
+- Deploy manual vía SSH a EC2 no es aceptable — usar CI/CD.
