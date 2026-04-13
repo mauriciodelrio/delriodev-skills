@@ -1,54 +1,29 @@
 ---
 name: architecture
 description: >
-  Framework de decisiones arquitectónicas para proyectos de software. Esta skill
-  es un orquestador: guía al agente a través de un ciclo de preguntas sobre el
-  negocio, escala, presupuesto y equipo, y luego activa sub-skills de compute,
-  databases, storage, networking, messaging, observability y costos para construir
-  una propuesta de infraestructura completa. El agente NO asume tecnologías — todo
-  es situacional. Al finalizar, presenta un resumen ejecutivo y pide confirmación.
+  Usa esta skill cuando necesites diseñar la arquitectura de un proyecto.
+  Orquesta sub-skills de compute, databases, storage, networking, messaging,
+  observability y costos. Guía al agente a través de discovery, análisis,
+  propuesta e implementación. El agente NO asume tecnologías — todo es
+  situacional.
 ---
 
-# 🏛️ Architecture — Framework de Decisiones
+# Architecture — Framework de Decisiones
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **No existe la "mejor" arquitectura — existe la correcta para este proyecto.**
-> Cada decisión tiene un trade-off. El agente pregunta, propone con justificación,
-> y no avanza sin confirmación del desarrollador.
+1. **Discovery:** preguntar sobre negocio, escala, presupuesto, equipo y constraints. Recopilar todas las respuestas antes de proponer nada.
+2. **Análisis:** activar sub-skills relevantes según respuestas, evaluar opciones con árboles de decisión, considerar presupuesto como constraint.
+3. **Propuesta:** presentar resumen ejecutivo con todas las decisiones, justificar cada elección, estimar costo mensual, pedir confirmación.
+4. **Implementación:** con confirmación, generar IaC/configuración, guiar paso a paso, referenciar basic-workflows para CI/CD de PRs.
 
----
+> No existe la "mejor" arquitectura — existe la correcta para este proyecto.
+> Cada decisión tiene un trade-off. El agente pregunta, propone con
+> justificación, y no avanza sin confirmación del desarrollador.
 
-## Flujo del Agente
+## 1. Preguntas de Discovery
 
-```
-FASE 1: DISCOVERY
-  → Preguntas sobre negocio, escala, presupuesto, equipo, constraints
-  → Recopilar todas las respuestas antes de proponer NADA
-
-FASE 2: ANÁLISIS
-  → Activar sub-skills relevantes según respuestas
-  → Evaluar opciones con árboles de decisión de cada sub-skill
-  → Considerar presupuesto como constraint transversal
-
-FASE 3: PROPUESTA
-  → Presentar resumen ejecutivo con TODAS las decisiones
-  → Justificar cada elección (por qué X y no Y)
-  → Estimar costo mensual aproximado
-  → PEDIR CONFIRMACIÓN antes de continuar
-
-FASE 4: IMPLEMENTACIÓN
-  → Con confirmación, generar configuración/IaC
-  → Guiar paso a paso la configuración de servicios
-  → Referenciar skill basic-workflows para CI/CD de PRs
-```
-
----
-
-## FASE 1 — Preguntas de Discovery
-
-El agente DEBE hacer estas preguntas antes de tomar cualquier decisión.
-Agrupar en bloques — no abrumar con todas a la vez.
+El agente DEBE hacer estas preguntas antes de tomar cualquier decisión. Agrupar en bloques — no abrumar con todas a la vez.
 
 ### Bloque 1: Negocio
 
@@ -142,9 +117,7 @@ Agrupar en bloques — no abrumar con todas a la vez.
     (Manual, CI/CD parcial, CI/CD completo, no existe aún)
 ```
 
----
-
-## FASE 2 — Routing a Sub-Skills
+## 2. Routing a sub-skills
 
 Una vez recopiladas las respuestas, el agente consulta las sub-skills:
 
@@ -158,9 +131,7 @@ Una vez recopiladas las respuestas, el agente consulta las sub-skills:
 | Logs, monitoreo, alertas | `observability` | Siempre |
 | Optimización de costos | `cost-and-scaling` | Siempre (evalúa contra presupuesto) |
 
----
-
-## FASE 3 — Resumen Ejecutivo
+## 3. Resumen ejecutivo
 
 Al terminar el análisis, presentar este formato:
 
@@ -205,9 +176,7 @@ Al terminar el análisis, presentar este formato:
 ⚠️ ¿Confirmas esta propuesta para proceder con la implementación?
 ```
 
----
-
-## FASE 4 — Implementación
+## 4. Implementación
 
 Con confirmación del desarrollador:
 
@@ -218,36 +187,19 @@ Con confirmación del desarrollador:
 3. **Guías de setup** — Paso a paso para cada servicio propuesto
 4. **Variables de entorno** — Qué secrets/configs necesita cada servicio
 
----
+## 5. Reglas transversales
 
-## Reglas Transversales
+**Presupuesto es un constraint, no una sugerencia.** Toda propuesta respeta el tier del usuario. Si la solución ideal excede el presupuesto, proponer alternativas.
 
-```
-1. PRESUPUESTO ES UN CONSTRAINT, NO UNA SUGERENCIA
-   → Toda propuesta debe respetar el tier de presupuesto del usuario.
-   → Si la solución "ideal" excede el presupuesto, proponer alternativas.
+**Complejidad proporcional al equipo.** Equipo de 1–2: managed services, mínima infra custom. Equipo de 15+: puede manejar Kubernetes, multi-service.
 
-2. COMPLEJIDAD PROPORCIONAL AL EQUIPO
-   → Equipo de 1-2: managed services, mínima infra custom.
-   → Equipo de 15+: puede manejar Kubernetes, multi-service, etc.
+**No sobre-arquitecturar.** MVP no necesita microservicios. <1,000 usuarios probablemente no necesita cache distribuido. Empezar simple, escalar cuando los datos lo justifiquen.
 
-3. NO SOBRE-ARQUITECTURAR
-   → MVP no necesita microservicios.
-   → < 1,000 usuarios probablemente no necesita cache distribuido.
-   → Empezar simple, escalar cuando los datos lo justifiquen.
+**Seguridad no es opcional.** HTTPS everywhere, secrets en vault, IAM least privilege. Si hay regulaciones, activar skills de GRC como prerequisito.
 
-4. SEGURIDAD NO ES OPCIONAL
-   → HTTPS everywhere, secrets en vault, IAM least privilege.
-   → Si hay regulaciones, activar skills de GRC como prerequisito.
+**Observability desde el día 1.** No es algo que "agregas después". Logging y monitoring van en la configuración inicial.
 
-5. OBSERVABILITY DESDE EL DÍA 1
-   → No es algo que "agregas después". Logging y monitoring van
-     en la configuración inicial.
-```
-
----
-
-## Sub-Skills Disponibles
+## 6. Sub-skills disponibles
 
 - `architecture/compute` — Lambda, ECS, EC2, Vercel, Cloud Run
 - `architecture/databases` — RDS, DynamoDB, MongoDB, Redis, ElastiCache
