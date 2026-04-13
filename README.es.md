@@ -7,7 +7,7 @@
 
 Repositorio de **skills** para GitHub Copilot con instrucciones detalladas para desarrollo de software, seguridad y cumplimiento normativo.
 
-Todas las skills están en **español** con ejemplos de código en **TypeScript**.
+Todas las skills están en **español** e **inglés** con ejemplos de código en **TypeScript**.
 
 ---
 
