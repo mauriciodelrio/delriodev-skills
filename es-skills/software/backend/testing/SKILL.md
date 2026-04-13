@@ -13,7 +13,7 @@ description: >
 
 **1.** Identificar el tipo de test según la capa (sección 1).
 **2.** Elegir herramientas del stack (sección 2).
-**3.** Escribir unit o integration test según corresponda (secciones 3–5).
+**3.** Escribir unit tests para services/utils (sección 3) e integration tests para endpoints (secciones 4–5).
 **4.** Configurar DB testing y fixtures si necesario (secciones 6–7).
 **5.** Aplicar reglas de mocking y configuración (secciones 8–9).
 **6.** Verificar contra la lista de gotchas (sección 10).
@@ -340,6 +340,8 @@ export default defineConfig({
 - Test de happy path solamente — testear también errores y edge cases.
 - describe/it genéricos ("should work") — describir comportamiento esperado.
 - Snapshot tests para JSON responses — frágiles, usar assertions específicas.
+- Solo integration tests sin unit tests — el service se testea indirectamente y cualquier cambio rompe tests masivamente.
+- Solo unit tests sin integration tests — mocks pasan pero el endpoint real falla.
 
 ## Skills Relacionadas
 

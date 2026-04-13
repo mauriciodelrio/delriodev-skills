@@ -71,7 +71,7 @@ Esta skill cubre implementación en código backend: cómo estructurar el proyec
 
 Estas reglas aplican siempre que se crea o modifica código backend. Cada sub-skill individual debe consultar esta sección para saber qué otras skills son obligatorias en paralelo.
 
-**Al crear/modificar un endpoint:** testing (coverage ≥ 80%), data-validation (DTOs, Zod/class-validator), error-handling (error classes tipados, global handler), security (Helmet, rate limiting, sanitización), logging (structured logging, correlation IDs), api-design (REST conventions, status codes, OpenAPI), clean-code-principles (JSDoc, SRP, guard clauses, naming).
+**Al crear/modificar un endpoint:** testing (unit tests para services/utils + integration tests para endpoints, coverage ≥ 80%), data-validation (DTOs, Zod/class-validator, sanitización HTML), error-handling (error classes tipados, global handler), security (Helmet, rate limiting, sanitización), logging (structured logging, correlation IDs), api-design (REST conventions, status codes, OpenAPI), clean-code-principles (JSDoc, SRP, guard clauses, naming).
 
 **Al crear/modificar auth:** todos los anteriores + auth (JWT, hashing, RBAC, guards), governance/owasp-top-10 (A07 Auth Failures, rate limiting).
 

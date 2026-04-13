@@ -248,6 +248,7 @@ const listOrdersQuery = paginationSchema
 - DTOs without whitelist — the client can inject extra fields.
 - Trusting TypeScript types for runtime safety — TS doesn't exist at runtime.
 - Complex regex to validate emails — use `z.string().email()`.
+- Schemas without HTML sanitization `.transform()` for free-text fields — see `security` section 3.
 - Business validation in the schema — that belongs in the service.
 - Giant schema with 100+ fields — split into composable sub-schemas.
 - `transform()` that mutates data unexpectedly — only sanitization and formatting.
@@ -261,4 +262,5 @@ const listOrdersQuery = paginationSchema
 | `api-design` | Validation goes in the request pipeline before logic |
 | `security` | Sanitization as the first line of defense |
 | `frontend/forms-and-validation-rules` | Shared Zod schemas client/server |
+| `error-handling` | Error classes for validation (400 Bad Request) |
 | `clean-code-principles` | Composable schemas, DRY, expressive naming |
