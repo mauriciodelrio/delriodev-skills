@@ -1,48 +1,33 @@
 ---
 name: real-time
 description: >
-  Real-time communication in Node.js backend. Covers WebSocket
-  (Socket.IO, ws), Server-Sent Events (SSE), rooms/namespaces,
-  scaling with Redis adapter, WebSocket authentication, and reconnection.
-  When to use events → architecture/messaging-and-events.
+  Use this skill when implementing real-time communication in a
+  Node.js backend. Covers WebSocket (Socket.IO, ws), Server-Sent
+  Events (SSE), rooms/namespaces, scaling with Redis adapter,
+  WebSocket authentication, and reconnection. When to use events
+  → architecture/messaging-and-events.
 ---
 
-# 🔴 Real-Time — WebSocket and SSE
+# Real-Time — WebSocket and SSE
 
-## Principle
+## Agent workflow
 
-> **Real-time only when the client NEEDS data without asking.**
-> If the client can poll every 30s, you don't need WebSocket.
-> Evaluate complexity vs benefit before implementing.
+**1.** Decide technology: WebSocket, SSE, or polling (section 1).
+**2.** Configure Socket.IO or SSE as needed (sections 2–5).
+**3.** Organize rooms and namespaces (section 6).
+**4.** Configure Redis adapter for multiple instances (section 7).
+**5.** Implement client-side reconnection (section 8).
+**6.** Check against the gotchas list (section 9).
 
----
+## 1. WebSocket or SSE?
 
-## WebSocket or SSE?
+**WebSocket (bidirectional):** chat, messaging, multiplayer games, collaborative editing, any case where the client sends data in real time. More complex: connection management, reconnection, scaling.
 
-```
-WEBSOCKET (bidirectional):
-  ✅ Chat, messaging
-  ✅ Multiplayer games
-  ✅ Collaborative editing
-  ✅ Any case where the CLIENT sends data in real time
-  → More complex: connection management, reconnection, scaling
+**SSE — Server-Sent Events (unidirectional: server → client):** notifications, live feeds (stock prices, scores), progress updates (file processing, deployment), any case where only the server sends data. Simpler: native HTTP, automatic reconnection, no library needed.
 
-SSE — Server-Sent Events (unidirectional: server → client):
-  ✅ Notifications
-  ✅ Live feeds (stock prices, scores)
-  ✅ Progress updates (file processing, deployment)
-  ✅ Any case where only the SERVER sends data
-  → Simpler: native HTTP, automatic reconnection, no library needed
+**Polling (simple fallback):** data that changes every 30s+ (dashboard metrics), doesn't justify the complexity of WS/SSE. Long polling if you need < 5s latency without WS.
 
-POLLING (simple fallback):
-  ✅ Data that changes every 30s+ (dashboard metrics)
-  ✅ Doesn't justify the complexity of WS/SSE
-  → Long polling if you need < 5s latency without WS
-```
-
----
-
-## Socket.IO — Setup
+## 2. Socket.IO — Setup
 
 ```typescript
 // server.ts
@@ -114,9 +99,7 @@ io.on('connection', (socket) => {
 });
 ```
 
----
-
-## NestJS — Gateway
+## 3. NestJS — Gateway
 
 ```typescript
 @WebSocketGateway({
@@ -165,9 +148,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 }
 ```
 
----
-
-## SSE — Server-Sent Events
+## 4. SSE — Server-Sent Events
 
 ```typescript
 // Express — SSE endpoint
@@ -220,27 +201,11 @@ export class NotificationsController {
 }
 ```
 
----
+## 5. Rooms and Namespaces
 
-## Rooms and Namespaces
+**Namespaces (Socket.IO):** `/chat` → messaging, `/dashboard` → real-time metrics, `/support` → support chat. Each namespace can have its own middleware and handlers. Client connects to a specific namespace.
 
-```
-NAMESPACES (Socket.IO):
-  /chat       → Messaging
-  /dashboard  → Real-time metrics
-  /support    → Support chat
-  
-  Each namespace can have its own middleware and handlers.
-  Client connects to a specific namespace.
-
-ROOMS:
-  user:usr_123           → Personal room (direct notifications)
-  chat:room_456          → Chat room
-  org:org_789            → Organization
-  
-  A socket can be in multiple rooms.
-  Broadcast to room = all sockets in that room receive it.
-```
+**Rooms:** `user:usr_123` → personal room (direct notifications), `chat:room_456` → chat room, `org:org_789` → organization. A socket can be in multiple rooms. Broadcast to room = all sockets in that room receive it.
 
 ```typescript
 // Emit to a specific room
@@ -256,9 +221,7 @@ socket.to('chat:room_456').emit('newMessage', message);
 io.to('room1').to('room2').emit('announcement', data);
 ```
 
----
-
-## Scaling with Redis Adapter
+## 6. Scaling with Redis Adapter
 
 ```typescript
 // WITHOUT Redis adapter: each instance has its own sockets
@@ -280,9 +243,7 @@ io.adapter(createAdapter(pubClient, subClient));
 //   → reaches ALL sockets in room:123, regardless of the instance
 ```
 
----
-
-## Reconnection
+## 7. Reconnection
 
 ```typescript
 // CLIENT-SIDE: Socket.IO reconnects automatically
@@ -308,19 +269,15 @@ io.use(async (socket, next) => {
 });
 ```
 
----
+## 8. Gotchas
 
-## Anti-patterns
-
-```
-❌ WebSocket for everything → SSE or polling when only the server sends
-❌ No authentication on WS → anyone can connect
-❌ No input validation on messages → XSS/injection via WS
-❌ Broadcast without rooms → sending to ALL including irrelevant users
-❌ No Redis adapter on multiple instances → messages get lost
-❌ Heavy messages over WS → send only IDs/diffs, client fetches the rest
-❌ No heartbeat/ping → zombie connections
-❌ No rate limiting on WS → a client can flood with messages
-❌ Business logic in the gateway → move to services
-❌ No graceful disconnect → resources are not cleaned up
-```
+- WebSocket for everything — SSE or polling when only the server sends.
+- No authentication on WS — anyone can connect.
+- No input validation on messages — XSS/injection via WS.
+- Broadcast without rooms — sending to all including irrelevant users.
+- No Redis adapter on multiple instances — messages get lost.
+- Heavy messages over WS — send only IDs/diffs, client fetches the rest.
+- No heartbeat/ping — zombie connections.
+- No rate limiting on WS — a client can flood with messages.
+- Business logic in the gateway — move to services.
+- No graceful disconnect — resources are not cleaned up.
