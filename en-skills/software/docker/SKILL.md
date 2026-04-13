@@ -1,39 +1,21 @@
 ---
 name: docker
 description: >
-  Containerization and local development environment with Docker. Covers
-  multi-stage Dockerfiles, docker-compose for development, dev containers,
-  image optimization, networking between services, volumes, secrets,
-  and patterns for Node.js/TypeScript. Does NOT cover cloud orchestration
-  (ECS, EKS) — that's architecture/compute.
+  Use this skill when generating Dockerfiles, configuring docker-compose for
+  local development, implementing dev containers, optimizing images or configuring
+  volumes, networking and secrets for Node.js/TypeScript projects. Also when the
+  user asks to spin up a development environment with a single command.
 ---
 
-# 🐳 Docker & Local Dev — Containerization
+# Docker & Local Dev
 
-## Principle
+## Agent workflow
 
-> **If it works on my machine, it works on all machines.**
-> Docker eliminates "works on my machine". Every dev on the team must be able
-> to spin up the entire project with a single command.
-
----
-
-## Scope
-
-```
-✅ This skill covers:
-  - Dockerfiles for Node.js/TypeScript
-  - Multi-stage builds (dev, build, prod)
-  - docker-compose for local development
-  - Dev containers (VS Code)
-  - Volumes, networking, secrets
-  - Image optimization
-
-❌ Does NOT cover:
-  - Where to deploy containers → architecture/compute
-  - ECS, EKS, Fargate config → architecture/compute
-  - CI/CD with Docker → deploy-pipelines
-```
+1. Use the multi-stage Dockerfile in this skill as the base for every Node.js/TypeScript project
+2. Include docker-compose with healthchecks for all services
+3. Always generate `.dockerignore` alongside the Dockerfile
+4. Follow the Dockerfile rules (layers, alpine, non-root, multi-stage)
+5. Validate against the Gotchas section before delivering Docker configuration
 
 ---
 
@@ -422,17 +404,15 @@ docker system df
 
 ---
 
-## Anti-patterns
+## Gotchas
 
-```
-❌ latest base image → pin version (node:20-alpine, not node:alpine)
-❌ Running as root in production → non-root USER
-❌ COPY . . at the beginning → invalidates dependency cache
-❌ npm install in production (without lockfile) → use --frozen-lockfile
-❌ Secrets in Dockerfile ENV/ARG → BuildKit secrets or runtime
-❌ One container with multiple processes → one process per container
-❌ Missing .dockerignore → node_modules and .git in build context
-❌ Data volumes without backup strategy → named volumes can be deleted
-❌ docker compose up without healthcheck → app starts before DB
-❌ Bind mount in production → only in development
-```
+- Always pin base image version (`node:20-alpine`, never `node:alpine` or `latest`). `latest` images cause non-reproducible builds.
+- Never run as root in production. Create a dedicated user and use `USER` before `CMD`.
+- `COPY` order matters for cache: lockfile first → install deps → copy code → build. `COPY . .` at the start invalidates all cache.
+- In production always use `--frozen-lockfile`. Without a lockfile the build is not reproducible.
+- Never put secrets in Dockerfile `ENV`/`ARG` — they remain in image layers. Use BuildKit secrets or runtime injection.
+- One container = one process. Never API + Worker + Cron in the same container.
+- Without `.dockerignore` the build context includes `node_modules` and `.git` — slow builds and potential secret leaks.
+- Always define `healthcheck` in compose. Without it the app starts before the DB is ready.
+- Bind mounts only in development, never in production.
+- On macOS the anonymous volume `/app/node_modules` is mandatory to avoid filesystem conflicts between host and container.

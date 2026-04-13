@@ -1,19 +1,23 @@
 ---
 name: basic-workflows
 description: >
-  Mandatory basic CI/CD workflows for every new project. This skill is
-  activated when creating or configuring a project. Creates GitHub Actions for
-  linting, build, tests, security audit, bundle analysis, and type validation.
-  Defines branch protection rules and Dependabot configuration. Every PR must
-  pass all checks before merge.
+  Use this skill when creating or configuring a new project. Creates GitHub
+  Actions for lint, type-check, tests, build, security audit and bundle
+  analysis. Configures branch protection, Dependabot, CODEOWNERS and PR
+  template. Every PR must pass all checks before merge.
 ---
 
-# ⚙️ Basic Workflows — CI/CD for Every Project
+# Basic Workflows
 
-## Guiding Principle
+## Agent workflow
 
-> **If it's not in CI, it doesn't exist.** Every check done locally must
-> be replicated in CI. A PR without green checks doesn't get merged — no exceptions.
+1. Create `.github/workflows/ci.yml` with jobs: install → lint → type-check → test → build (in that dependency order)
+2. Create `.github/workflows/security.yml` with pnpm audit + CodeQL (daily schedule + on PRs)
+3. Create `.github/dependabot.yml` for npm + github-actions with minor/patch grouping
+4. Create `.github/CODEOWNERS` and `.github/pull_request_template.md`
+5. Configure branch protection on main: require status checks, approvals, linear history
+6. Verify that scripts `lint`, `format:check`, `type-check`, `test:ci`, `build` exist in package.json
+7. Validate against the Gotchas section before configuring workflows
 
 ---
 
@@ -549,17 +553,15 @@ When creating a new project, verify that ALL of this exists:
 
 ---
 
-## Anti-patterns
+## Gotchas
 
-```yaml
-# ❌ Workflows that DON'T cache node_modules → slow builds
-# ❌ Checks that can be skipped with [skip ci] without restriction
-# ❌ main branch without protection → direct push possible
-# ❌ PRs without required status checks → merge without CI
-# ❌ pnpm install without --frozen-lockfile in CI → inconsistent lockfile
-# ❌ Hardcoded secrets in workflows → use GitHub Secrets
-# ❌ Workflows that run on push to ALL branches → wasted CI minutes
-# ❌ Ignoring Dependabot security alerts
-# ❌ Build as first step → wastes CI if lint fails
-# ❌ Without concurrency → old PRs consume runners unnecessarily
-```
+- Workflows without node_modules cache produce slow builds — use `actions/cache` with key based on `pnpm-lock.yaml`.
+- Never allow `[skip ci]` without restriction — checks exist to protect main.
+- Main branch without protection allows direct push — always configure branch protection rules.
+- PRs without required status checks allow merge without CI — mark Lint, Type Check, Tests, Build as required.
+- Never `pnpm install` without `--frozen-lockfile` in CI — without it the lockfile can mutate and cause inconsistencies.
+- Never hardcode secrets in workflows — use GitHub Secrets (`${{ secrets.NAME }}`).
+- Workflows running on push to all branches waste CI minutes — limit to `main` and `develop`.
+- Ignoring Dependabot security alerts leaves vulnerabilities open — review and update weekly.
+- Putting build as first step wastes CI if lint fails — order: lint → type-check → test → build.
+- Without `concurrency` with `cancel-in-progress`, old PRs consume runners unnecessarily.

@@ -1,28 +1,27 @@
 ---
 name: clean-code-principles
 description: >
-  Fundamental principles for building clean software. This skill is the
-  core that applies BEFORE any other: SOLID, DRY, KISS, YAGNI, atomic
-  methods, encapsulation, dependency injection, business-oriented JSDoc
-  documentation, expressive naming, guard clauses, composition, immutability,
-  and separation of concerns. Every act of writing code must go through these rules.
+  Use this skill on ALL code generation. Apply SOLID, DRY, KISS, YAGNI,
+  atomic functions, guard clauses, composition, immutability, encapsulation,
+  expressive naming, business JSDoc documentation, boundary validation and
+  separation of concerns. This skill is the mandatory core that precedes
+  any other software skill.
 ---
 
-# 🧱 Clean Code Principles
+# Clean Code Principles
 
-## Guiding Principle
+## Agent workflow
 
-> **Code is read 10x more than it is written.**
-> Write for the human who will read it in 6 months — probably you.
-> This skill is the **core**: it applies before any other specific skill.
+1. Apply ALL principles in this skill to every generated code block
+2. Use the ✅ patterns from each section as mandatory style reference
+3. Default to atomic functions, guard clauses and composition
+4. Validate against the Gotchas section before delivering code
 
 ---
 
 ## 1. SOLID
 
 ### S — Single Responsibility Principle
-
-Each class, module, or function has **one single reason to change**.
 
 ```typescript
 // ❌ Does too much: validates, persists, notifies
@@ -57,8 +56,6 @@ async function notifyOrderCreated(order: Order): Promise<void> {
 
 ### O — Open/Closed Principle
 
-Open for extension, closed for modification. Extend behavior without touching existing code.
-
 ```typescript
 // ❌ Switch that grows with each new type
 function calculateDiscount(type: string, amount: number) {
@@ -90,8 +87,6 @@ function calculateDiscount(type: string, amount: number): number {
 
 ### L — Liskov Substitution Principle
 
-Subtypes must be substitutable for their base types without breaking the program.
-
 ```typescript
 // ❌ Violates LSP: Square doesn't behave like Rectangle
 class Rectangle {
@@ -119,8 +114,6 @@ class Square implements Shape {
 ```
 
 ### I — Interface Segregation Principle
-
-Don't force implementation of methods that aren't used.
 
 ```typescript
 // ❌ Fat interface
@@ -151,8 +144,6 @@ interface ReportRepository extends Readable<Report> {} // Read-only
 ```
 
 ### D — Dependency Inversion Principle
-
-Depend on abstractions, not on concrete implementations.
 
 ```typescript
 // ❌ Direct dependency on concrete implementation
@@ -267,8 +258,6 @@ interface ProductRepository {
 
 ## 5. Atomic Functions
 
-Each function does **one single thing**, has a **name that describes what it does**, is **short** (ideally < 20 lines), and operates at **a single level of abstraction**.
-
 ```typescript
 // ❌ Long function with multiple levels of abstraction
 async function processOrder(input: RawOrderInput) {
@@ -323,8 +312,6 @@ function calculateTotals(items: OrderItem[]): OrderTotals {
 
 ## 6. Guard Clauses — Early Returns
 
-Avoid deep nesting. Validate and exit early.
-
 ```typescript
 // ❌ Excessive nesting
 function processPayment(order: Order | null, user: User | null) {
@@ -362,8 +349,6 @@ function processPayment(order: Order | null, user: User | null) {
 ---
 
 ## 7. Encapsulation and Exposure
-
-Expose only what the consumer needs. Hide implementation details.
 
 ```typescript
 // ❌ Everything public — consumer can break invariants
@@ -480,9 +465,7 @@ interface Config {
 
 ---
 
-## 10. Expressive Naming — Code Self-Documents
-
-The name of a variable, function, or class should make a comment unnecessary.
+## 10. Expressive Naming
 
 ```typescript
 // ❌ Cryptic names + compensatory comment
@@ -513,10 +496,7 @@ function getUserProfile() {} // ✅
 
 ## 11. In-Code Documentation (JSDoc)
 
-### Philosophy
-
-> **Document the WHY and the business WHAT, not the technical HOW.**
-> If a function needs a comment explaining how it works, it's too complex — refactor it.
+Document the WHY and the business WHAT, not the technical HOW. If you need to explain how it works, refactor.
 
 ### When TO document (JSDoc)
 
@@ -660,8 +640,6 @@ function ProductPage() {
 
 ## 13. Error Handling at Boundaries
 
-Validate inputs at system boundaries — not in every internal function.
-
 ```typescript
 // ❌ Defensive validation at every layer
 function calculateTax(amount: number) {
@@ -709,47 +687,21 @@ function applyDiscount(price: number, discountRate: number): number {
 
 ---
 
-## Pre-Commit Mental Checklist
+## Gotchas
 
-Before committing, ask yourself:
-
-- [ ] Does each function do **one single thing**?
-- [ ] Do the names describe intent without needing comments?
-- [ ] Is there duplication that should be extracted?
-- [ ] Am I building only what's needed **today**?
-- [ ] Are dependencies injected, not internally instantiated?
-- [ ] Is public data read-only where possible?
-- [ ] Does the documentation describe the **business**, not the mechanics?
-- [ ] Are there inline comments that are unnecessary?
-- [ ] Can I read the high-level function like an executive summary?
-
----
-
-## Universal Anti-patterns
-
-```typescript
-// ❌ any — use unknown + type guards
-// ❌ Functions over 30 lines — split them
-// ❌ More than 3 parameters — use an options object
-// ❌ Nested ternaries — use early returns or named variables
-// ❌ Magic numbers — extract to constants with business names
-// ❌ God class / God function — violates SRP
-// ❌ Deep inheritance (> 2 levels) — use composition
-// ❌ Comments like "// TODO: fix later" on main
-// ❌ Commented-out code — delete it (Git is your history)
-// ❌ Defensive programming in internal layers — validate at boundaries
-// ❌ Premature abstraction — abstract on the 3rd repetition, not the 1st
-// ❌ Importing entire modules for one function — import { pick } from 'lodash-es'
-```
+- Never use `any` — always `unknown` + type guards. The agent must generate strict types.
+- Functions > 30 lines indicate they should be split. More than 3 parameters → options object.
+- Nested ternaries are unreadable — use early returns or descriptively named variables.
+- Magic numbers must be constants with business names (`GRACE_PERIOD_DAYS`, not `15`).
+- Never inherit > 2 levels deep — prefer composition.
+- Never leave `// TODO` on main or commented-out code — Git is the history.
+- No defensive validation in internal layers — only at boundaries (API handlers, form submits).
+- Don't abstract prematurely — rule of three: abstract on the 3rd repetition, not the 1st.
+- Import specific functions, not entire modules: `import { pick } from 'lodash-es'`.
 
 ---
 
 ## Related Skills
-
-> **This skill is cross-cutting — it applies to ALL generated code.**
-> The master indexes [`frontend/SKILL.md`](../frontend/SKILL.md) and
-> [`backend/SKILL.md`](../backend/SKILL.md) reference this skill as
-> mandatory on every action. The agent MUST always apply it.
 
 | Skill | Relationship |
 |-------|-------------|

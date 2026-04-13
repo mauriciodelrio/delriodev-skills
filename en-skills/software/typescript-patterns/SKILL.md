@@ -1,19 +1,23 @@
 ---
 name: typescript-patterns
 description: >
-  Advanced TypeScript patterns for full-stack development. Covers
-  generics, utility types, discriminated unions, type narrowing, satisfies,
-  module augmentation, branded types, shared frontend↔backend types,
-  and type inference patterns. Cross-cutting for frontend and backend.
+  Use this skill when defining TypeScript types, interfaces or schemas.
+  Apply generics, utility types, discriminated unions, type narrowing,
+  satisfies, branded types, module augmentation, shared frontend↔backend
+  types and inference from Zod schemas. strict: true always.
 ---
 
-# 🔷 TypeScript Patterns — Advanced Types
+# TypeScript Patterns
 
-## Principle
+## Agent workflow
 
-> **TypeScript is your first line of defense against bugs.**
-> A well-used type system catches errors at compile time,
-> not in production. Investing in good types is investing in quality.
+1. `strict: true` + `noUncheckedIndexedAccess` always in tsconfig.json
+2. Discriminated unions over optional properties for modeling variants
+3. `unknown` + type guards over `any` and `as Type` casts
+4. `satisfies` to validate types while preserving literal inference
+5. Zod schema as source of truth → infer types with `z.infer<>`
+6. Shared types in dedicated package (monorepo) or shared file (simple project)
+7. Validate against the Gotchas section before defining types
 
 ---
 
@@ -449,18 +453,16 @@ type StatusCode = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS]; // 200 | 201 |
 
 ---
 
-## Anti-patterns
+## Gotchas
 
-```
-❌ any as escape → use unknown + type guard
-❌ as Type without verifying → it's an unsafe cast, prefer type guards
-❌ // @ts-ignore liberally → fix the type error
-❌ TypeScript enums → use as const + string unions
-❌ interface with I prefix → IUser → use User (the prefix adds no value)
-❌ Overly complex types → if it's not understandable, simplify
-❌ Forgotten export type {} in .d.ts → the file becomes a global script
-❌ Duplicating types between frontend and backend → share in a package
-❌ Date in API interfaces → use string (ISO) for JSON serialization
-❌ strict: false → ALWAYS strict: true from day 1
-❌ Types with unnecessary optional properties → prefer discriminated unions
-```
+- Never use `any` as an escape — use `unknown` + type guard to maintain type safety.
+- `as Type` is an unsafe cast that silences the compiler — prefer type guards or assertion functions.
+- Don't use `// @ts-ignore` liberally — fix the type error. If unavoidable, use `@ts-expect-error` which fails when the error disappears.
+- TypeScript `enum` has tree-shaking and runtime issues — use `as const` + string unions.
+- Don't use `I` prefix on interfaces (`IUser`) — just `User`. The prefix adds no value in TypeScript.
+- Overly complex types (3+ levels of nested conditional types) are unreadable — simplify or split.
+- Forgetting `export type {}` in `.d.ts` files turns them into global scripts that pollute the namespace.
+- Don't duplicate types between frontend and backend — share from a package or common file.
+- Using `Date` in API interfaces causes serialization issues — use `string` (ISO 8601) because JSON has no native Date type.
+- Never `strict: false` — always `strict: true` from day 1. Migrating later is much more costly.
+- Unnecessary optional properties (`name?: string`) create ambiguity — prefer discriminated unions to model variants explicitly.

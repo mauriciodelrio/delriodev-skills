@@ -1,19 +1,23 @@
 ---
 name: typescript-patterns
 description: >
-  Patrones avanzados de TypeScript para desarrollo full-stack. Cubre
-  generics, utility types, discriminated unions, type narrowing, satisfies,
-  module augmentation, branded types, tipos compartidos frontend↔backend,
-  y patrones de inferencia de tipos. Transversal a frontend y backend.
+  Usa esta skill cuando definas tipos, interfaces o esquemas TypeScript.
+  Aplica generics, utility types, discriminated unions, type narrowing,
+  satisfies, branded types, module augmentation, tipos compartidos
+  frontend↔backend e inferencia desde Zod schemas. strict: true siempre.
 ---
 
-# 🔷 TypeScript Patterns — Tipos Avanzados
+# TypeScript Patterns
 
-## Principio
+## Flujo de trabajo del agente
 
-> **TypeScript es tu primera línea de defensa contra bugs.**
-> Un type system bien usado atrapa errores en compilación,
-> no en producción. Invertir en tipos buenos es invertir en calidad.
+1. `strict: true` + `noUncheckedIndexedAccess` siempre en tsconfig.json
+2. Discriminated unions sobre propiedades opcionales para modelar variantes
+3. `unknown` + type guards sobre `any` y `as Type` casts
+4. `satisfies` para validar tipos preservando inferencia literal
+5. Zod schema como source of truth → inferir tipos con `z.infer<>`
+6. Tipos compartidos en paquete dedicado (monorepo) o archivo shared (proyecto simple)
+7. Validar contra la sección Gotchas antes de definir tipos
 
 ---
 
@@ -449,18 +453,16 @@ type StatusCode = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS]; // 200 | 201 |
 
 ---
 
-## Anti-patrones
+## Gotchas
 
-```
-❌ any como escape → usar unknown + type guard
-❌ as Type sin verificar → es un cast inseguro, preferir type guards
-❌ // @ts-ignore liberalmente → arreglar el type error
-❌ TypeScript enums → usar as const + string unions
-❌ interface con I prefix → IUser → usar User (el prefix no agrega valor)
-❌ Tipos excesivamente complejos → si no se entiende, simplificar
-❌ export type {} olvidado en .d.ts → el archivo se vuelve script global
-❌ Duplicar tipos entre frontend y backend → compartir en paquete
-❌ Date en interfaces de API → usar string (ISO) para serialización JSON
-❌ strict: false → SIEMPRE strict: true desde el día 1
-❌ Tipos con propiedades opcionales innecesarias → preferir discriminated unions
-```
+- Nunca usar `any` como escape — usar `unknown` + type guard para mantener type safety.
+- `as Type` es un cast inseguro que silencia el compilador — preferir type guards o assertion functions.
+- No usar `// @ts-ignore` libremente — arreglar el error de tipos. Si es inevitable, usar `@ts-expect-error` que falla cuando el error desaparece.
+- TypeScript `enum` tiene problemas de tree-shaking y runtime — usar `as const` + string unions.
+- No usar prefix `I` en interfaces (`IUser`) — simplemente `User`. El prefix no agrega valor en TypeScript.
+- Tipos excesivamente complejos (3+ niveles de conditional types anidados) son ilegibles — simplificar o dividir.
+- Olvidar `export type {}` en archivos `.d.ts` los convierte en scripts globales que contaminan el namespace.
+- No duplicar tipos entre frontend y backend — compartir desde un paquete o archivo común.
+- Usar `Date` en interfaces de API causa problemas de serialización — usar `string` (ISO 8601) porque JSON no tiene tipo Date nativo.
+- Nunca `strict: false` — siempre `strict: true` desde el día 1. Migrar después es mucho más costoso.
+- Propiedades opcionales innecesarias (`name?: string`) crean ambigüedad — preferir discriminated unions para modelar variantes explícitamente.

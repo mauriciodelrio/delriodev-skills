@@ -1,20 +1,22 @@
 ---
 name: scripting
 description: >
-  Reglas para shell scripting profesional (Bash/Zsh). Cubre estructura de archivos
-  .sh, atomicidad de scripts, uso de sed/awk/grep sobre ciclos explícitos, permisos,
-  estilos de terminal (colores/formato), captura de outputs, creación de CLIs cuando
-  sea necesario, y reglas para scripts simples vs herramientas complejas. Preferir
-  pipelines nativos de Unix sobre loops imperativos.
+  Usa esta skill cuando escribas o modifiques scripts Bash/Zsh. Aplica
+  set -euo pipefail, estructura main(), sed/awk/grep sobre loops, permisos,
+  estilos de terminal, captura de outputs, y decide cuándo un script simple
+  basta vs cuándo crear un CLI con flags.
 ---
 
-# 🐚 Shell Scripting — Reglas
+# Shell Scripting
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Un script es software — trátalo como tal.** Debe ser legible, atómico,
-> y fallar ruidosamente. Pero no todo necesita ser un CLI con flags y menús.
-> Si un pipeline de 3 comandos resuelve el problema, no escribas 50 líneas.
+1. Todo script inicia con `#!/usr/bin/env bash` + `set -euo pipefail` + comentario de encabezado (nombre, propósito, uso)
+2. Usar grep/sed/awk/xargs y pipelines sobre while-read loops para procesamiento de texto
+3. Envolver lógica en `main()`, sourcear libs compartidas (styles.sh, utils.sh) al inicio
+4. Tarea simple → script simple. Solo crear CLI con flags cuando existan 3+ opciones
+5. Cada script hace una cosa. Componer scripts atómicos para flujos complejos
+6. Validar contra la sección Gotchas antes de escribir shell scripts
 
 ---
 
@@ -559,20 +561,18 @@ main() {
 
 ---
 
-## Anti-patrones
+## Gotchas
 
-```bash
-# ❌ Sin set -euo pipefail — errores silenciosos
-# ❌ while read loop para procesar texto → usar grep/sed/awk
-# ❌ Variables sin quotear → word splitting, rm -rf desastroso
-# ❌ chmod 777 — jamás
-# ❌ curl | bash sin verificar qué descarga
-# ❌ Credenciales hardcodeadas en scripts
-# ❌ Scripts de 200+ líneas sin funciones → dividir en funciones atómicas
-# ❌ echo para logging (sin colores, sin niveles) → usar log_* functions
-# ❌ CLI complejo para un script de 10 líneas → KISS
-# ❌ cat file | grep pattern → grep pattern file (useless use of cat)
-# ❌ ls | while read → find con -print0 | xargs -0 (maneja espacios)
-# ❌ [ ] en vez de [[ ]] → [[ ]] es más seguro y potente en bash
-# ❌ Confiar en que $PATH tiene los binarios → verificar con command -v
-```
+- Nunca omitir `set -euo pipefail` — sin esto los errores pasan silenciosos y el script continúa en estado corrupto.
+- No usar while-read loops para procesar texto — grep/sed/awk son más eficientes y expresivos.
+- Siempre quotear variables (`"$var"`) — sin quotes hay word splitting y globbing; `rm -rf $DIR` vacío se convierte en `rm -rf /`.
+- Nunca `chmod 777` — cualquiera puede modificar y ejecutar. Usar 755 para scripts, 700 para scripts con secrets.
+- Nunca `curl | bash` sin verificar qué descarga — inspeccionar el script primero.
+- No hardcodear credenciales en scripts — usar variables de entorno o secrets manager.
+- Scripts de 200+ líneas sin funciones son ilegibles — dividir en funciones atómicas con nombres descriptivos.
+- No usar `echo` para logging — usar funciones `log_*` con colores y niveles (info, warn, error).
+- No crear un CLI con flags y menús para un script de 10 líneas — KISS.
+- `cat file | grep pattern` es un uso innecesario de cat — `grep pattern file` directamente.
+- `ls | while read` no maneja espacios en nombres — usar `find -print0 | xargs -0`.
+- Usar `[[ ]]` en vez de `[ ]` — doble bracket es más seguro y potente en bash (soporta regex, no hace word splitting).
+- Verificar que los binarios existan con `command -v` antes de usarlos — no confiar en que `$PATH` los tiene.

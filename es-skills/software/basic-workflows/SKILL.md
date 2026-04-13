@@ -1,19 +1,23 @@
 ---
 name: basic-workflows
 description: >
-  Workflows de CI/CD básicos obligatorios para todo proyecto nuevo. Esta skill se
-  activa al crear o configurar un proyecto. Crea GitHub Actions para linting,
-  build, tests, auditoría de seguridad, análisis de bundle y validación de tipos.
-  Define branch protection rules y configuración de Dependabot. Cada PR debe pasar
-  todos los checks antes de merge.
+  Usa esta skill al crear o configurar un proyecto nuevo. Crea GitHub Actions
+  para lint, type-check, tests, build, auditoría de seguridad y bundle analysis.
+  Configura branch protection, Dependabot, CODEOWNERS y PR template. Todo PR
+  debe pasar todos los checks antes de merge.
 ---
 
-# ⚙️ Basic Workflows — CI/CD para Todo Proyecto
+# Basic Workflows
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Si no está en CI, no existe.** Todo check que se hace localmente debe
-> replicarse en CI. Un PR sin checks verdes no se mergea — sin excepciones.
+1. Crear `.github/workflows/ci.yml` con jobs: install → lint → type-check → test → build (en ese orden de dependencia)
+2. Crear `.github/workflows/security.yml` con pnpm audit + CodeQL (schedule diario + en PRs)
+3. Crear `.github/dependabot.yml` para npm + github-actions con agrupación de minor/patch
+4. Crear `.github/CODEOWNERS` y `.github/pull_request_template.md`
+5. Configurar branch protection en main: require status checks, approvals, linear history
+6. Verificar que los scripts `lint`, `format:check`, `type-check`, `test:ci`, `build` existen en package.json
+7. Validar contra la sección Gotchas antes de configurar workflows
 
 ---
 
@@ -549,17 +553,15 @@ Al crear un proyecto nuevo, verificar que TODO esto exista:
 
 ---
 
-## Anti-patrones
+## Gotchas
 
-```yaml
-# ❌ Workflows que NO cachean node_modules → builds lentos
-# ❌ Checks que se pueden skipear con [skip ci] sin restricción
-# ❌ Branch main sin protección → push directo posible
-# ❌ PRs sin status checks requeridos → merge sin CI
-# ❌ pnpm install sin --frozen-lockfile en CI → lockfile inconsistente
-# ❌ Secrets hardcodeados en workflows → usar GitHub Secrets
-# ❌ Workflows que corren en push a TODOS los branches → desperdicio de CI minutes
-# ❌ Ignorar security alerts de Dependabot
-# ❌ Build como primer step → desperdicias CI si lint falla
-# ❌ Sin concurrency → PRs viejos consumen runners innecesariamente
-```
+- Workflows sin cache de node_modules generan builds lentos — usar `actions/cache` con key basada en `pnpm-lock.yaml`.
+- Nunca permitir `[skip ci]` sin restricción — los checks existen para proteger main.
+- Branch main sin protección permite push directo — siempre configurar branch protection rules.
+- PRs sin status checks requeridos permiten merge sin CI — marcar Lint, Type Check, Tests, Build como required.
+- Nunca `pnpm install` sin `--frozen-lockfile` en CI — sin esto el lockfile puede mutar y generar inconsistencias.
+- Nunca hardcodear secrets en workflows — usar GitHub Secrets (`${{ secrets.NAME }}`).
+- Workflows que corren en push a todos los branches desperdician CI minutes — limitar a `main` y `develop`.
+- Ignorar security alerts de Dependabot deja vulnerabilidades abiertas — revisar y actualizar semanalmente.
+- Poner build como primer step desperdicia CI si lint falla — ordenar: lint → type-check → test → build.
+- Sin `concurrency` con `cancel-in-progress`, PRs viejos consumen runners innecesariamente.
