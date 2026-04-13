@@ -1,26 +1,23 @@
 ---
 name: component-patterns
 description: >
-  Patrones avanzados de composición de componentes React. Cubre Compound Components,
-  Render Props, HOC, Slot pattern, Polymorphic components, y patrones de inversión
-  de control para crear APIs de componentes flexibles y reutilizables.
+  Usa esta skill cuando necesites patrones de composición de componentes React:
+  Compound Components, Render Props, HOC, Slot pattern, Polymorphic components,
+  y patrones controlled/uncontrolled para APIs flexibles y reutilizables.
 ---
 
-# 🧩 Patrones de Composición de Componentes
+# Patrones de Composición de Componentes
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Composición sobre configuración.** Prefiere componentes que se componen
-> entre sí a componentes con 20 props de configuración.
-
----
+1. Identificar el patrón adecuado según la tabla de decisión (sección 7).
+2. Implementar el patrón siguiendo los templates de código (secciones 1-6).
+3. Preferir composición (children/slots) sobre props de configuración.
+4. Preferir hooks sobre render props y HOC cuando sea posible.
 
 ## 1. Compound Components
 
-Componentes que comparten estado implícito via Context. Ideal para UI con relación padre-hijo (Tabs, Accordion, Select).
-
 ```tsx
-// ✅ Compound Component — Tabs
 import { createContext, useContext, useState, type ReactNode } from 'react';
 
 interface TabsContextValue {
@@ -80,24 +77,11 @@ function Panel({ value, children }: TabProps) {
 // Asignar sub-componentes al padre
 Tabs.Tab = Tab;
 Tabs.Panel = Panel;
-
-// USO:
-// <Tabs defaultTab="general">
-//   <Tabs.Tab value="general">General</Tabs.Tab>
-//   <Tabs.Tab value="security">Seguridad</Tabs.Tab>
-//   <Tabs.Panel value="general">Contenido general</Tabs.Panel>
-//   <Tabs.Panel value="security">Contenido seguridad</Tabs.Panel>
-// </Tabs>
 ```
 
----
-
-## 2. Render Props / Children as Function
-
-Cuando necesitas exponer lógica interna sin acoplar la UI.
+## 2. Render Props
 
 ```tsx
-// ✅ Render Props — componente que expone estado de hover
 interface HoverTrackerProps {
   children: (isHovered: boolean) => ReactNode;
 }
@@ -114,28 +98,13 @@ export function HoverTracker({ children }: HoverTrackerProps) {
     </div>
   );
 }
-
-// USO:
-// <HoverTracker>
-//   {(isHovered) => (
-//     <Card className={isHovered ? 'shadow-lg' : 'shadow-sm'}>
-//       {isHovered && <QuickActions />}
-//     </Card>
-//   )}
-// </HoverTracker>
 ```
 
-> **Nota:** En la mayoría de casos, un custom hook es más ergonómico que render props.
-> Usa render props cuando necesitas **encapsular JSX wrapper** junto a la lógica.
-
----
+Preferir custom hook sobre render props excepto cuando se necesita encapsular un JSX wrapper junto a la lógica.
 
 ## 3. Polymorphic Components (as prop)
 
-Componentes que pueden renderizar como cualquier elemento HTML o componente.
-
 ```tsx
-// ✅ Polymorphic component con tipado correcto
 import { type ElementType, type ComponentPropsWithoutRef } from 'react';
 
 type TextProps<T extends ElementType = 'span'> = {
@@ -164,21 +133,14 @@ export function Text<T extends ElementType = 'span'>({
   );
 }
 
-// USO — TypeScript infiere las props correctas del elemento:
-// <Text>Span por defecto</Text>
-// <Text as="p">Párrafo</Text>
-// <Text as="label" htmlFor="email">Email</Text>  ← htmlFor solo disponible con "label"
-// <Text as="a" href="/home">Link</Text>           ← href solo disponible con "a"
+// TypeScript infiere las props correctas del elemento:
+// <Text as="label" htmlFor="email">Email</Text>  ← htmlFor solo con "label"
+// <Text as="a" href="/home">Link</Text>           ← href solo con "a"
 ```
-
----
 
 ## 4. Slot Pattern
 
-Para componentes con múltiples áreas de contenido nombradas.
-
 ```tsx
-// ✅ Slot pattern — Card con áreas definidas
 interface CardSlots {
   header?: ReactNode;
   media?: ReactNode;
@@ -202,25 +164,13 @@ export function Card({ header, media, children, footer }: CardSlots) {
     </article>
   );
 }
-
-// USO:
-// <Card
-//   header={<h3>Título</h3>}
-//   media={<img src={url} alt={alt} />}
-//   footer={<><Button variant="ghost">Cancelar</Button><Button>Guardar</Button></>}
-// >
-//   <p>Contenido principal de la card.</p>
-// </Card>
 ```
-
----
 
 ## 5. HOC (Higher-Order Component)
 
-Usar **solo** cuando necesitas interceptar el ciclo de vida del componente que no controlas (ej: wrapping de librerías externas). En la mayoría de casos preferir hooks.
+Usar SOLO para interceptar componentes que no controlas (wrapping de libs externas). Preferir hooks.
 
 ```tsx
-// ✅ HOC — solo para casos justificados como auth wrappers
 import { type ComponentType } from 'react';
 import { redirect } from 'next/navigation';
 
@@ -241,24 +191,14 @@ export function withAuth<P extends object>(
 
   return AuthenticatedComponent;
 }
-
-// ❌ EVITAR HOC para:
-// - Inyectar datos (usar hooks)
-// - Condicionar rendering (usar composición)
-// - Agregar estilos (usar className/cn)
 ```
 
----
-
-## 6. Controlled vs Uncontrolled Pattern
-
-Para componentes que pueden funcionar en ambos modos.
+## 6. Controlled vs Uncontrolled
 
 ```tsx
-// ✅ Dual mode: controlled y uncontrolled
 interface ToggleProps {
-  defaultPressed?: boolean;      // Uncontrolled
-  pressed?: boolean;             // Controlled
+  defaultPressed?: boolean;   // Uncontrolled
+  pressed?: boolean;          // Controlled
   onPressedChange?: (pressed: boolean) => void;
   children: ReactNode;
 }
@@ -289,14 +229,9 @@ export function Toggle({
     </button>
   );
 }
-
-// USO uncontrolled: <Toggle defaultPressed={false}>Bold</Toggle>
-// USO controlled:   <Toggle pressed={isBold} onPressedChange={setIsBold}>Bold</Toggle>
 ```
 
----
-
-## Cuándo Usar Cada Patrón
+## 7. Cuándo Usar Cada Patrón
 
 | Patrón | Caso de Uso | Complejidad |
 |--------|-------------|-------------|
@@ -305,46 +240,21 @@ export function Toggle({
 | **Polymorphic** | Componentes de UI primitivos (`as` prop) | Alta (tipado) |
 | **Slot** | Layouts con áreas nombradas (Card, Dialog, Page) | Baja |
 | **HOC** | Wrapping de libs externas, auth guards legacy | Media |
-| **Controlled/Uncontrolled** | Inputs, toggles, cualquier estado que el padre quiera controlar opcionalmente | Media |
+| **Controlled/Uncontrolled** | Inputs, toggles, estado que el padre quiera controlar opcionalmente | Media |
 
----
+## Gotchas
 
-## Anti-patrones
-
-```tsx
-// ❌ Boolean props explosion
-<Modal
-  showHeader={true}
-  showFooter={true}
-  showCloseButton={true}
-  showOverlay={true}
-  fullScreen={false}
-  centered={true}
-/>
-// ✅ Usar compound components o slots
-
-// ❌ Prop drilling de callbacks
-<Parent onSave={save} onCancel={cancel} onDelete={del} onEdit={edit} />
-// ✅ Usar composición: pasar <Actions> como children o slot
-
-// ❌ Componente con > 10 props
-// Si tienes más de 10 props, necesitas descomponer en subcomponentes
-
-// ❌ Render prop anidado (callback hell)
-<Auth>{(user) => <Theme>{(theme) => <Data>{...}</Data>}</Theme>}</Auth>
-// ✅ Usar hooks: const user = useAuth(); const theme = useTheme();
-```
-
----
+- Componente con > 10 props indica que necesita descomponerse en sub-componentes o usar compound/slot pattern.
+- Explosión de boolean props (`showHeader`, `showFooter`, `showClose`...) — reemplazar con compound components o slots.
+- Prop drilling de callbacks (`onSave`, `onCancel`, `onDelete`) — pasar `<Actions>` como children o slot.
+- HOC para inyectar datos o estilos es innecesario — usar hooks o `className`/`cn()`.
+- Render props anidados crean callback hell — extraer a hooks: `const user = useAuth()`.
+- `controlledPressed !== undefined` es la forma correcta de detectar modo controlled — no usar `controlledPressed != null` porque excluye `false`.
 
 ## Skills Relacionadas
-
-> **Consultar el índice maestro [`frontend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para verificar qué skills transversales aplican al crear componentes.
 
 | Skill | Por qué | Cuándo |
 |-------|---------|--------|
 | `testing-rules` | Todo componente nuevo requiere tests | Siempre |
 | `a11y-rules` | WCAG 2.2 AA en cada componente interactivo | Siempre |
-| `clean-code-principles` | JSDoc en interfaces/props, named exports | Siempre |
-| `i18n-rules` | No hardcodear strings de UI | Si el proyecto usa i18n |
 | `css-rules` | Estilos con Tailwind + `cn()` | Siempre |
