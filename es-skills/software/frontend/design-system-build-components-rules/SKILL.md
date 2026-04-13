@@ -1,54 +1,49 @@
 ---
 name: design-system-build-components-rules
 description: >
-  Reglas para construir componentes de Design System siguiendo Atomic Design.
-  Cubre átomos (Button, Input, Badge), moléculas (SearchBar, FormField),
-  organismos (Header, DataTable), design tokens, variantes con CVA/cn,
-  documentación con Storybook y testing visual.
+  Usa esta skill cuando construyas componentes de Design System: átomos
+  (Button, Input, Badge), moléculas (SearchBar, FormField), organismos
+  (Header, DataTable), design tokens, variantes con CVA/cn, Storybook
+  y testing visual.
 ---
 
-# 🎨 Design System — Construcción de Componentes
+# Design System — Construcción de Componentes
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Atomic Design + Composition API.** Cada componente es un átomo, molécula u organismo
-> con API predecible, tokens de diseño consistentes y documentación Storybook.
-
----
+1. Clasificar componente como átomo, molécula u organismo.
+2. Crear estructura de archivos (implementación + variants + stories + test + barrel).
+3. Implementar variantes con CVA, SIEMPRE aceptar `className` prop.
+4. Usar `forwardRef` + `displayName` en átomos con elementos nativos.
+5. Verificar las 8 reglas obligatorias (sección 5).
 
 ## Jerarquía Atomic Design
 
 ```
-🔵 Átomos       → Elementos indivisibles: Button, Input, Badge, Icon, Text, Avatar
-🟢 Moléculas    → Combinación de átomos: SearchBar, FormField, NavItem, Card
-🟠 Organismos   → Secciones completas: Header, DataTable, Sidebar, HeroSection
-🔴 Templates    → Layouts de página (viven en app/, no en el design system)
-⚫ Páginas       → Instancias concretas (viven en app/, no en el design system)
+Átomos       → Elementos indivisibles: Button, Input, Badge, Icon, Text, Avatar
+Moléculas    → Combinación de átomos: SearchBar, FormField, NavItem, Card
+Organismos   → Secciones completas: Header, DataTable, Sidebar, HeroSection
+Templates    → Layouts de página (viven en app/, no en el design system)
+Páginas      → Instancias concretas (viven en app/, no en el design system)
 ```
 
----
-
-## Estructura de un Componente del Design System
+## Estructura de Componente
 
 ```
 shared/components/ui/Button/
-├── Button.tsx              # Implementación
-├── Button.test.tsx         # Tests unitarios
-├── Button.stories.tsx      # Storybook stories
-├── Button.variants.ts      # Variantes CVA (si es complejo)
-└── index.ts                # Barrel: export { Button } from './Button'
+├── Button.tsx
+├── Button.test.tsx
+├── Button.stories.tsx
+├── Button.variants.ts
+└── index.ts
 ```
 
----
-
-## 1. Átomos — Ejemplo Completo: Button
+## 1. Átomos — Ejemplo: Button
 
 ```tsx
-// Button.variants.ts — Variantes con class-variance-authority
 import { cva, type VariantProps } from 'class-variance-authority';
 
 export const buttonVariants = cva(
-  // Base styles — aplicados siempre
   [
     'inline-flex items-center justify-center gap-2',
     'rounded-md font-medium transition-colors',
@@ -82,7 +77,6 @@ export type ButtonVariants = VariantProps<typeof buttonVariants>;
 ```
 
 ```tsx
-// Button.tsx
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cn } from '@shared/lib/cn';
 import { buttonVariants, type ButtonVariants } from './Button.variants';
@@ -123,7 +117,6 @@ Button.displayName = 'Button';
 ```
 
 ```tsx
-// Button.stories.tsx — Storybook
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from './Button';
 
@@ -165,14 +158,9 @@ export const AllVariants: Story = {
 };
 ```
 
----
-
 ## 2. Moléculas — Ejemplo: FormField
 
-Combina átomos (Label + Input + Error message) en una unidad reutilizable.
-
 ```tsx
-// FormField.tsx — Molécula
 import { type ReactNode } from 'react';
 import { cn } from '@shared/lib/cn';
 
@@ -209,7 +197,7 @@ export function FormField({
         {required && <span className="text-red-500 ml-0.5" aria-hidden="true">*</span>}
       </label>
 
-      {/* El children (Input) debe recibir aria-describedby y aria-invalid externamente */}
+      {/* El children (Input) debe recibir aria-describedby y aria-invalid */}
       {children}
 
       {hint && !error && (
@@ -228,12 +216,9 @@ export function FormField({
 }
 ```
 
----
-
 ## 3. Organismos — Ejemplo: DataTable
 
 ```tsx
-// DataTable.tsx — Organismo con composición de moléculas y átomos
 import { type ReactNode } from 'react';
 
 interface Column<T> {
@@ -312,51 +297,30 @@ export function DataTable<T extends { id: string | number }>({
 }
 ```
 
----
-
-## Design Tokens
+## 4. Design Tokens
 
 ```css
-/* styles/tokens.css — Custom properties como fuente de verdad */
 :root {
-  /* Colores semánticos */
   --color-primary: theme('colors.blue.600');
   --color-primary-hover: theme('colors.blue.700');
   --color-destructive: theme('colors.red.600');
   --color-muted: theme('colors.gray.500');
-
-  /* Espaciado consistente */
-  --space-xs: 0.25rem;   /* 4px */
-  --space-sm: 0.5rem;    /* 8px */
-  --space-md: 1rem;      /* 16px */
-  --space-lg: 1.5rem;    /* 24px */
-  --space-xl: 2rem;      /* 32px */
-
-  /* Radio de bordes */
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
-  --radius-full: 9999px;
-
-  /* Sombras */
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px rgb(0 0 0 / 0.07);
-
-  /* Transiciones */
   --transition-fast: 150ms ease;
   --transition-normal: 200ms ease;
 }
 
-/* Dark mode */
 [data-theme='dark'] {
   --color-primary: theme('colors.blue.400');
   --color-primary-hover: theme('colors.blue.300');
 }
 ```
 
----
-
-## Reglas Obligatorias para Todo Componente del DS
+## 5. Reglas Obligatorias
 
 1. **`forwardRef`** en todo átomo que renderiza un elemento nativo
 2. **`className` como prop** — SIEMPRE permitir override via `cn(baseStyles, className)`
@@ -367,25 +331,10 @@ export function DataTable<T extends { id: string | number }>({
 7. **Test de rendering** — verificar que renderiza sin crash con props mínimas
 8. **No lógica de negocio** — los componentes del DS son UI pura, sin fetch ni estado global
 
----
+## Gotchas
 
-## Anti-patrones
-
-```tsx
-// ❌ Estilos hardcoded sin tokens
-<button className="bg-[#1a73e8] rounded-[6px]">
-
-// ❌ Variantes con ternarios encadenados
-className={`${variant === 'primary' ? 'bg-blue-600' : variant === 'secondary' ? 'bg-gray-100' : ''}`}
-
-// ❌ Componente sin forwardRef que renderiza <button>/<input>
-export function Input(props: InputProps) { ... } // No se puede adjuntar ref
-
-// ❌ Componente del DS que hace fetch de datos
-export function UserCard() {
-  const { data } = useQuery(...); // ❌ Lógica de negocio en el DS
-}
-
-// ❌ Omitir className prop — impide customización
-export function Badge({ label }: { label: string }) { ... } // No acepta className
-```
+- Estilos hardcoded como `bg-[#1a73e8]` o `rounded-[6px]` se saltan los tokens — usar siempre tokens o clases Tailwind semánticas.
+- Variantes con ternarios encadenados son ilegibles y no escalan — usar CVA.
+- Componente sin `forwardRef` que renderiza `<button>`/`<input>` no permite adjuntar refs — siempre wrappear con `forwardRef`.
+- Componente del DS que hace `useQuery` o cualquier fetch mezcla lógica de negocio con UI — recibir datos como props.
+- Omitir `className` prop impide customización por el consumidor — siempre aceptar `className` y usar `cn(base, className)`.

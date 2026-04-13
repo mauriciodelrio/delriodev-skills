@@ -1,54 +1,49 @@
 ---
 name: design-system-build-components-rules
 description: >
-  Rules for building Design System components following Atomic Design.
-  Covers atoms (Button, Input, Badge), molecules (SearchBar, FormField),
-  organisms (Header, DataTable), design tokens, variants with CVA/cn,
-  Storybook documentation, and visual testing.
+  Use this skill when building Design System components: atoms
+  (Button, Input, Badge), molecules (SearchBar, FormField), organisms
+  (Header, DataTable), design tokens, variants with CVA/cn, Storybook
+  and visual testing.
 ---
 
-# 🎨 Design System — Component Construction
+# Design System — Component Construction
 
-## Guiding Principle
+## Agent workflow
 
-> **Atomic Design + Composition API.** Each component is an atom, molecule, or organism
-> with a predictable API, consistent design tokens, and Storybook documentation.
-
----
+1. Classify component as atom, molecule, or organism.
+2. Create file structure (implementation + variants + stories + test + barrel).
+3. Implement variants with CVA, ALWAYS accept `className` prop.
+4. Use `forwardRef` + `displayName` on atoms with native elements.
+5. Verify all 8 mandatory rules (section 5).
 
 ## Atomic Design Hierarchy
 
 ```
-🔵 Atoms       → Indivisible elements: Button, Input, Badge, Icon, Text, Avatar
-🟢 Molecules   → Atom combinations: SearchBar, FormField, NavItem, Card
-🟠 Organisms   → Complete sections: Header, DataTable, Sidebar, HeroSection
-🔴 Templates   → Page layouts (live in app/, not in the design system)
-⚫ Pages        → Concrete instances (live in app/, not in the design system)
+Atoms       → Indivisible elements: Button, Input, Badge, Icon, Text, Avatar
+Molecules   → Atom combinations: SearchBar, FormField, NavItem, Card
+Organisms   → Complete sections: Header, DataTable, Sidebar, HeroSection
+Templates   → Page layouts (live in app/, not in the design system)
+Pages       → Concrete instances (live in app/, not in the design system)
 ```
 
----
-
-## Design System Component Structure
+## Component Structure
 
 ```
 shared/components/ui/Button/
-├── Button.tsx              # Implementation
-├── Button.test.tsx         # Unit tests
-├── Button.stories.tsx      # Storybook stories
-├── Button.variants.ts      # CVA variants (if complex)
-└── index.ts                # Barrel: export { Button } from './Button'
+├── Button.tsx
+├── Button.test.tsx
+├── Button.stories.tsx
+├── Button.variants.ts
+└── index.ts
 ```
 
----
-
-## 1. Atoms — Complete Example: Button
+## 1. Atoms — Example: Button
 
 ```tsx
-// Button.variants.ts — Variants with class-variance-authority
 import { cva, type VariantProps } from 'class-variance-authority';
 
 export const buttonVariants = cva(
-  // Base styles — always applied
   [
     'inline-flex items-center justify-center gap-2',
     'rounded-md font-medium transition-colors',
@@ -82,7 +77,6 @@ export type ButtonVariants = VariantProps<typeof buttonVariants>;
 ```
 
 ```tsx
-// Button.tsx
 import { forwardRef, type ButtonHTMLAttributes } from 'react';
 import { cn } from '@shared/lib/cn';
 import { buttonVariants, type ButtonVariants } from './Button.variants';
@@ -123,7 +117,6 @@ Button.displayName = 'Button';
 ```
 
 ```tsx
-// Button.stories.tsx — Storybook
 import type { Meta, StoryObj } from '@storybook/react';
 import { Button } from './Button';
 
@@ -165,14 +158,9 @@ export const AllVariants: Story = {
 };
 ```
 
----
-
 ## 2. Molecules — Example: FormField
 
-Combines atoms (Label + Input + Error message) into a reusable unit.
-
 ```tsx
-// FormField.tsx — Molecule
 import { type ReactNode } from 'react';
 import { cn } from '@shared/lib/cn';
 
@@ -209,7 +197,7 @@ export function FormField({
         {required && <span className="text-red-500 ml-0.5" aria-hidden="true">*</span>}
       </label>
 
-      {/* The children (Input) should receive aria-describedby and aria-invalid externally */}
+      {/* The children (Input) should receive aria-describedby and aria-invalid */}
       {children}
 
       {hint && !error && (
@@ -228,12 +216,9 @@ export function FormField({
 }
 ```
 
----
-
 ## 3. Organisms — Example: DataTable
 
 ```tsx
-// DataTable.tsx — Organism with molecule and atom composition
 import { type ReactNode } from 'react';
 
 interface Column<T> {
@@ -312,51 +297,30 @@ export function DataTable<T extends { id: string | number }>({
 }
 ```
 
----
-
-## Design Tokens
+## 4. Design Tokens
 
 ```css
-/* styles/tokens.css — Custom properties as source of truth */
 :root {
-  /* Semantic colors */
   --color-primary: theme('colors.blue.600');
   --color-primary-hover: theme('colors.blue.700');
   --color-destructive: theme('colors.red.600');
   --color-muted: theme('colors.gray.500');
-
-  /* Consistent spacing */
-  --space-xs: 0.25rem;   /* 4px */
-  --space-sm: 0.5rem;    /* 8px */
-  --space-md: 1rem;      /* 16px */
-  --space-lg: 1.5rem;    /* 24px */
-  --space-xl: 2rem;      /* 32px */
-
-  /* Border radius */
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
-  --radius-full: 9999px;
-
-  /* Shadows */
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px rgb(0 0 0 / 0.07);
-
-  /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 200ms ease;
 }
 
-/* Dark mode */
 [data-theme='dark'] {
   --color-primary: theme('colors.blue.400');
   --color-primary-hover: theme('colors.blue.300');
 }
 ```
 
----
-
-## Mandatory Rules for Every DS Component
+## 5. Mandatory Rules
 
 1. **`forwardRef`** on every atom that renders a native element
 2. **`className` as a prop** — ALWAYS allow override via `cn(baseStyles, className)`
@@ -367,25 +331,10 @@ export function DataTable<T extends { id: string | number }>({
 7. **Render test** — verify it renders without crashing with minimal props
 8. **No business logic** — DS components are pure UI, no fetching or global state
 
----
+## Gotchas
 
-## Anti-patterns
-
-```tsx
-// ❌ Hardcoded styles without tokens
-<button className="bg-[#1a73e8] rounded-[6px]">
-
-// ❌ Variants with chained ternaries
-className={`${variant === 'primary' ? 'bg-blue-600' : variant === 'secondary' ? 'bg-gray-100' : ''}`}
-
-// ❌ Component without forwardRef that renders <button>/<input>
-export function Input(props: InputProps) { ... } // Cannot attach ref
-
-// ❌ DS component that fetches data
-export function UserCard() {
-  const { data } = useQuery(...); // ❌ Business logic in the DS
-}
-
-// ❌ Omitting className prop — prevents customization
-export function Badge({ label }: { label: string }) { ... } // Does not accept className
-```
+- Hardcoded styles like `bg-[#1a73e8]` or `rounded-[6px]` bypass tokens — always use tokens or semantic Tailwind classes.
+- Variants with chained ternaries are unreadable and don't scale — use CVA.
+- Component without `forwardRef` that renders `<button>`/`<input>` prevents attaching refs — always wrap with `forwardRef`.
+- DS component doing `useQuery` or any fetch mixes business logic with UI — receive data as props.
+- Omitting `className` prop prevents consumer customization — always accept `className` and use `cn(base, className)`.
