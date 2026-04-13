@@ -1,85 +1,46 @@
 ---
 name: security
 description: >
-  Code-level security in Node.js backend. Covers Helmet, rate
-  limiting, input sanitization, CSRF, dependency audit, OWASP Top 10
-  from a code perspective, and Express/NestJS hardening.
-  Infrastructure security (WAF, VPC, IAM) → architecture/networking.
+  Use this skill when implementing code-level security in a Node.js
+  backend. Covers Helmet, rate limiting, input sanitization, CSRF,
+  dependency audit, OWASP Top 10 from code, and Express/NestJS
+  hardening. Infra (WAF, VPC, IAM) → architecture/networking.
 ---
 
-# 🛡️ Security — Code-Level Security
+# Security — Code-Level Security
 
-## Principle
+## Agent workflow
 
-> **Security is not a feature, it's a permanent non-functional requirement.**
-> Every endpoint is a potential attack surface.
-> Assume all input is malicious until validated.
+**1.** Review OWASP checklist by category (section 1).
+**2.** Configure Helmet and CORS (section 2).
+**3.** Sanitize inputs and prevent injection (sections 3–4).
+**4.** Implement CSRF and secrets management (sections 5–7).
+**5.** Verify resource-level authorization (section 8).
+**6.** Check against the gotchas list (section 9).
 
----
+## 1. OWASP Top 10 — Backend Checklist
 
-## OWASP Top 10 — Backend Checklist
+**A01 — Broken Access Control:** verify permissions on every endpoint (not just frontend), don't expose sequential IDs (use UUID/CUID), verify resource ownership, principle of least privilege.
 
-```
-A01: Broken Access Control
-  ✅ Verify permissions on EVERY endpoint (not just in the frontend)
-  ✅ Don't expose sequential IDs → use UUID/CUID
-  ✅ Verify ownership: does the user have access to THIS resource?
-  ✅ Principle of least privilege for roles
+**A02 — Cryptographic Failures:** HTTPS mandatory in production, passwords with bcrypt/argon2, secrets in env vars, JWT with explicit algorithm (HS256/RS256).
 
-A02: Cryptographic Failures
-  ✅ HTTPS mandatory in production
-  ✅ Passwords with bcrypt/argon2 (never MD5/SHA)
-  ✅ Secrets in environment variables (never in code)
-  ✅ JWT with explicit algorithm (HS256/RS256)
+**A03 — Injection:** parameterized queries (ORM, never string concat), sanitize user HTML, never execute `eval()` with input, validate and escape all input.
 
-A03: Injection
-  ✅ Parameterized queries (ORM/query builder, never string concat)
-  ✅ Sanitize user HTML (sanitize-html)
-  ✅ Never execute eval() with user input
-  ✅ Validate and escape all input
+**A04 — Insecure Design:** rate limiting on auth endpoints, account lockout after N attempts, don't expose sensitive data in error messages, threat modeling.
 
-A04: Insecure Design
-  ✅ Rate limiting on auth endpoints
-  ✅ Account lockout after N failed attempts
-  ✅ Don't expose sensitive data in error messages
-  ✅ Threat modeling before designing security features
+**A05 — Security Misconfiguration:** Helmet enabled, restrictive CORS (explicit origins), debug mode off in production, stack traces not exposed.
 
-A05: Security Misconfiguration
-  ✅ Helmet headers enabled
-  ✅ Restrictive CORS (explicit list of origins)
-  ✅ Debug mode disabled in production
-  ✅ Stack traces not exposed to the client
+**A06 — Vulnerable Components:** `pnpm audit` in CI, Dependabot/Renovate enabled, verify maintenance before installing.
 
-A06: Vulnerable Components
-  ✅ pnpm audit in CI
-  ✅ Dependabot / Renovate enabled
-  ✅ Don't install packages without verifying maintenance
+**A07 — Auth Failures:** refresh token rotation, logout invalidates tokens, generic messages ("Invalid credentials"), MFA for sensitive accounts.
 
-A07: Auth Failures
-  ✅ Refresh token rotation
-  ✅ Logout invalidates tokens
-  ✅ Generic error messages ("Invalid credentials")
-  ✅ MFA for sensitive accounts
+**A08 — Software and Data Integrity:** lock files committed, verify dependency integrity, CI/CD with minimal permissions.
 
-A08: Software and Data Integrity
-  ✅ Lock files committed (pnpm-lock.yaml)
-  ✅ Verify dependency integrity
-  ✅ CI/CD with minimal permissions
+**A09 — Logging & Monitoring Failures:** log auth failures and access control failures, don't log sensitive data (passwords, tokens, PII), alerts for suspicious patterns.
 
-A09: Logging & Monitoring Failures
-  ✅ Log auth failures, access control failures
-  ✅ Don't log sensitive data (passwords, tokens, PII)
-  ✅ Alerts for suspicious patterns
+**A10 — SSRF:** validate user-provided URLs, don't fetch arbitrary URLs, whitelist of allowed domains for server-side requests.
 
-A10: SSRF
-  ✅ Validate URLs that the user provides
-  ✅ Don't fetch arbitrary user-provided URLs
-  ✅ Whitelist of allowed domains for server-side requests
-```
-
----
-
-## Helmet — Security Headers
+## 2. Helmet — Security Headers
 
 ```typescript
 import helmet from 'helmet';
@@ -111,9 +72,7 @@ app.use(helmet({
 }));
 ```
 
----
-
-## Input Sanitization
+## 3. Input Sanitization
 
 ```typescript
 // Sanitize HTML to prevent stored XSS
@@ -144,9 +103,7 @@ function sanitizeRichText(dirty: string): string {
 //   ❌ allowedTags: ['script'] → XSS
 ```
 
----
-
-## SQL Injection Prevention
+## 4. SQL Injection Prevention
 
 ```typescript
 // ✅ ALWAYS use parameterized queries
@@ -168,9 +125,7 @@ const result = await prisma.$queryRaw`
 // Prisma escapes automatically with template literals
 ```
 
----
-
-## CSRF Protection
+## 5. CSRF Protection
 
 ```typescript
 // CSRF is relevant when you use cookies for auth
@@ -199,9 +154,7 @@ app.get('/api/csrf-token', (req, res) => {
 });
 ```
 
----
-
-## Dependency Audit
+## 6. Dependency Audit
 
 ```bash
 # In CI — fail the build if there are critical vulnerabilities
@@ -218,30 +171,13 @@ pnpm audit --audit-level=critical
 #   4. How many transitive dependencies does it add?
 ```
 
----
+## 7. Secrets Management
 
-## Secrets Management
+Never hardcode secrets in code or config files. Environment variables for development. Secret manager for production (AWS Secrets Manager, Vault). Validate that all secrets exist at startup (fail fast). Rotate secrets periodically (especially JWT_SECRET). `.env` in `.gitignore` always. `.env.example` with keys but without values.
 
-```
-RULES:
-  1. NEVER hardcode secrets in code or config files
-  2. Environment variables for development
-  3. Secret manager for production (AWS Secrets Manager, Vault)
-  4. Validate that ALL secrets exist at startup (fail fast)
-  5. Rotate secrets periodically (especially JWT_SECRET)
-  6. .env in .gitignore ALWAYS
-  7. .env.example WITH keys but WITHOUT values
+**File checklist:** `.env` → in .gitignore, `.env.example` → in git (keys without values), `.env.test` → in git (test values), `.env.local` → in .gitignore.
 
-CHECKLIST:
-  .env          → in .gitignore ✅
-  .env.example  → in git ✅ (keys without values)
-  .env.test     → in git ✅ (test values, not real ones)
-  .env.local    → in .gitignore ✅
-```
-
----
-
-## Resource-Level Authorization
+## 8. Resource-Level Authorization
 
 ```typescript
 // Not only verify the role, also verify ownership
@@ -272,29 +208,21 @@ async findByIdForUser(id: string, userId: string) {
 }
 ```
 
----
+## 9. Gotchas
 
-## Anti-patterns
-
-```
-❌ Helmet not installed → missing security headers
-❌ CORS with origin: '*' → any site can make requests
-❌ Secrets in code or committed config files → git history exposes them
-❌ eval() with user input → arbitrary code execution
-❌ SELECT * without filtering by ownership → IDOR (Insecure Direct Object Reference)
-❌ Error messages with stack trace in production → information for attackers
-❌ Passwords logged → data breach
-❌ No rate limiting on /login → brute force
-❌ Dependency audit only manual → automate in CI
-❌ Trusting headers like X-Forwarded-For without a trusted proxy
-❌ Weak JWT secret (< 32 chars) or shared between access and refresh
-```
-
----
+- Helmet not installed — missing security headers.
+- CORS with `origin: '*'` — any site can make requests.
+- Secrets in code or committed config files — git history exposes them.
+- `eval()` with user input — arbitrary code execution.
+- `SELECT *` without filtering by ownership — IDOR.
+- Error messages with stack trace in production — information for attackers.
+- Passwords logged — data breach.
+- No rate limiting on `/login` — brute force.
+- Dependency audit only manual — automate in CI.
+- Trusting headers like `X-Forwarded-For` without a trusted proxy.
+- Weak JWT secret (< 32 chars) or shared between access and refresh.
 
 ## Related Skills
-
-> **Consult the master index [`backend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
 
 | Skill | Why |
 |-------|-----|
