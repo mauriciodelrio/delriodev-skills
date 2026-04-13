@@ -1,19 +1,22 @@
 ---
 name: performance-rules
 description: >
-  Performance rules for React/Next.js applications. Covers Core Web Vitals
-  (LCP, INP, CLS), lazy loading, code splitting, bundle analysis, strategic
-  memoization, React Profiler, image optimization, and metrics.
+  Use this skill when optimizing performance in React/Next.js:
+  Core Web Vitals (LCP, INP, CLS), lazy loading, code splitting,
+  bundle analysis, strategic memoization, virtualization, and metrics.
 ---
 
-# ⚡ Performance — Rules
+# Performance — Rules
 
-## Guiding Principle
+## Agent workflow
 
-> **Measure first, optimize later.** Never optimize without profiling.
-> Perceived performance matters as much as actual performance.
-
----
+1. Measure first with React DevTools Profiler and Web Vitals before optimizing.
+2. Ensure LCP < 2.5s, INP < 200ms, CLS < 0.1 (targets table below).
+3. `lazy()` + `Suspense` for heavy components, `next/dynamic` with `ssr: false` for browser-only (section 1).
+4. `useMemo`/`useCallback`/`memo` only when computation or re-render is expensive and measured (section 2).
+5. Virtualize lists > 100 items with `@tanstack/react-virtual` (section 3).
+6. `next/image` with `priority` for LCP, `sizes` for responsive, `placeholder="blur"` (section 4).
+7. First Load JS < 100KB — analyze with `ANALYZE=true pnpm build` (section 6).
 
 ## Core Web Vitals — Targets
 
@@ -23,13 +26,9 @@ description: >
 | **INP** | < 200ms | 200ms – 500ms    | > 500ms | Interaction latency                   |
 | **CLS** | < 0.1   | 0.1 – 0.25       | > 0.25  | Visual stability (layout shifts)      |
 
----
-
 ## 1. Code Splitting and Lazy Loading
 
 ```tsx
-// ✅ Lazy loading of routes/pages (automatic in Next.js App Router)
-// For heavy Client Components:
 import { lazy, Suspense } from 'react';
 
 const HeavyChart = lazy(() => import('./HeavyChart'));
@@ -38,38 +37,34 @@ const MarkdownEditor = lazy(() => import('./MarkdownEditor'));
 function Dashboard() {
   return (
     <div>
-      <Header />  {/* Main bundle */}
+      <Header />
 
       <Suspense fallback={<ChartSkeleton />}>
-        <HeavyChart data={data} />  {/* Separate chunk */}
+        <HeavyChart data={data} />
       </Suspense>
 
       {showEditor && (
         <Suspense fallback={<EditorSkeleton />}>
-          <MarkdownEditor />  {/* Only loads if needed */}
+          <MarkdownEditor />
         </Suspense>
       )}
     </div>
   );
 }
 
-// ✅ next/dynamic for heavy Client Components in Next.js
 import dynamic from 'next/dynamic';
 
 const Map = dynamic(() => import('./Map'), {
   loading: () => <MapSkeleton />,
-  ssr: false,  // Don't render on server (uses browser APIs)
+  ssr: false,
 });
 ```
-
----
 
 ## 2. Strategic Memoization
 
 ```tsx
-// ✅ useMemo — ONLY when the computation is expensive
 function ProductList({ products, filters }: Props) {
-  // ✅ Filtering 10,000+ items is expensive
+  // Filtering 10,000+ items is expensive
   const filteredProducts = useMemo(
     () => products.filter((p) => matchesFilters(p, filters)),
     [products, filters],
@@ -78,14 +73,10 @@ function ProductList({ products, filters }: Props) {
   return <VirtualList items={filteredProducts} />;
 }
 
-// ❌ NO memo for cheap operations
-const fullName = useMemo(
-  () => `${user.first} ${user.last}`, // ❌ A concatenation doesn't need memo
-  [user.first, user.last],
-);
-const fullName = `${user.first} ${user.last}`; // ✅
+// Cheap operations do NOT need memo
+const fullName = `${user.first} ${user.last}`;
 
-// ✅ useCallback — ONLY when passed to a memoized component
+// useCallback — only when passed to a memoized component
 const handleSearch = useCallback(
   (query: string) => {
     setFilters((prev) => ({ ...prev, query }));
@@ -93,19 +84,15 @@ const handleSearch = useCallback(
   [],
 );
 
-// ✅ React.memo — ONLY for components that re-render unnecessarily
-// and whose render is expensive
+// React.memo — only for components with expensive render that re-render unnecessarily
 const ExpensiveRow = memo(function ExpensiveRow({ item }: { item: Item }) {
   return <ComplexVisualization data={item} />;
 });
 ```
 
----
-
 ## 3. List Virtualization
 
 ```tsx
-// ✅ For lists > 100 items use @tanstack/react-virtual
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 function VirtualProductList({ products }: { products: Product[] }) {
@@ -114,8 +101,8 @@ function VirtualProductList({ products }: { products: Product[] }) {
   const virtualizer = useVirtualizer({
     count: products.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 72, // Estimated height of each item
-    overscan: 5,            // Extra items outside the viewport
+    estimateSize: () => 72,
+    overscan: 5,
   });
 
   return (
@@ -145,26 +132,21 @@ function VirtualProductList({ products }: { products: Product[] }) {
 }
 ```
 
----
-
 ## 4. Image Optimization
 
 ```tsx
-// ✅ ALWAYS use next/image
 import Image from 'next/image';
 
-// LCP image — prioritize
 <Image
   src="/hero.jpg"
   alt="Hero banner"
   width={1200}
   height={600}
-  priority              // Preload — for above-the-fold images
+  priority
   sizes="100vw"
   className="object-cover"
 />
 
-// Lazy image (default)
 <Image
   src={product.image}
   alt={product.name}
@@ -172,55 +154,36 @@ import Image from 'next/image';
   height={300}
   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
   placeholder="blur"
-  blurDataURL={product.blurHash}  // Placeholder while loading
+  blurDataURL={product.blurHash}
 />
-
-// ✅ Image rules:
-// - ALWAYS width + height (avoid CLS)
-// - ALWAYS descriptive alt
-// - priority ONLY for LCP image (1 per page)
-// - sizes for responsive (avoid loading huge image on mobile)
-// - WebP/AVIF (Next.js converts automatically)
 ```
 
----
+Image rules: always `width` + `height` (avoid CLS), descriptive `alt`, `priority` only for LCP (1 per page), `sizes` for responsive.
 
 ## 5. Avoiding Layout Shifts (CLS)
 
 ```tsx
-// ✅ Reserve space for dynamic content
-// Skeleton with same dimensions
 <div className="h-[400px] w-full">
   {isLoading ? <Skeleton className="h-full w-full" /> : <Chart data={data} />}
 </div>
 
-// ✅ Aspect ratio for images/videos
+// Aspect ratio for images/videos
 <div className="aspect-video relative">
   <Image src={src} alt={alt} fill className="object-cover" />
 </div>
 
-// ✅ min-height for containers that grow
+// min-height for containers that grow
 <main className="min-h-screen">
   {content}
 </main>
-
-// ❌ Injecting content above the viewport without reserving space
-// ❌ Fonts that change the layout (use next/font with display: swap)
-// ❌ Ads/embeds without fixed dimensions
 ```
-
----
 
 ## 6. Bundle Analysis
 
 ```bash
-# Analyze Next.js bundle
 ANALYZE=true pnpm build
 
-# Install analyzer
 pnpm add -D @next/bundle-analyzer
-
-# next.config.mjs
 import withBundleAnalyzer from '@next/bundle-analyzer';
 
 const config = withBundleAnalyzer({
@@ -241,12 +204,9 @@ export default config;
 | Component       | < 20 KB    | lazy() or dynamic()               |
 | Dependency      | Evaluate   | Is there a lighter alternative?   |
 
----
-
 ## 7. Debounce and Throttle
 
 ```tsx
-// ✅ Debounce for search
 import { useDeferredValue } from 'react';
 
 function SearchResults({ query }: { query: string }) {
@@ -262,7 +222,7 @@ function SearchResults({ query }: { query: string }) {
   );
 }
 
-// ✅ Custom hook for debounce (when useDeferredValue doesn't apply)
+// Custom hook for debounce (when useDeferredValue doesn't apply)
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
@@ -275,12 +235,9 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 ```
 
----
-
 ## 8. Web Vitals Monitoring
 
 ```tsx
-// app/layout.tsx — report metrics
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -296,7 +253,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   );
 }
 
-// Custom reporting
 export function reportWebVitals(metric: NextWebVitalsMetric) {
   if (metric.label === 'web-vital') {
     analytics.track('Web Vital', {
@@ -308,17 +264,15 @@ export function reportWebVitals(metric: NextWebVitalsMetric) {
 }
 ```
 
----
+## Gotchas
 
-## Anti-patterns
-
-```tsx
-// ❌ Memo/useCallback on ALL components — unnecessary overhead
-// ❌ Optimizing without measuring — use React DevTools Profiler first
-// ❌ Bundle > 100KB First Load JS without justification
-// ❌ Images without width/height (CLS)
-// ❌ Lists of 1000+ items without virtualization
-// ❌ Event listeners without cleanup (memory leaks)
-// ❌ Re-renders caused by creating inline objects/arrays in props
-// ❌ Importing full libraries: import _ from 'lodash' (use lodash-es/pick)
-```
+- `useMemo`/`useCallback`/`memo` on all components adds overhead without benefit — only apply where the profiler shows problems.
+- Optimizing without measuring leads to unnecessary complexity — use React DevTools Profiler first.
+- First Load JS > 100KB without code splitting significantly degrades LCP.
+- Images without `width`/`height` cause layout shifts (CLS).
+- Lists of 1000+ items without virtualization block the main thread.
+- Event listeners without cleanup cause memory leaks.
+- Inline objects/arrays in props cause unnecessary re-renders in memoized components.
+- `import _ from 'lodash'` imports the full library — use `lodash-es/pick` or similar.
+- Injecting content above the viewport without reserving space causes CLS.
+- Fonts that change layout — use `next/font` with `display: swap`.
