@@ -1,47 +1,42 @@
 ---
 name: rendering-strategies
 description: >
-  Estrategias de rendering en aplicaciones React/Next.js. Cubre SSR, SSG, ISR,
-  Streaming SSR, React Server Components (RSC), Partial Prerendering (PPR),
-  hydration selectiva, y criterios de selección por caso de uso.
+  Usa esta skill cuando debas elegir o implementar estrategias de rendering
+  en React/Next.js: SSG, ISR, SSR, Streaming, RSC, PPR, CSR, y criterios
+  de selección por caso de uso.
 ---
 
-# 🖥️ Estrategias de Rendering
+# Estrategias de Rendering
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Renderiza lo más cerca del dato.** Server Components para datos estáticos/DB,
-> Client Components solo para interactividad. Streaming para percepción de velocidad.
-
----
+1. Identificar naturaleza de los datos: estático, semi-estático, personalizado, o real-time.
+2. Consultar el Cheat Sheet (sección 7) para seleccionar la estrategia.
+3. SSG para contenido inmutable, ISR para semi-estático, SSR para datos por usuario.
+4. Envolver zonas lentas en `<Suspense>` para streaming progresivo.
+5. PPR cuando una página mezcla contenido estático y dinámico.
+6. `'use client'` solo para interactividad — todo lo demás es Server Component.
 
 ## Mapa de Estrategias
 
 | Estrategia | Build Time | Request Time | Revalidación | Caso de Uso |
 |-----------|------------|--------------|--------------|-------------|
-| **SSG** | ✅ HTML estático | — | `revalidate` o on-demand | Blog, docs, landing |
-| **ISR** | ✅ HTML inicial | ✅ Regenera en background | `revalidate: N` | Productos, catálogos |
-| **SSR** | — | ✅ Cada request | — | Dashboards, datos user-specific |
-| **Streaming** | — | ✅ Parcial progresivo | — | Páginas con zonas lentas |
-| **RSC** | ✅/✅ | Según ruta | — | Todo (default en App Router) |
-| **PPR** | ✅ Shell estático | ✅ Slots dinámicos | — | Combina estático + dinámico |
+| **SSG** | HTML estático | — | `revalidate` o on-demand | Blog, docs, landing |
+| **ISR** | HTML inicial | Regenera en background | `revalidate: N` | Productos, catálogos |
+| **SSR** | — | Cada request | — | Dashboards, datos user-specific |
+| **Streaming** | — | Parcial progresivo | — | Páginas con zonas lentas |
+| **RSC** | Build + request | Según ruta | — | Todo (default en App Router) |
+| **PPR** | Shell estático | Slots dinámicos | — | Combina estático + dinámico |
 | **CSR** | — | — (client-only) | — | SPAs internas, widgets |
-
----
 
 ## 1. Static Site Generation (SSG)
 
 ```tsx
-// app/blog/[slug]/page.tsx
-// Genera HTML en build time. Más rápido posible.
-
-// Generar las rutas estáticas en build
 export async function generateStaticParams() {
   const posts = await db.post.findMany({ select: { slug: true } });
   return posts.map((post) => ({ slug: post.slug }));
 }
 
-// La página se renderiza en build time
 export default async function BlogPost({
   params,
 }: {
@@ -59,20 +54,11 @@ export default async function BlogPost({
     </article>
   );
 }
-
-// ✅ Usar para: contenido que no cambia con cada request
-// ✅ Combinar con revalidate para ISR
 ```
-
----
 
 ## 2. Incremental Static Regeneration (ISR)
 
 ```tsx
-// app/products/[id]/page.tsx
-// Estático + revalidación en background
-
-// Revalidación por tiempo
 export const revalidate = 3600; // Regenerar cada 1 hora
 
 export default async function ProductPage({
@@ -88,8 +74,7 @@ export default async function ProductPage({
   return <ProductDetail product={product} />;
 }
 
-// ✅ Revalidación on-demand (cuando el dato cambia)
-// app/api/revalidate/route.ts
+// Revalidación on-demand
 import { revalidatePath, revalidateTag } from 'next/cache';
 
 export async function POST(request: Request) {
@@ -106,15 +91,9 @@ export async function POST(request: Request) {
 }
 ```
 
----
-
 ## 3. Server-Side Rendering (SSR)
 
 ```tsx
-// app/dashboard/page.tsx
-// SSR forzado — renderiza en cada request
-
-// Forzar dynamic rendering
 export const dynamic = 'force-dynamic';
 // O usar headers()/cookies() que automáticamente hacen la ruta dinámica
 
@@ -131,59 +110,40 @@ export default async function DashboardPage() {
 
   return <DashboardView data={data} />;
 }
-
-// ✅ Usar para: datos personalizados por usuario, datos en tiempo real
-// ❌ NO usar si los datos son los mismos para todos los usuarios (usar SSG/ISR)
 ```
-
----
 
 ## 4. Streaming SSR con Suspense
 
 ```tsx
-// app/dashboard/page.tsx
-// Enviar HTML progresivamente — la página aparece rápido
-
 import { Suspense } from 'react';
 
 export default function DashboardPage() {
   return (
     <div className="grid grid-cols-12 gap-6">
-      {/* Se renderiza inmediatamente */}
       <header className="col-span-12">
         <h1>Dashboard</h1>
       </header>
 
-      {/* Cada Suspense boundary envía HTML cuando está listo */}
       <Suspense fallback={<ChartSkeleton />}>
-        <RevenueChart />  {/* Fetch lento: 2s */}
+        <RevenueChart />
       </Suspense>
 
       <Suspense fallback={<TableSkeleton />}>
-        <RecentOrders />  {/* Fetch medio: 800ms */}
+        <RecentOrders />
       </Suspense>
 
       <Suspense fallback={<StatsSkeleton />}>
-        <QuickStats />    {/* Fetch rápido: 200ms */}
+        <QuickStats />
       </Suspense>
     </div>
   );
 }
-
-// ✅ Cada sección async se resuelve independientemente
-// ✅ El usuario ve contenido progresivamente
-// ✅ No hay waterfalls — los fetches corren en paralelo
 ```
-
----
 
 ## 5. React Server Components (RSC) — Patterns
 
 ```tsx
-// ✅ Pattern: Server Component wrapping Client Component
-// El Server Component hace el fetch, el Client maneja interactividad
-
-// Server Component (default)
+// Pattern: Server Component wrapping Client Component
 async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const product = await db.product.findUnique({ where: { id } });
@@ -191,42 +151,30 @@ async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <div>
-      {/* Server: renderiza HTML estático */}
       <ProductInfo product={product} />
-
-      {/* Client: necesita interactividad */}
       <AddToCartButton productId={id} price={product.price} />
-
-      {/* Server: renderiza lista estática */}
       <ReviewList reviews={reviews} />
-
-      {/* Client: formulario interactivo */}
       <ReviewForm productId={id} />
     </div>
   );
 }
 
-// ✅ Pattern: Pasar Server Components como children a Client Components
-// ClientWrapper.tsx
+// Pattern: Pasar Server Components como children a Client Components
 'use client';
 export function ClientWrapper({ children }: { children: ReactNode }) {
   const [isVisible, setIsVisible] = useState(true);
   return isVisible ? <div>{children}</div> : null;
 }
 
-// Page.tsx (Server Component)
 export default async function Page() {
-  const data = await fetchData(); // Server-side fetch
+  const data = await fetchData();
   return (
     <ClientWrapper>
-      {/* ServerContent se renderiza en el server, aunque ClientWrapper es client */}
       <ServerContent data={data} />
     </ClientWrapper>
   );
 }
 ```
-
----
 
 ## 6. Partial Prerendering (PPR) — Next.js 15+
 
@@ -234,12 +182,11 @@ export default async function Page() {
 // next.config.ts
 const config = {
   experimental: {
-    ppr: 'incremental', // Activar PPR
+    ppr: 'incremental',
   },
 };
 
-// app/product/[id]/page.tsx
-export const experimental_ppr = true; // Opt-in por ruta
+export const experimental_ppr = true;
 
 import { Suspense } from 'react';
 
@@ -249,26 +196,20 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      {/* ESTÁTICO — se sirve desde CDN como HTML pre-renderizado */}
       <ProductInfo product={product} />
       <ProductImages images={product.images} />
 
-      {/* DINÁMICO — se resuelve en request time via Suspense */}
       <Suspense fallback={<PriceSkeleton />}>
-        <DynamicPrice productId={id} />  {/* Usa cookies/headers */}
+        <DynamicPrice productId={id} />
       </Suspense>
 
       <Suspense fallback={<StockSkeleton />}>
-        <StockStatus productId={id} />   {/* Stock en tiempo real */}
+        <StockStatus productId={id} />
       </Suspense>
     </div>
   );
 }
-
-// ✅ Lo mejor de ambos mundos: velocidad de estático + frescura de dinámico
 ```
-
----
 
 ## Cuándo Usar Cada Estrategia — Cheat Sheet
 
@@ -284,29 +225,9 @@ Formularios complejos          → Client Components
 Chat / real-time               → Client Components + WebSockets
 ```
 
----
+## Gotchas
 
-## Anti-patrones
-
-```tsx
-// ❌ 'use client' en el page.tsx de una ruta que solo muestra datos
-'use client'; // ❌ Innecesario — esto podría ser Server Component
-export default function ProductPage() { ... }
-
-// ❌ Fetch en Client Component cuando podría ser Server
-'use client';
-export function ProductList() {
-  const { data } = useQuery({ queryKey: ['products'], queryFn: fetchProducts });
-  // ❌ Esto debería ser un Server Component con fetch directo
-}
-
-// ❌ cache: 'no-store' en todo — elimina todas las optimizaciones
-fetch(url, { cache: 'no-store' }); // ❌ Solo si el dato REALMENTE cambia cada request
-
-// ❌ No usar Suspense boundaries — toda la página espera al fetch más lento
-export default async function Page() {
-  const slow = await fetchSlow();   // 3 segundos
-  const fast = await fetchFast();   // 100ms
-  // El usuario no ve NADA durante 3 segundos
-}
-```
+- `'use client'` en page.tsx que solo muestra datos — debería ser Server Component.
+- Fetch en Client Component cuando podría ser Server Component con fetch directo.
+- `cache: 'no-store'` por defecto en todo elimina las optimizaciones — solo si el dato realmente cambia cada request.
+- No usar `<Suspense>` boundaries — toda la página espera al fetch más lento en lugar de streaming progresivo.
