@@ -1,43 +1,33 @@
 ---
 name: logging
 description: >
-  Structured logging for Node.js backend. Covers pino (structured logging),
-  log levels, sensitive data masking, request logging middleware, health
-  endpoints, log correlation, and JSON format for observability.
-  Infrastructure monitoring/alerting → architecture/observability.
+  Use this skill when implementing structured logging in a Node.js
+  backend. Covers Pino, log levels, sensitive data masking, request
+  logging middleware, health endpoints, log correlation, and JSON
+  format for observability. Infrastructure monitoring/alerting
+  → architecture/observability.
 ---
 
-# 📋 Logging — Structured Logs
+# Logging — Structured Logs
 
-## Principle
+## Agent workflow
 
-> **Logs are your first line of diagnostics.**
-> A good log tells you WHAT happened, WHEN, WHERE, and for WHOM,
-> without revealing sensitive data.
+**1.** Choose logging stack (section 1).
+**2.** Configure Pino with redact (section 2).
+**3.** Define log levels per environment (section 3).
+**4.** Implement structured logging in JSON format (section 4).
+**5.** Add request logging middleware (section 5).
+**6.** Configure child loggers and data masking (sections 6–7).
+**7.** Implement health endpoints (section 8).
+**8.** Check against the gotchas list (section 9).
 
----
+## 1. Logging Stack
 
-## Logging Stack
+**Pino (preferred):** native JSON structured logging, faster than Winston (10x in benchmarks), low overhead in production, pino-pretty for development (human-readable), child loggers for context scoping.
 
-```
-Pino (PREFERRED):
-  ✅ Native JSON structured logging
-  ✅ Faster than Winston (10x in benchmarks)
-  ✅ Low overhead in production
-  ✅ pino-pretty for development (human-readable)
-  ✅ Child loggers for context scoping
+**Winston (alternative):** multiple transports (file, console, external), mature ecosystem, but slower than Pino and more configuration needed. Use only if already in the project.
 
-Winston (alternative):
-  ✅ Multiple transports (file, console, external)
-  ✅ Mature ecosystem
-  ❌ Slower than Pino
-  ❌ More configuration needed
-  → Use only if already in the project
-```
-
----
-
-## Pino Setup
+## 2. Pino Setup
 
 ```typescript
 // lib/logger.ts
@@ -83,24 +73,16 @@ export const logger = pino({
 });
 ```
 
----
+## 3. Log Levels
 
-## Log Levels
+**fatal:** app cannot continue, about to die (e.g.: DB connection lost permanently).
+**error:** operation failed, but app keeps running (e.g.: Payment processing failed).
+**warn:** something unexpected but not an error (e.g.: Retry attempt 3/5).
+**info:** significant business events (e.g.: User registered, Order created).
+**debug:** information for debugging (e.g.: Query executed, Cache hit/miss).
+**trace:** very detailed, only for investigating bugs (e.g.: Function entry/exit).
 
-```
-LEVEL    WHEN TO USE                                    EXAMPLE
-─────────────────────────────────────────────────────────────────
-fatal    App cannot continue, about to die              DB connection lost permanently
-error    Operation failed, but app keeps running        Payment processing failed
-warn     Something unexpected but not an error          Retry attempt 3/5
-info     Significant business events                    User registered, Order created
-debug    Information for debugging                      Query executed, Cache hit/miss
-trace    Very detailed, only for investigating bugs     Function entry/exit
-
-PRODUCTION:  level = 'info' (info + warn + error + fatal)
-DEVELOPMENT: level = 'debug' (everything except trace)
-DEBUGGING:   level = 'trace' (temporarily)
-```
+Production: `level = 'info'` (info + warn + error + fatal). Development: `level = 'debug'` (everything except trace). Debugging: `level = 'trace'` (temporarily).
 
 ```typescript
 // Correct examples by level
@@ -111,9 +93,7 @@ logger.debug({ query: 'findMany', duration: '45ms' }, 'DB query executed');
 logger.fatal({ error: err.message }, 'Database connection lost');
 ```
 
----
-
-## Structured Logging — Format
+## 4. Structured Logging — Format
 
 ```typescript
 // ✅ ALWAYS use structured logging (object + message)
@@ -135,9 +115,7 @@ logger.info(`User ${userId} created order ${orderId} for $${total}`);
 // → Not parseable, not aggregable, not filterable
 ```
 
----
-
-## Request Logging
+## 5. Request Logging
 
 ```typescript
 // Express — with pino-http
@@ -198,9 +176,7 @@ export class LoggingInterceptor implements NestInterceptor {
 }
 ```
 
----
-
-## Child Loggers (Context Scoping)
+## 6. Child Loggers (Context Scoping)
 
 ```typescript
 // Create child logger with request context
@@ -220,30 +196,11 @@ reqLogger.info({ orderId: 'ord_123' }, 'Processing order');
 // NestJS — use INQUIRER scope or cls-hooked for context propagation
 ```
 
----
+## 7. Sensitive Data Masking
 
-## Sensitive Data Masking
+**Never log:** passwords (plain text or hashed), full JWT tokens, API keys / secrets, credit card numbers, SSN / identity documents, session tokens, medical data, full request body of login/register.
 
-```
-NEVER LOG:
-  ❌ Passwords (plain text or hashed)
-  ❌ Full JWT tokens
-  ❌ API keys / secrets
-  ❌ Credit card numbers
-  ❌ SSN / identity documents
-  ❌ Session tokens
-  ❌ Medical data
-  ❌ Full request body of login/register
-
-DO LOG:
-  ✅ User IDs (not PII)
-  ✅ Request IDs
-  ✅ HTTP method + path
-  ✅ Status codes
-  ✅ Duration
-  ✅ Error codes (not internal messages in production)
-  ✅ Business events (user registered, order created)
-```
+**Do log:** User IDs (not PII), request IDs, HTTP method + path, status codes, duration, error codes (not internal messages in production), business events (user registered, order created).
 
 ```typescript
 // Manual masking for special cases
@@ -257,9 +214,7 @@ function maskToken(token: string): string {
 }
 ```
 
----
-
-## Health Endpoints
+## 8. Health Endpoints
 
 ```typescript
 // GET /health — Liveness probe (app is alive)
@@ -300,28 +255,20 @@ app.get('/health/ready', async (req, res) => {
 //   ✅ Kubernetes uses liveness + readiness probes
 ```
 
----
+## 9. Gotchas
 
-## Anti-patterns
-
-```
-❌ console.log in production → use a structured logger
-❌ Logging sensitive data → passwords, tokens, PII
-❌ String interpolation in logs → not parseable
-❌ Log level 'debug' in production → performance hit + noise
-❌ Not including request ID → impossible to correlate logs
-❌ Logging the full body of every request → sensitive data + volume
-❌ Logger without redact → sensitive data leaks out
-❌ try/catch that only does console.error(e) → no context, no structure
-❌ Health endpoint that requires auth → K8s cannot verify
-❌ Logs without timestamp → impossible to sort chronologically
-```
-
----
+- `console.log` in production — use a structured logger.
+- Logging sensitive data — passwords, tokens, PII.
+- String interpolation in logs — not parseable.
+- Log level `debug` in production — performance hit + noise.
+- Not including request ID — impossible to correlate logs.
+- Logging the full body of every request — sensitive data + volume.
+- Logger without redact — sensitive data leaks out.
+- `try/catch` that only does `console.error(e)` — no context, no structure.
+- Health endpoint that requires auth — K8s cannot verify.
+- Logs without timestamp — impossible to sort chronologically.
 
 ## Related Skills
-
-> **Consult the master index [`backend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
 
 | Skill | Why |
 |-------|-----|
