@@ -1,51 +1,54 @@
 ---
 name: project-structure
 description: >
-  Reglas y convenciones para estructurar proyectos frontend con React/Next.js.
-  Cubre organización de carpetas feature-based, barrel files, path aliases,
-  separación de capas y convenciones de nombrado de archivos.
+  Usa esta skill cuando estructures proyectos frontend con React/Next.js:
+  organización feature-based, barrel files, path aliases, separación de
+  capas y convenciones de nombrado.
 ---
 
-# 📁 Estructura de Proyecto Frontend
+# Estructura de Proyecto Frontend
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Feature-first, no layer-first.** Agrupa por dominio de negocio, no por tipo de archivo.
-
----
+1. Organizar por dominio de negocio (feature-first), nunca por tipo de archivo.
+2. Cada feature en `features/<nombre>/` con barrel file `index.ts` que expone solo la API pública.
+3. Código compartido en `shared/` (componentes UI, hooks genéricos, utils, tipos globales).
+4. Path aliases (`@features/*`, `@shared/*`, `@config/*`) para imports limpios.
+5. Respetar la regla de dependencias: `features/` nunca importa de otro `features/` directamente — pasar por `shared/` o Context.
+6. Tests colocados junto al archivo que testean; E2E en `e2e/` raíz.
+7. Variables de entorno validadas con Zod en `config/env.ts`.
 
 ## Estructura Base — Next.js App Router
 
 ```
 src/
-├── app/                          # App Router (rutas y layouts)
-│   ├── (auth)/                   # Route group: login, register
+├── app/
+│   ├── (auth)/
 │   │   ├── login/page.tsx
 │   │   └── register/page.tsx
-│   ├── (dashboard)/              # Route group: área autenticada
+│   ├── (dashboard)/
 │   │   ├── layout.tsx
 │   │   └── settings/page.tsx
-│   ├── api/                      # Route handlers
+│   ├── api/
 │   │   └── webhooks/route.ts
-│   ├── layout.tsx                # Root layout
-│   ├── loading.tsx               # Root loading
-│   ├── error.tsx                 # Root error boundary
-│   ├── not-found.tsx             # 404 personalizado
+│   ├── layout.tsx
+│   ├── loading.tsx
+│   ├── error.tsx
+│   ├── not-found.tsx
 │   └── globals.css
 │
-├── features/                     # 🎯 Módulos por dominio de negocio
+├── features/
 │   ├── auth/
-│   │   ├── components/           # Componentes internos del feature
+│   │   ├── components/
 │   │   │   ├── LoginForm.tsx
 │   │   │   └── LoginForm.test.tsx
-│   │   ├── hooks/                # Hooks específicos del feature
+│   │   ├── hooks/
 │   │   │   └── useAuth.ts
-│   │   ├── services/             # Lógica de negocio / API calls
+│   │   ├── services/
 │   │   │   └── auth.service.ts
-│   │   ├── types/                # Tipos del dominio
+│   │   ├── types/
 │   │   │   └── auth.types.ts
-│   │   └── index.ts              # Barrel file: API pública del feature
-│   │
+│   │   └── index.ts
 │   └── products/
 │       ├── components/
 │       ├── hooks/
@@ -53,52 +56,43 @@ src/
 │       ├── types/
 │       └── index.ts
 │
-├── shared/                       # Código compartido cross-feature
-│   ├── components/               # Componentes genéricos reutilizables
-│   │   ├── ui/                   # Primitivos: Button, Input, Modal
-│   │   └── layout/               # Header, Sidebar, Footer
-│   ├── hooks/                    # Hooks genéricos
+├── shared/
+│   ├── components/
+│   │   ├── ui/
+│   │   └── layout/
+│   ├── hooks/
 │   │   ├── useDebounce.ts
 │   │   └── useMediaQuery.ts
-│   ├── lib/                      # Utilidades puras
-│   │   ├── cn.ts                 # clsx + twMerge
-│   │   ├── format.ts             # Formateo de fechas, moneda
-│   │   └── validators.ts         # Schemas Zod compartidos
-│   ├── types/                    # Tipos globales
+│   ├── lib/
+│   │   ├── cn.ts
+│   │   ├── format.ts
+│   │   └── validators.ts
+│   ├── types/
 │   │   └── global.d.ts
-│   └── constants/                # Constantes de la app
+│   └── constants/
 │       └── routes.ts
 │
-├── config/                       # Configuración de la app
-│   ├── env.ts                    # Variables de entorno validadas con Zod
-│   └── site.ts                   # Metadata del sitio
+├── config/
+│   ├── env.ts
+│   └── site.ts
 │
-└── styles/                       # Estilos globales (si aplica)
-    └── tokens.css                # Design tokens CSS custom properties
+└── styles/
+    └── tokens.css
 ```
-
----
 
 ## Reglas de Organización
 
 ### 1. Barrel Files — Exportaciones controladas
 
 ```typescript
-// features/auth/index.ts — API pública del feature
-// SOLO exporta lo que otros features necesitan consumir
-
 export { LoginForm } from './components/LoginForm';
 export { useAuth } from './hooks/useAuth';
 export type { User, AuthSession } from './types/auth.types';
-
-// ❌ NUNCA exportar componentes internos, helpers privados o servicios directos
-// ❌ NUNCA hacer re-export masivo: export * from './components'
 ```
 
 ### 2. Path Aliases — Imports limpios
 
 ```json
-// tsconfig.json
 {
   "compilerOptions": {
     "baseUrl": ".",
@@ -113,13 +107,9 @@ export type { User, AuthSession } from './types/auth.types';
 ```
 
 ```typescript
-// ✅ CORRECTO
 import { LoginForm } from '@features/auth';
 import { Button } from '@shared/components/ui/Button';
 import { env } from '@config/env';
-
-// ❌ INCORRECTO — imports relativos cross-feature
-import { LoginForm } from '../../../features/auth/components/LoginForm';
 ```
 
 ### 3. Regla de Dependencias entre Capas
@@ -127,19 +117,13 @@ import { LoginForm } from '../../../features/auth/components/LoginForm';
 ```
 app/ → puede importar de → features/, shared/, config/
 features/ → puede importar de → shared/, config/
-features/ → ❌ NO puede importar de → otro features/ directamente
+features/ → NO puede importar de → otro features/ directamente
 shared/ → puede importar de → config/
-shared/ → ❌ NO puede importar de → features/, app/
-config/ → ❌ NO puede importar de → ninguna otra capa
+shared/ → NO puede importar de → features/, app/
+config/ → NO puede importar de → ninguna otra capa
 ```
 
 ```typescript
-// ❌ PROHIBIDO — feature importando de otro feature
-// features/products/components/ProductCard.tsx
-import { useAuth } from '@features/auth'; // ❌ Acoplamiento directo
-
-// ✅ CORRECTO — usar shared o inyección por props/context
-// Si auth es necesario, exponerlo vía shared/hooks o Context en app/
 import { useCurrentUser } from '@shared/hooks/useCurrentUser';
 ```
 
@@ -159,16 +143,14 @@ Constantes:               UPPER_SNAKE_CASE       → API_BASE_URL
 ### 5. Colocación de Tests
 
 ```
-// ✅ PREFERIDO — test junto al archivo que testea
 features/auth/
 ├── components/
 │   ├── LoginForm.tsx
-│   └── LoginForm.test.tsx      ← Junto al componente
+│   └── LoginForm.test.tsx
 ├── hooks/
 │   ├── useAuth.ts
-│   └── useAuth.test.ts         ← Junto al hook
+│   └── useAuth.test.ts
 
-// Tests de integración / E2E van en carpeta separada raíz
 e2e/
 ├── auth.spec.ts
 └── products.spec.ts
@@ -177,13 +159,12 @@ e2e/
 ### 6. Variables de Entorno Validadas
 
 ```typescript
-// config/env.ts — SIEMPRE validar en runtime
 import { z } from 'zod';
 
 const envSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().url(),
   NEXT_PUBLIC_APP_ENV: z.enum(['development', 'staging', 'production']),
-  DATABASE_URL: z.string().min(1).optional(), // solo server-side
+  DATABASE_URL: z.string().min(1).optional(),
 });
 
 export const env = envSchema.parse({
@@ -191,45 +172,14 @@ export const env = envSchema.parse({
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
   DATABASE_URL: process.env.DATABASE_URL,
 });
-
-// Uso: import { env } from '@config/env';
-// env.NEXT_PUBLIC_API_URL → tipado y validado
 ```
 
----
+## Gotchas
 
-## Anti-patrones
-
-```typescript
-// ❌ Carpeta "utils" global gigante con todo mezclado
-src/utils/
-  helpers.ts          // 2000 líneas de funciones random
-  index.ts            // re-exporta todo
-
-// ❌ Carpetas por tipo de archivo (layer-first)
-src/
-  components/         // 150 componentes de todos los dominios
-  hooks/              // 80 hooks mezclados
-  services/           // todos los API calls juntos
-
-// ❌ Archivos con múltiples componentes exportados
-// UserCard.tsx exporta UserCard, UserAvatar, UserBadge, UserTooltip
-
-// ❌ Barrel files que re-exportan todo
-export * from './components';
-export * from './hooks';
-export * from './services';
-// Esto rompe tree shaking y crea dependencias circulares
-```
-
----
-
-## Checklist de Estructura
-
-- [ ] ¿Cada feature tiene su propia carpeta con barrel file?
-- [ ] ¿Los imports cross-feature pasan por `shared/` o Context?
-- [ ] ¿Los path aliases están configurados y se usan consistentemente?
-- [ ] ¿Las variables de entorno están validadas con Zod?
-- [ ] ¿Los tests están colocados junto al código que testean?
-- [ ] ¿Los archivos siguen las convenciones de nombrado?
-- [ ] ¿Ningún archivo tiene más de ~300 líneas?
+- Carpeta `utils` global gigante con todo mezclado — dividir por dominio en `features/` o en `shared/lib/`.
+- Organización layer-first (`components/`, `hooks/`, `services/` en raíz) no escala — usar feature-first.
+- Archivos con múltiples componentes exportados dificultan tree shaking y búsqueda.
+- `export * from './components'` en barrel files rompe tree shaking y crea dependencias circulares.
+- Imports relativos cross-feature (`../../../features/auth/...`) acoplan módulos — usar path aliases.
+- Variables de entorno sin validar causan errores en runtime difíciles de diagnosticar.
+- Archivos de más de ~300 líneas son señal de que un componente necesita extracción.

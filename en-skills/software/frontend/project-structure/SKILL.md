@@ -1,51 +1,54 @@
 ---
 name: project-structure
 description: >
-  Rules and conventions for structuring frontend projects with React/Next.js.
-  Covers feature-based folder organization, barrel files, path aliases,
-  layer separation, and file naming conventions.
+  Use this skill when structuring frontend projects with React/Next.js:
+  feature-based folder organization, barrel files, path aliases, layer
+  separation, and file naming conventions.
 ---
 
-# 📁 Frontend Project Structure
+# Frontend Project Structure
 
-## Guiding Principle
+## Agent workflow
 
-> **Feature-first, not layer-first.** Group by business domain, not by file type.
-
----
+1. Organize by business domain (feature-first), never by file type.
+2. Each feature in `features/<name>/` with barrel file `index.ts` exposing only the public API.
+3. Shared code in `shared/` (UI components, generic hooks, utils, global types).
+4. Path aliases (`@features/*`, `@shared/*`, `@config/*`) for clean imports.
+5. Respect the dependency rule: `features/` never imports from another `features/` directly — go through `shared/` or Context.
+6. Tests colocated next to the file they test; E2E in root `e2e/`.
+7. Environment variables validated with Zod in `config/env.ts`.
 
 ## Base Structure — Next.js App Router
 
 ```
 src/
-├── app/                          # App Router (routes and layouts)
-│   ├── (auth)/                   # Route group: login, register
+├── app/
+│   ├── (auth)/
 │   │   ├── login/page.tsx
 │   │   └── register/page.tsx
-│   ├── (dashboard)/              # Route group: authenticated area
+│   ├── (dashboard)/
 │   │   ├── layout.tsx
 │   │   └── settings/page.tsx
-│   ├── api/                      # Route handlers
+│   ├── api/
 │   │   └── webhooks/route.ts
-│   ├── layout.tsx                # Root layout
-│   ├── loading.tsx               # Root loading
-│   ├── error.tsx                 # Root error boundary
-│   ├── not-found.tsx             # Custom 404
+│   ├── layout.tsx
+│   ├── loading.tsx
+│   ├── error.tsx
+│   ├── not-found.tsx
 │   └── globals.css
 │
-├── features/                     # 🎯 Modules by business domain
+├── features/
 │   ├── auth/
-│   │   ├── components/           # Feature-internal components
+│   │   ├── components/
 │   │   │   ├── LoginForm.tsx
 │   │   │   └── LoginForm.test.tsx
-│   │   ├── hooks/                # Feature-specific hooks
+│   │   ├── hooks/
 │   │   │   └── useAuth.ts
-│   │   ├── services/             # Business logic / API calls
+│   │   ├── services/
 │   │   │   └── auth.service.ts
-│   │   ├── types/                # Domain types
+│   │   ├── types/
 │   │   │   └── auth.types.ts
-│   │   └── index.ts              # Barrel file: feature public API
-│   │
+│   │   └── index.ts
 │   └── products/
 │       ├── components/
 │       ├── hooks/
@@ -53,52 +56,43 @@ src/
 │       ├── types/
 │       └── index.ts
 │
-├── shared/                       # Cross-feature shared code
-│   ├── components/               # Generic reusable components
-│   │   ├── ui/                   # Primitives: Button, Input, Modal
-│   │   └── layout/               # Header, Sidebar, Footer
-│   ├── hooks/                    # Generic hooks
+├── shared/
+│   ├── components/
+│   │   ├── ui/
+│   │   └── layout/
+│   ├── hooks/
 │   │   ├── useDebounce.ts
 │   │   └── useMediaQuery.ts
-│   ├── lib/                      # Pure utilities
-│   │   ├── cn.ts                 # clsx + twMerge
-│   │   ├── format.ts             # Date, currency formatting
-│   │   └── validators.ts         # Shared Zod schemas
-│   ├── types/                    # Global types
+│   ├── lib/
+│   │   ├── cn.ts
+│   │   ├── format.ts
+│   │   └── validators.ts
+│   ├── types/
 │   │   └── global.d.ts
-│   └── constants/                # App constants
+│   └── constants/
 │       └── routes.ts
 │
-├── config/                       # App configuration
-│   ├── env.ts                    # Environment variables validated with Zod
-│   └── site.ts                   # Site metadata
+├── config/
+│   ├── env.ts
+│   └── site.ts
 │
-└── styles/                       # Global styles (if applicable)
-    └── tokens.css                # Design tokens CSS custom properties
+└── styles/
+    └── tokens.css
 ```
-
----
 
 ## Organization Rules
 
 ### 1. Barrel Files — Controlled Exports
 
 ```typescript
-// features/auth/index.ts — Feature public API
-// ONLY export what other features need to consume
-
 export { LoginForm } from './components/LoginForm';
 export { useAuth } from './hooks/useAuth';
 export type { User, AuthSession } from './types/auth.types';
-
-// ❌ NEVER export internal components, private helpers, or direct services
-// ❌ NEVER do mass re-exports: export * from './components'
 ```
 
 ### 2. Path Aliases — Clean Imports
 
 ```json
-// tsconfig.json
 {
   "compilerOptions": {
     "baseUrl": ".",
@@ -113,13 +107,9 @@ export type { User, AuthSession } from './types/auth.types';
 ```
 
 ```typescript
-// ✅ CORRECT
 import { LoginForm } from '@features/auth';
 import { Button } from '@shared/components/ui/Button';
 import { env } from '@config/env';
-
-// ❌ INCORRECT — cross-feature relative imports
-import { LoginForm } from '../../../features/auth/components/LoginForm';
 ```
 
 ### 3. Layer Dependency Rule
@@ -127,19 +117,13 @@ import { LoginForm } from '../../../features/auth/components/LoginForm';
 ```
 app/ → can import from → features/, shared/, config/
 features/ → can import from → shared/, config/
-features/ → ❌ CANNOT import from → another features/ directly
+features/ → CANNOT import from → another features/ directly
 shared/ → can import from → config/
-shared/ → ❌ CANNOT import from → features/, app/
-config/ → ❌ CANNOT import from → any other layer
+shared/ → CANNOT import from → features/, app/
+config/ → CANNOT import from → any other layer
 ```
 
 ```typescript
-// ❌ FORBIDDEN — feature importing from another feature
-// features/products/components/ProductCard.tsx
-import { useAuth } from '@features/auth'; // ❌ Direct coupling
-
-// ✅ CORRECT — use shared or inject via props/context
-// If auth is needed, expose it via shared/hooks or Context in app/
 import { useCurrentUser } from '@shared/hooks/useCurrentUser';
 ```
 
@@ -159,16 +143,14 @@ Constants:           UPPER_SNAKE_CASE       → API_BASE_URL
 ### 5. Test Colocation
 
 ```
-// ✅ PREFERRED — test next to the file it tests
 features/auth/
 ├── components/
 │   ├── LoginForm.tsx
-│   └── LoginForm.test.tsx      ← Next to the component
+│   └── LoginForm.test.tsx
 ├── hooks/
 │   ├── useAuth.ts
-│   └── useAuth.test.ts         ← Next to the hook
+│   └── useAuth.test.ts
 
-// Integration / E2E tests go in a separate root folder
 e2e/
 ├── auth.spec.ts
 └── products.spec.ts
@@ -177,13 +159,12 @@ e2e/
 ### 6. Validated Environment Variables
 
 ```typescript
-// config/env.ts — ALWAYS validate at runtime
 import { z } from 'zod';
 
 const envSchema = z.object({
   NEXT_PUBLIC_API_URL: z.string().url(),
   NEXT_PUBLIC_APP_ENV: z.enum(['development', 'staging', 'production']),
-  DATABASE_URL: z.string().min(1).optional(), // server-side only
+  DATABASE_URL: z.string().min(1).optional(),
 });
 
 export const env = envSchema.parse({
@@ -191,45 +172,14 @@ export const env = envSchema.parse({
   NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
   DATABASE_URL: process.env.DATABASE_URL,
 });
-
-// Usage: import { env } from '@config/env';
-// env.NEXT_PUBLIC_API_URL → typed and validated
 ```
 
----
+## Gotchas
 
-## Anti-patterns
-
-```typescript
-// ❌ Giant global "utils" folder with everything mixed together
-src/utils/
-  helpers.ts          // 2000 lines of random functions
-  index.ts            // re-exports everything
-
-// ❌ Folders by file type (layer-first)
-src/
-  components/         // 150 components from all domains
-  hooks/              // 80 mixed hooks
-  services/           // all API calls together
-
-// ❌ Files with multiple exported components
-// UserCard.tsx exports UserCard, UserAvatar, UserBadge, UserTooltip
-
-// ❌ Barrel files that re-export everything
-export * from './components';
-export * from './hooks';
-export * from './services';
-// This breaks tree shaking and creates circular dependencies
-```
-
----
-
-## Structure Checklist
-
-- [ ] Does each feature have its own folder with a barrel file?
-- [ ] Do cross-feature imports go through `shared/` or Context?
-- [ ] Are path aliases configured and used consistently?
-- [ ] Are environment variables validated with Zod?
-- [ ] Are tests colocated next to the code they test?
-- [ ] Do files follow the naming conventions?
-- [ ] Is no file longer than ~300 lines?
+- Giant global `utils` folder with everything mixed — split by domain into `features/` or `shared/lib/`.
+- Layer-first organization (`components/`, `hooks/`, `services/` at root) doesn't scale — use feature-first.
+- Files with multiple exported components hinder tree shaking and discoverability.
+- `export * from './components'` in barrel files breaks tree shaking and creates circular dependencies.
+- Relative cross-feature imports (`../../../features/auth/...`) couple modules — use path aliases.
+- Unvalidated environment variables cause hard-to-diagnose runtime errors.
+- Files over ~300 lines signal a component needs extraction.
