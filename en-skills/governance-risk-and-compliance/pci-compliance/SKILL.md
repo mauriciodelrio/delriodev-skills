@@ -886,31 +886,21 @@ export function SecurePaymentPage({ amount, currency }: { amount: number; curren
 
 ---
 
-## PCI DSS Best Practices
+## Agent workflow
 
-### ✅ DO
+1. Implement tokenization with a PCI Level 1 processor (Stripe): the backend never touches the PAN, only tokens (Req. 3).
+2. Configure Prisma schema storing only tokenized data (stripePaymentMethodId, last4, brand, fingerprint) — never PAN, CVV, PIN, or magnetic stripe data.
+3. Configure TLS 1.2+ with strong cipher suites (AES-256-GCM, CHACHA20), HSTS, and HTTP→HTTPS redirect in production (Req. 4).
+4. Implement strict Zod validation for payment operations: amounts in cents (min 50, max 99999999), tokens with regex pm_*, and .strict() to reject undeclared fields (Req. 6).
+5. Implement PAN detection middleware with Luhn algorithm that blocks requests containing card numbers (Req. 3.4).
+6. Implement complete PCI audit logging: user ID, event type, date/time, success/failure, origin, affected resource; with PAN/CVV/password redaction; 12-month retention (Req. 10).
+7. Segment the CDE with isolated Docker networks: payment-service and payment-db on internal network without internet access (Req. 1).
+8. Use Stripe Elements on frontend so card data never touches the server — reduces PCI scope from SAQ D to SAQ A (Req. 3).
+9. Validate against the compliance checklist (Req. 1-12) before deploying.
 
-1. **Use tokenization** — delegate PAN handling to a PCI Level 1 processor
-2. **Stripe Elements / Hosted Fields** on frontend to reduce PCI scope to SAQ A
-3. **TLS 1.2+** mandatory for all payment data transmission
-4. **Segment the CDE** — isolate payment infrastructure
-5. **Complete audit log** of every payment operation
-6. **Quarterly vulnerability scans** (ASV for external)
-7. **Annual penetration testing** of the CDE
-8. **Rotate encryption keys** annually
-9. **Real-time monitoring** of suspicious transactions
-10. **Strict input validation** — detect PANs in inputs
+## Gotchas
 
-### ❌ DO NOT
-
-1. **NEVER** store CVV/CVC after authorization
-2. **NEVER** store magnetic stripe data or PIN
-3. **NEVER** log full card numbers
-4. **NEVER** send card data via email, chat, or insecure channels
-5. **NEVER** store PAN unencrypted (if you must store it)
-6. **NEVER** use default accounts/passwords in CDE systems
-7. **NEVER** allow access to the CDE without MFA
-8. **NEVER** copy production data (with PANs) to test environments
+Never store CVV/CVC after authorization — it is explicitly prohibited by PCI DSS. Never store magnetic stripe data or PIN. Never log full card numbers — configure redact in pino for paths like *.cardNumber, *.pan, *.cvv. Never send card data via email, chat, or insecure channels. If you must store PAN, it must be encrypted — but tokenization is preferred because it dramatically reduces PCI scope. Never use default credentials in CDE systems. CDE access always requires MFA. Never copy production data with PANs to test environments. Encryption keys must be rotated annually. Vulnerability scans must be quarterly (ASV for external) and penetration testing annual. Audit logs must be retained for 12 months with 3 months immediately accessible. PAN must be masked in displays showing only the last 4 digits. Suspicious transaction monitoring must be real-time.
 
 ---
 
