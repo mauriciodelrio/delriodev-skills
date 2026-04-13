@@ -1,25 +1,25 @@
 ---
 name: animations-and-transitions
 description: >
-  Reglas para animaciones y transiciones en aplicaciones React. Cubre Framer Motion,
-  CSS transitions/animations, View Transitions API, loading skeletons,
-  micro-interacciones, respeto a prefers-reduced-motion, y patrones de
-  animación performantes (transform/opacity).
+  Usa esta skill cuando implementes animaciones o transiciones en React/Next.js:
+  Framer Motion, CSS transitions, View Transitions API, loading skeletons,
+  micro-interacciones, prefers-reduced-motion y patrones performantes
+  (transform/opacity).
 ---
 
-# ✨ Animaciones y Transiciones
+# Animaciones y Transiciones
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Animación con propósito.** Cada animación DEBE comunicar un cambio de estado,
-> guiar la atención o dar feedback. Respetar SIEMPRE `prefers-reduced-motion`.
+1. Determinar si la animación necesita Framer Motion o basta CSS transition (sección 1-2).
+2. Para navegación entre páginas evaluar View Transitions API (sección 3).
+3. Implementar skeletons que repliquen la estructura del contenido real (sección 4).
+4. Agregar soporte prefers-reduced-motion (sección 5).
+5. Animar SOLO propiedades compositas: transform, opacity, filter (sección 6).
 
----
-
-## 1. Framer Motion — Patrones Base
+## 1. Framer Motion
 
 ```tsx
-// ✅ Animación de entrada/salida con AnimatePresence
 import { motion, AnimatePresence } from 'framer-motion';
 
 function NotificationToast({ notifications }: { notifications: Notification[] }) {
@@ -44,7 +44,7 @@ function NotificationToast({ notifications }: { notifications: Notification[] })
   );
 }
 
-// ✅ Variants reutilizables
+// Variants reutilizables
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
@@ -68,7 +68,6 @@ function PageSection({ children }: { children: ReactNode }) {
 ### Animaciones de Lista
 
 ```tsx
-// ✅ Stagger animation para listas
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -98,7 +97,6 @@ function AnimatedList({ items }: { items: Item[] }) {
 ### Layout Animations
 
 ```tsx
-// ✅ Shared layout animation (expand/collapse, reorder)
 function ExpandableCard({ item }: { item: Item }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -126,12 +124,9 @@ function ExpandableCard({ item }: { item: Item }) {
 }
 ```
 
----
-
-## 2. CSS Transitions — Para Interacciones Simples
+## 2. CSS Transitions — Interacciones Simples
 
 ```tsx
-// ✅ Hover, focus, active — usar CSS transitions puras
 <button
   className={cn(
     'transform rounded-lg bg-blue-600 px-4 py-2 text-white',
@@ -144,7 +139,7 @@ function ExpandableCard({ item }: { item: Item }) {
   Guardar
 </button>
 
-// ✅ Accordion con CSS transition (sin Framer Motion)
+// Accordion con CSS grid transition (sin Framer Motion)
 function Accordion({ isOpen, children }: { isOpen: boolean; children: ReactNode }) {
   return (
     <div
@@ -159,12 +154,9 @@ function Accordion({ isOpen, children }: { isOpen: boolean; children: ReactNode 
 }
 ```
 
----
-
-## 3. View Transitions API — Navegación Suave
+## 3. View Transitions API
 
 ```tsx
-// ✅ View Transitions en Next.js (experimental)
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -187,9 +179,9 @@ export function TransitionLink({ href, children }: { href: string; children: Rea
 
   return <a href={href} onClick={handleClick}>{children}</a>;
 }
+```
 
-// CSS para View Transitions
-/* globals.css */
+```css
 ::view-transition-old(root) {
   animation: fade-out 200ms ease-out;
 }
@@ -197,22 +189,17 @@ export function TransitionLink({ href, children }: { href: string; children: Rea
   animation: fade-in 200ms ease-in;
 }
 
-/* Transición específica para imágenes de producto */
 .product-image {
   view-transition-name: product-hero;
 }
 ```
 
----
-
 ## 4. Loading Skeletons
 
 ```tsx
-// ✅ Skeleton que replica la estructura del contenido real
 function CardSkeleton() {
   return (
     <div className="animate-pulse rounded-lg border bg-white p-4" aria-hidden="true">
-      {/* Avatar + nombre */}
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 rounded-full bg-gray-200" />
         <div className="space-y-1.5">
@@ -220,7 +207,6 @@ function CardSkeleton() {
           <div className="h-3 w-20 rounded bg-gray-200" />
         </div>
       </div>
-      {/* Contenido */}
       <div className="mt-4 space-y-2">
         <div className="h-4 w-full rounded bg-gray-200" />
         <div className="h-4 w-3/4 rounded bg-gray-200" />
@@ -229,7 +215,7 @@ function CardSkeleton() {
   );
 }
 
-// ✅ Skeleton accesible con aria
+// Skeleton accesible con role="status"
 function TableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
     <div role="status" aria-label="Cargando datos">
@@ -246,13 +232,9 @@ function TableSkeleton({ rows = 5 }: { rows?: number }) {
 }
 ```
 
----
-
-## 5. Respeto a prefers-reduced-motion
+## 5. prefers-reduced-motion
 
 ```tsx
-// ✅ OBLIGATORIO: respetar preferencia del usuario
-// Hook para detectar
 function usePrefersReducedMotion(): boolean {
   const [prefersReduced, setPrefersReduced] = useState(false);
 
@@ -268,12 +250,10 @@ function usePrefersReducedMotion(): boolean {
   return prefersReduced;
 }
 
-// ✅ Framer Motion respeta automáticamente con:
+// Framer Motion: usar useReducedMotion o globalmente <MotionConfig reducedMotion="user">
 import { useReducedMotion } from 'framer-motion';
-// O globalmente:
-// <MotionConfig reducedMotion="user">
 
-// ✅ CSS: desactivar animaciones para usuarios que lo piden
+// CSS: desactivar animaciones globalmente
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -284,37 +264,21 @@ import { useReducedMotion } from 'framer-motion';
 }
 ```
 
----
-
-## Reglas de Performance de Animaciones
+## 6. Performance
 
 ```tsx
-// ✅ SOLO animar propiedades compositas (GPU-accelerated)
-// transform (translate, scale, rotate)
-// opacity
-// filter
+// SOLO propiedades compositas (GPU): transform, opacity, filter
+// NUNCA: width, height, top, left, margin, padding — causan layout reflow
 
-// ❌ NUNCA animar directamente:
-// width, height, top, left, margin, padding, border
-// Estos causan layout reflow = jank
-
-// ✅ Usar will-change con moderación
+// will-change solo en elementos que se van a animar
 <div className="transition-transform will-change-transform hover:scale-105" />
-// Solo en elementos que SABES que se van a animar
-
-// ❌ NUNCA will-change en muchos elementos simultáneamente
 ```
 
----
+## Gotchas
 
-## Anti-patrones
-
-```tsx
-// ❌ Animación sin propósito (solo decorativa)
-// ❌ Animaciones > 300ms para interacciones (hover, click)
-// ❌ Animar width/height directamente (usar transform: scale)
-// ❌ Ignorar prefers-reduced-motion
-// ❌ Framer Motion para hover simple (usar CSS transition)
-// ❌ will-change en todo el DOM
-// ❌ Autoplaying animations en mobile (consume batería)
-```
+- `transition-all` anima TODAS las propiedades incluidas las que causan reflow — usar `transition-[transform]` o `transition-opacity` específicamente.
+- Framer Motion para hover/focus simple es overhead innecesario — CSS transitions son suficientes y más performantes.
+- `will-change` en muchos elementos simultáneamente consume memoria GPU — aplicar solo al elemento que se va a animar, no a contenedores padre.
+- Animaciones > 300ms para interacciones directas (click, hover) se sienten lentas — usar ~150-200ms para feedback instantáneo.
+- `height: auto` no es animable con CSS — usar `grid-rows-[0fr]/[1fr]` (accordion pattern de sección 2) o Framer Motion.
+- Autoplay de animaciones en mobile consume batería — evitar loops infinitos en elementos fuera de viewport.
