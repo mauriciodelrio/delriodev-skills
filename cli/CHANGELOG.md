@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.3.2...v0.4.0) (2026-04-13)
+
+In version 0.4.0 of "delriodev-skills," all backend, architecture, frontend, software, and GRC skills have been optimized for improved agent consumption, adhering to agentskills.io best practices. This release features imperative frontmatter descriptions, streamlined agent workflow sections with step-by-step instructions, and the removal of decorative elements for clarity. Additionally, a new root orchestrator has been introduced for the software domain, enhancing the overall functionality and usability of the CLI.
+
+### Pull Requests
+
+- [#5](https://github.com/mauriciodelrio/delriodev-skills/pull/5) refactor(agent-workflow): optimize all agent-workflow skills following agentskills.io best practices
+- [#6](https://github.com/mauriciodelrio/delriodev-skills/pull/6) refactor(grc): optimize all GRC skills for agent consumption
+- [#7](https://github.com/mauriciodelrio/delriodev-skills/pull/7) refactor(software): optimize standalone skills and add root orchestrator
+- [#8](https://github.com/mauriciodelrio/delriodev-skills/pull/8) refactor(frontend): optimize 22 frontend skills + orchestrator for agent consumption
+- [#9](https://github.com/mauriciodelrio/delriodev-skills/pull/9) optimize(architecture): Improve all architecture skills — agentskills.io best practices
+- [#10](https://github.com/mauriciodelrio/delriodev-skills/pull/10) optimize(backend): improve all 17 backend skills for agent consumption
+
 ## [0.3.2](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.2.3...v0.3.2) (2026-04-12)
 
 In version 0.3.2 of "delriodev-skills," users will benefit from improved release management with the addition of workflows and scripts that enhance the generation of release notes. This update also includes synchronization of the package version to ensure consistency across deployments. Additionally, the GitHub release token has been updated for better security and reliability during the publishing process.
