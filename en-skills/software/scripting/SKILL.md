@@ -1,20 +1,22 @@
 ---
 name: scripting
 description: >
-  Rules for professional shell scripting (Bash/Zsh). Covers .sh file
-  structure, script atomicity, using sed/awk/grep over explicit loops,
-  permissions, terminal styles (colors/formatting), output capture, CLI
-  creation when necessary, and rules for simple scripts vs complex tools.
-  Prefer native Unix pipelines over imperative loops.
+  Use this skill when writing or modifying Bash/Zsh scripts. Apply
+  set -euo pipefail, main() structure, sed/awk/grep over loops, permissions,
+  terminal styles, output capture, and decide when a simple script suffices
+  vs when to build a CLI with flags.
 ---
 
-# 🐚 Shell Scripting — Rules
+# Shell Scripting
 
-## Guiding Principle
+## Agent workflow
 
-> **A script is software — treat it as such.** It must be readable, atomic,
-> and fail loudly. But not everything needs to be a CLI with flags and menus.
-> If a 3-command pipeline solves the problem, don't write 50 lines.
+1. Every script starts with `#!/usr/bin/env bash` + `set -euo pipefail` + header comment (name, purpose, usage)
+2. Use grep/sed/awk/xargs and pipelines over while-read loops for text processing
+3. Wrap logic in `main()`, source shared libs (styles.sh, utils.sh) at the top
+4. Simple task → simple script. Only build a CLI with flags when 3+ options exist
+5. Each script does one thing. Compose atomic scripts for complex flows
+6. Validate against the Gotchas section before writing shell scripts
 
 ---
 
@@ -498,3 +500,19 @@ main() {
 ```
 
 ---
+
+## Gotchas
+
+- Never omit `set -euo pipefail` — without it errors pass silently and the script continues in a corrupted state.
+- Don't use while-read loops for text processing — grep/sed/awk are more efficient and expressive.
+- Always quote variables (`"$var"`) — without quotes you get word splitting and globbing; `rm -rf $DIR` when empty becomes `rm -rf /`.
+- Never `chmod 777` — anyone can modify and execute. Use 755 for scripts, 700 for scripts with secrets.
+- Never `curl | bash` without verifying what you're downloading — inspect the script first.
+- Don't hardcode credentials in scripts — use environment variables or a secrets manager.
+- Scripts of 200+ lines without functions are unreadable — split into atomic functions with descriptive names.
+- Don't use `echo` for logging — use `log_*` functions with colors and levels (info, warn, error).
+- Don't build a CLI with flags and menus for a 10-line script — KISS.
+- `cat file | grep pattern` is a useless use of cat — `grep pattern file` directly.
+- `ls | while read` doesn't handle spaces in names — use `find -print0 | xargs -0`.
+- Use `[[ ]]` instead of `[ ]` — double brackets are safer and more powerful in bash (supports regex, no word splitting).
+- Verify binaries exist with `command -v` before using them — don't trust `$PATH` has them.
