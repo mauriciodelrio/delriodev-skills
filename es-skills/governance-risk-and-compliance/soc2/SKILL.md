@@ -1,52 +1,22 @@
 ---
 name: soc2
 description: >
-  Skill de cumplimiento SOC 2 Type II — Trust Service Criteria (AICPA). Activa esta skill
-  cuando desarrolles software SaaS o servicios cloud que requieran demostrar controles de
-  seguridad, disponibilidad, integridad de procesamiento, confidencialidad y/o privacidad.
-  Esencial para vender a empresas que exigen SOC 2.
+  Usa este skill cuando desarrolles software SaaS o servicios cloud que
+  requieran demostrar controles de seguridad, disponibilidad, integridad de
+  procesamiento, confidencialidad y/o privacidad. Aunque SOC 2 es un framework
+  de auditoría del AICPA, este skill se aplica como estándar de controles
+  organizacionales para cualquier software que maneje datos de clientes
+  independientemente de la ubicación geográfica. Cubre política de contraseñas,
+  revisión de accesos con offboarding, monitoreo con alertas, gestión de cambios
+  con pipeline CI/CD, SLAs de disponibilidad, y aislamiento multi-tenant con
+  Prisma.
 ---
 
-# 🔐 SOC 2 Type II — Trust Service Criteria
+# SOC 2 Type II — Trust Service Criteria
 
-## Descripción General
+SOC 2 Type II (AICPA) evalúa la efectividad operativa de controles organizacionales durante un período de 6-12 meses y debe aplicarse a cualquier software que maneje datos de clientes independientemente de la ubicación geográfica. Se estructura en 5 Trust Service Criteria: Seguridad (CC, obligatorio — controles de acceso, monitoreo, gestión de cambios), Disponibilidad (A — SLAs, DR, backups), Integridad del Procesamiento (PI — validación, reconciliación), Confidencialidad (C — aislamiento multi-tenant, encriptación) y Privacidad (P — consentimiento, eliminación de datos).
 
-**SOC 2** (System and Organization Controls 2) es un framework de auditoría desarrollado por el AICPA que evalúa los controles de una organización según los **Trust Service Criteria (TSC)**. Es el estándar de facto para empresas SaaS y proveedores de servicios cloud que manejan datos de clientes.
-
-- **Type I**: Evaluación del diseño de controles en un punto en el tiempo
-- **Type II**: Evaluación de la efectividad operativa de controles durante un período (usualmente 6-12 meses)
-
-**¿Por qué importa?** La mayoría de clientes empresariales (B2B) exigen un reporte SOC 2 Type II antes de comprar tu producto. Sin él, pierdes deals.
-
----
-
-## Cuándo Activar esta Skill
-
-Activa esta skill **siempre** que:
-
-- Desarrolles una aplicación **SaaS** o servicio **cloud**
-- Tus clientes sean **empresas (B2B)** que exigen compliance
-- Implementes **controles de acceso** y autenticación robusta
-- Diseñes **sistemas de monitoreo**, alertas y logging
-- Trabajes en **disponibilidad** y resiliencia del servicio
-- Implementes **gestión de cambios** y deployment pipelines
-- Necesites demostrar controles de **confidencialidad** de datos de clientes
-
----
-
-## Los 5 Trust Service Criteria (TSC)
-
-| Criterio | Código | Descripción | ¿Obligatorio? |
-|----------|--------|-------------|----------------|
-| **Seguridad** | CC (Common Criteria) | Proteger contra acceso no autorizado | Sí (siempre incluido) |
-| **Disponibilidad** | A | Disponibilidad del sistema según SLA | Opcional |
-| **Integridad del Procesamiento** | PI | Procesamiento completo, válido, exacto y oportuno | Opcional |
-| **Confidencialidad** | C | Proteger información confidencial | Opcional |
-| **Privacidad** | P | Recolección, uso, retención y divulgación de info personal | Opcional |
-
----
-
-## Requisitos Técnicos de Implementación
+## Implementación
 
 ### 1. CC1 — Entorno de Control (Control Environment)
 
@@ -754,33 +724,20 @@ model Project {
 
 ---
 
-## Buenas Prácticas SOC 2
+## Flujo de trabajo del agente
 
-### ✅ HACER
+1. Implementar política de contraseñas robusta: mínimo 12 caracteres, complejidad (mayúsculas, minúsculas, números, especiales), rotación cada 90 días, historial de 12, bloqueo tras 5 intentos fallidos (CC1).
+2. Implementar MFA obligatorio para todos los usuarios internos y revisión de accesos trimestral que desactive cuentas sin actividad en 90 días (CC6).
+3. Implementar offboarding inmediato: desactivar cuenta, revocar sesiones activas y tokens de API en una transacción atómica (CC6.3).
+4. Configurar monitoreo con reglas de alerta: intentos de login fallidos excesivos, acceso admin fuera de horario, tasa de errores 5xx >5%, latencia p99 >2s, y errores de procesamiento (CC7).
+5. Implementar gestión de cambios formal con pipeline CI/CD: lint + type-check + tests + cobertura → audit de dependencias + SAST + detección de secretos → tests E2E en staging → deploy a producción con aprobación manual (CC8).
+6. Definir SLAs de disponibilidad (99.9% API, 99.5% dashboard), RPO/RTO, backups automatizados con pruebas de restauración, y status page pública (A1).
+7. Implementar aislamiento multi-tenant con Prisma middleware que inyecta tenantId automáticamente en todas las queries — todo modelo con datos de cliente debe tener tenantId (C1).
+8. Validar contra el checklist de cumplimiento (CC, A, PI, C, P) antes de desplegar.
 
-1. **Política de contraseñas robusta** — min 12 caracteres, complejidad, rotación
-2. **MFA obligatorio** para todos los usuarios internos
-3. **Revisión de accesos** trimestral — desactivar cuentas inactivas
-4. **Gestión de cambios formal** — PR reviews, aprobación, pipeline CI/CD
-5. **Monitoreo y alertas** — métricas de seguridad, disponibilidad y rendimiento
-6. **Aislamiento multi-tenant** — datos de clientes completamente separados
-7. **Logs de auditoría** inmutables con retención mínima de 1 año
-8. **Encriptación** en reposo (AES-256) y en tránsito (TLS 1.2+)
-9. **Backups automatizados** con pruebas de restauración periódicas
-10. **Status page pública** para informar sobre disponibilidad a clientes
-11. **Pen-testing** anual y escaneos de vulnerabilidades regulares
-12. **Offboarding** inmediato cuando un empleado deja la organización
+## Gotchas
 
-### ❌ NO HACER
-
-1. **NO** permitir deployments directos a producción sin aprobación
-2. **NO** compartir credenciales entre empleados
-3. **NO** ignorar las alertas de seguridad
-4. **NO** almacenar secretos en el código fuente
-5. **NO** omitir tests automatizados en el pipeline
-6. **NO** dar acceso admin por defecto a nuevos empleados
-7. **NO** mezclar datos de diferentes tenants sin aislamiento
-8. **NO** desactivar logging en producción
+Nunca permitir deployments directos a producción sin aprobación — SOC 2 requiere gestión de cambios formal con evidencia. Nunca compartir credenciales entre empleados — cada usuario debe tener ID único. Nunca ignorar alertas de seguridad — deben evaluarse (CC7.3) y documentarse como incidentes cuando corresponda (CC7.4). Nunca almacenar secretos en el código fuente — usar un gestor de secretos. Nunca omitir tests automatizados en el pipeline — son evidencia de CC8.1. Nunca dar acceso admin por defecto a nuevos empleados — aplicar principio de mínimo privilegio. Nunca mezclar datos de diferentes tenants sin aislamiento — el Row-Level Security con tenantId es obligatorio para multi-tenant SaaS. Nunca desactivar logging en producción — los logs de auditoría deben ser inmutables con retención mínima de 1 año. Las claves de encriptación deben usar AES-256 en reposo y TLS 1.2+ en tránsito. El pen-testing debe ser anual y los escaneos de vulnerabilidades regulares.
 
 ---
 

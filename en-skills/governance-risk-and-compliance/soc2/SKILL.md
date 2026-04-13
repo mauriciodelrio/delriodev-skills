@@ -754,33 +754,20 @@ model Project {
 
 ---
 
-## SOC 2 Best Practices
+## Agent workflow
 
-### ✅ DO
+1. Implement robust password policy: minimum 12 characters, complexity (uppercase, lowercase, numbers, special), rotation every 90 days, history of 12, lockout after 5 failed attempts (CC1).
+2. Implement mandatory MFA for all internal users and quarterly access review that deactivates accounts with no activity in 90 days (CC6).
+3. Implement immediate offboarding: deactivate account, revoke active sessions and API tokens in an atomic transaction (CC6.3).
+4. Configure monitoring with alert rules: excessive failed login attempts, admin access outside business hours, 5xx error rate >5%, p99 latency >2s, and processing errors (CC7).
+5. Implement formal change management with CI/CD pipeline: lint + type-check + tests + coverage → dependency audit + SAST + secret detection → E2E tests in staging → production deploy with manual approval (CC8).
+6. Define availability SLAs (99.9% API, 99.5% dashboard), RPO/RTO, automated backups with restoration tests, and public status page (A1).
+7. Implement multi-tenant isolation with Prisma middleware that automatically injects tenantId into all queries — every model with customer data must have tenantId (C1).
+8. Validate against the compliance checklist (CC, A, PI, C, P) before deploying.
 
-1. **Robust password policy** — min 12 characters, complexity, rotation
-2. **Mandatory MFA** for all internal users
-3. **Quarterly access reviews** — deactivate inactive accounts
-4. **Formal change management** — PR reviews, approval, CI/CD pipeline
-5. **Monitoring and alerts** — security, availability, and performance metrics
-6. **Multi-tenant isolation** — customer data completely separated
-7. **Immutable audit logs** with minimum 1-year retention
-8. **Encryption** at rest (AES-256) and in transit (TLS 1.2+)
-9. **Automated backups** with periodic restoration tests
-10. **Public status page** to inform customers about availability
-11. **Annual pen-testing** and regular vulnerability scans
-12. **Immediate offboarding** when an employee leaves the organization
+## Gotchas
 
-### ❌ DO NOT
-
-1. **DO NOT** allow direct deployments to production without approval
-2. **DO NOT** share credentials between employees
-3. **DO NOT** ignore security alerts
-4. **DO NOT** store secrets in source code
-5. **DO NOT** skip automated tests in the pipeline
-6. **DO NOT** give admin access by default to new employees
-7. **DO NOT** mix data from different tenants without isolation
-8. **DO NOT** disable logging in production
+Never allow direct deployments to production without approval — SOC 2 requires formal change management with evidence. Never share credentials between employees — each user must have a unique ID. Never ignore security alerts — they must be evaluated (CC7.3) and documented as incidents when applicable (CC7.4). Never store secrets in source code — use a secrets manager. Never skip automated tests in the pipeline — they are evidence of CC8.1. Never give admin access by default to new employees — apply the principle of least privilege. Never mix data from different tenants without isolation — Row-Level Security with tenantId is mandatory for multi-tenant SaaS. Never disable logging in production — audit logs must be immutable with minimum 1-year retention. Encryption keys must use AES-256 at rest and TLS 1.2+ in transit. Pen-testing must be annual and vulnerability scans regular.
 
 ---
 
