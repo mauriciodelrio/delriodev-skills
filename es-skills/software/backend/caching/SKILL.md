@@ -1,55 +1,35 @@
 ---
 name: caching
 description: >
-  Patrones de caching en backend Node.js. Cubre Redis (cache-aside,
-  write-through), invalidación, TTL, HTTP cache headers, decorator-based
-  caching en NestJS, y estrategias de key naming. Enfocado en
-  implementación en código (qué servicio de cache usar → architecture/).
+  Usa esta skill cuando implementes patrones de caching en backend
+  Node.js. Cubre Redis (cache-aside, write-through), invalidación,
+  TTL, HTTP cache headers, decorator-based caching en NestJS y
+  key naming. Enfocado en implementación (qué servicio de cache
+  usar → architecture/).
 ---
 
-# ⚡ Caching — Patrones de Cache
+# Caching — Patrones de Cache
 
-## Principio
+## Flujo de trabajo del agente
 
-> **Cache es un tradeoff: velocidad vs consistencia.**
-> Solo cachear lo que se lee mucho y cambia poco.
-> Invalidar siempre es más difícil que cachear.
+**1.** Elegir estrategia de cache según caso de uso (sección 1).
+**2.** Implementar CacheService con Redis (sección 2).
+**3.** Definir key naming y TTLs (secciones 3–4).
+**4.** Configurar invalidación y HTTP cache headers (secciones 5–7).
+**5.** Verificar contra la lista de gotchas (sección 9).
 
----
+## 1. Estrategias de Cache
 
-## Estrategias de Cache
+**Cache-aside (lazy loading)** — la más común:
+Buscar en cache → si hit, retornar → si miss, buscar en DB → guardar en cache → retornar. Solo se cachea lo que se consulta. Cache miss no es fatal (va a DB). Primera consulta siempre lenta (cold start). Datos pueden quedar stale hasta expirar TTL.
 
-```
-CACHE-ASIDE (Lazy Loading) — MÁS COMÚN:
-  1. Buscar en cache
-  2. Si existe → retornar (cache hit)
-  3. Si no existe → buscar en DB → guardar en cache → retornar
-  
-  ✅ Solo se cachea lo que se consulta
-  ✅ Cache miss no es fatal (va a DB)
-  ❌ Primera consulta siempre lenta (cold start)
-  ❌ Datos pueden quedar stale hasta expirar TTL
+**Write-through:**
+Escribir en cache y DB al mismo tiempo. Lecturas siempre desde cache. Cache siempre actualizado, pero overhead en escrituras y cachea datos que quizás nunca se leen.
 
-WRITE-THROUGH:
-  1. Escribir en cache Y en DB al mismo tiempo
-  2. Lecturas siempre van al cache
-  
-  ✅ Cache siempre actualizado
-  ❌ Overhead en escrituras
-  ❌ Cachea datos que quizás nunca se leen
+**Write-behind (write-back):**
+Escribir en cache, actualizar DB asíncronamente. Escrituras ultra rápidas pero riesgo de pérdida si cache cae. Solo para casos muy específicos.
 
-WRITE-BEHIND (Write-Back):
-  1. Escribir en cache
-  2. Actualizar DB de forma asíncrona
-  
-  ✅ Escrituras ultra rápidas
-  ❌ Riesgo de pérdida de datos si cache cae
-  ❌ Complejidad alta → solo para casos muy específicos
-```
-
----
-
-## Redis — Implementación Cache-Aside
+## 2. Redis — Implementación Cache-Aside
 
 ```typescript
 import { Redis } from 'ioredis';
@@ -100,59 +80,30 @@ async function getProductById(id: string) {
 }
 ```
 
----
+## 3. Key Naming Convention
 
-## Key Naming Convention
+Formato: `{entity}:{identifier}:{qualifier}`
 
-```
-FORMATO: {entity}:{identifier}:{qualifier}
+- `product:abc123` — producto individual
+- `products:list:page=1:size=20` — lista paginada
+- `user:abc123:profile` — perfil del usuario
+- `user:abc123:orders` — órdenes del usuario
+- `session:token_xyz` — sesión
+- `config:feature-flags` — feature flags
 
-EJEMPLOS:
-  product:abc123              → Producto individual
-  products:list:page=1:size=20 → Lista paginada
-  user:abc123:profile         → Perfil del usuario
-  user:abc123:orders          → Órdenes del usuario
-  session:token_xyz           → Sesión
-  config:feature-flags        → Feature flags
+Separar con `:` (convención Redis). Prefijo consistente por entidad. Keys predecibles para invalidar por patrón. No poner datos sensibles en el key. No exceder ~200 chars.
 
-REGLAS:
-  ✅ Separar con : (convención Redis)
-  ✅ Prefijo consistente por entidad
-  ✅ Keys predecibles → fácil invalidar por patrón
-  ❌ Keys con datos sensibles (passwords, tokens en el key)
-  ❌ Keys demasiado largos (> 200 chars) → compactar
-```
+## 4. TTL (Time To Live)
 
----
+**Cambian poco:** feature flags (5–15 min), config global (10–30 min), catálogos/listas (5–15 min), traducciones (1 h).
 
-## TTL (Time To Live) — Guía
+**Cambian moderadamente:** perfil de usuario (2–5 min), producto individual (5 min), listados paginados (1–2 min).
 
-```
-DATOS QUE CAMBIAN POCO:
-  Feature flags        → 5-15 min
-  Configuración global → 10-30 min
-  Catálogos/listas     → 5-15 min
-  Traducciones         → 1 hora
+**Cambian mucho:** contadores/views (30 s–1 min), stock (30 s o invalidar en write), precios (1 min o invalidar en write).
 
-DATOS QUE CAMBIAN MODERADAMENTE:
-  Perfil de usuario    → 2-5 min
-  Producto individual  → 5 min
-  Listados paginados   → 1-2 min
+**No cachear:** datos financieros en tiempo real, estado de transacciones en progreso, datos protegidos por GDPR post-deletion.
 
-DATOS QUE CAMBIAN MUCHO:
-  Contadores (views)   → 30s-1 min
-  Stock                → 30s (o invalidar en write)
-  Precios              → 1 min (o invalidar en write)
-
-DATOS QUE NO SE CACHEAN:
-  Datos financieros en tiempo real
-  Estado de transacciones en progreso
-  Datos protegidos por GDPR post-deletion
-```
-
----
-
-## Invalidación
+## 5. Invalidación
 
 ```typescript
 // ESTRATEGIA 1: Invalidar en write (más consistente)
@@ -179,9 +130,7 @@ await cache.set(key, data, 60); // 1 minuto, se refresca solo
 // Implementación custom o usar librería (e.g., cacheable)
 ```
 
----
-
-## NestJS — Cache Module
+## 6. NestJS — Cache Module
 
 ```typescript
 // NestJS built-in cache con @nestjs/cache-manager
@@ -217,9 +166,7 @@ export class ProductsController {
 }
 ```
 
----
-
-## HTTP Cache Headers
+## 7. HTTP Cache Headers
 
 ```typescript
 // Para responses que el cliente/CDN puede cachear
@@ -248,9 +195,7 @@ res.set('ETag', `"${hash(data)}"`);
 getConfig() { ... }
 ```
 
----
-
-## Patrones Avanzados
+## 8. Patrones Avanzados
 
 ```typescript
 // Cache stampede prevention: Mutex/Lock
@@ -278,19 +223,15 @@ async function getWithLock<T>(key: string, fetchFn: () => Promise<T>, ttl: numbe
 }
 ```
 
----
+## 9. Gotchas
 
-## Anti-patrones
-
-```
-❌ Cachear todo "por si acaso" → solo lo que se lee mucho y cambia poco
-❌ TTL infinito sin invalidación → datos stale para siempre
-❌ No manejar cache miss gracefully → app se rompe si Redis cae
-❌ Keys sin estructura → imposible invalidar selectivamente
-❌ Cachear datos sensibles sin considerar GDPR → datos borrados siguen en cache
-❌ Cache sin monitoreo → no sabes si hit rate es 5% o 95%
-❌ Invalidar con KEYS * en producción → bloquea Redis (O(N))
-❌ JSON.parse sin try/catch → cache corrupto crashea la app
-❌ Cachear errores → propagar un 500 desde cache
-❌ No tener fallback a DB cuando Redis cae
-```
+- Cachear todo "por si acaso" — solo lo que se lee mucho y cambia poco.
+- TTL infinito sin invalidación — datos stale para siempre.
+- No manejar cache miss — app se rompe si Redis cae.
+- Keys sin estructura — imposible invalidar selectivamente.
+- Cachear datos sensibles sin considerar GDPR — datos borrados siguen en cache.
+- Cache sin monitoreo — no sabes si hit rate es 5% o 95%.
+- Invalidar con `KEYS *` en producción — bloquea Redis (O(N)).
+- `JSON.parse` sin try/catch — cache corrupto crashea la app.
+- Cachear errores — propagar un 500 desde cache.
+- No tener fallback a DB cuando Redis cae.

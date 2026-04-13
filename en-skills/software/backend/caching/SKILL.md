@@ -1,55 +1,35 @@
 ---
 name: caching
 description: >
-  Caching patterns in Node.js backend. Covers Redis (cache-aside,
-  write-through), invalidation, TTL, HTTP cache headers, decorator-based
-  caching in NestJS, and key naming strategies. Focused on
-  code-level implementation (which cache service to use → architecture/).
+  Use this skill when implementing caching patterns in a Node.js
+  backend. Covers Redis (cache-aside, write-through), invalidation,
+  TTL, HTTP cache headers, decorator-based caching in NestJS, and
+  key naming. Focused on implementation (which cache service to
+  use → architecture/).
 ---
 
-# ⚡ Caching — Cache Patterns
+# Caching — Cache Patterns
 
-## Principle
+## Agent workflow
 
-> **Cache is a tradeoff: speed vs consistency.**
-> Only cache what is read often and changes rarely.
-> Invalidation is always harder than caching.
+**1.** Choose cache strategy based on use case (section 1).
+**2.** Implement CacheService with Redis (section 2).
+**3.** Define key naming and TTLs (sections 3–4).
+**4.** Configure invalidation and HTTP cache headers (sections 5–7).
+**5.** Check against the gotchas list (section 9).
 
----
+## 1. Cache Strategies
 
-## Cache Strategies
+**Cache-aside (lazy loading)** — most common:
+Look up in cache → if hit, return → if miss, look up in DB → store in cache → return. Only caches what is actually queried. Cache miss is not fatal (falls back to DB). First query is always slow (cold start). Data can become stale until TTL expires.
 
-```
-CACHE-ASIDE (Lazy Loading) — MOST COMMON:
-  1. Look up in cache
-  2. If exists → return (cache hit)
-  3. If not → look up in DB → store in cache → return
-  
-  ✅ Only caches what is actually queried
-  ✅ Cache miss is not fatal (falls back to DB)
-  ❌ First query is always slow (cold start)
-  ❌ Data can become stale until TTL expires
+**Write-through:**
+Write to cache and DB at the same time. Reads always from cache. Cache is always up to date, but overhead on writes and caches data that may never be read.
 
-WRITE-THROUGH:
-  1. Write to cache AND DB at the same time
-  2. Reads always go to cache
-  
-  ✅ Cache is always up to date
-  ❌ Overhead on writes
-  ❌ Caches data that may never be read
+**Write-behind (write-back):**
+Write to cache, update DB asynchronously. Ultra-fast writes but risk of data loss if cache goes down. Only for very specific cases.
 
-WRITE-BEHIND (Write-Back):
-  1. Write to cache
-  2. Update DB asynchronously
-  
-  ✅ Ultra-fast writes
-  ❌ Risk of data loss if cache goes down
-  ❌ High complexity → only for very specific cases
-```
-
----
-
-## Redis — Cache-Aside Implementation
+## 2. Redis — Cache-Aside Implementation
 
 ```typescript
 import { Redis } from 'ioredis';
@@ -100,59 +80,30 @@ async function getProductById(id: string) {
 }
 ```
 
----
+## 3. Key Naming Convention
 
-## Key Naming Convention
+Format: `{entity}:{identifier}:{qualifier}`
 
-```
-FORMAT: {entity}:{identifier}:{qualifier}
+- `product:abc123` — individual product
+- `products:list:page=1:size=20` — paginated list
+- `user:abc123:profile` — user profile
+- `user:abc123:orders` — user orders
+- `session:token_xyz` — session
+- `config:feature-flags` — feature flags
 
-EXAMPLES:
-  product:abc123              → Individual product
-  products:list:page=1:size=20 → Paginated list
-  user:abc123:profile         → User profile
-  user:abc123:orders          → User orders
-  session:token_xyz           → Session
-  config:feature-flags        → Feature flags
+Separate with `:` (Redis convention). Consistent prefix per entity. Predictable keys for pattern invalidation. No sensitive data in the key. Don't exceed ~200 chars.
 
-RULES:
-  ✅ Separate with : (Redis convention)
-  ✅ Consistent prefix per entity
-  ✅ Predictable keys → easy to invalidate by pattern
-  ❌ Keys with sensitive data (passwords, tokens in the key)
-  ❌ Keys that are too long (> 200 chars) → compact them
-```
+## 4. TTL (Time To Live)
 
----
+**Changes rarely:** feature flags (5–15 min), global configuration (10–30 min), catalogs/lists (5–15 min), translations (1 h).
 
-## TTL (Time To Live) — Guide
+**Changes moderately:** user profile (2–5 min), individual product (5 min), paginated listings (1–2 min).
 
-```
-DATA THAT CHANGES RARELY:
-  Feature flags        → 5-15 min
-  Global configuration → 10-30 min
-  Catalogs/lists       → 5-15 min
-  Translations         → 1 hour
+**Changes frequently:** counters/views (30 s–1 min), stock (30 s or invalidate on write), prices (1 min or invalidate on write).
 
-DATA THAT CHANGES MODERATELY:
-  User profile         → 2-5 min
-  Individual product   → 5 min
-  Paginated listings   → 1-2 min
+**Do not cache:** real-time financial data, in-progress transaction state, GDPR-protected data post-deletion.
 
-DATA THAT CHANGES FREQUENTLY:
-  Counters (views)     → 30s-1 min
-  Stock                → 30s (or invalidate on write)
-  Prices               → 1 min (or invalidate on write)
-
-DATA THAT SHOULD NOT BE CACHED:
-  Real-time financial data
-  In-progress transaction state
-  GDPR-protected data post-deletion
-```
-
----
-
-## Invalidation
+## 5. Invalidation
 
 ```typescript
 // STRATEGY 1: Invalidate on write (most consistent)
@@ -179,9 +130,7 @@ await cache.set(key, data, 60); // 1 minute, refreshes on its own
 // Custom implementation or use a library (e.g., cacheable)
 ```
 
----
-
-## NestJS — Cache Module
+## 6. NestJS — Cache Module
 
 ```typescript
 // NestJS built-in cache with @nestjs/cache-manager
@@ -217,9 +166,7 @@ export class ProductsController {
 }
 ```
 
----
-
-## HTTP Cache Headers
+## 7. HTTP Cache Headers
 
 ```typescript
 // For responses that the client/CDN can cache
@@ -248,9 +195,7 @@ res.set('ETag', `"${hash(data)}"`);
 getConfig() { ... }
 ```
 
----
-
-## Advanced Patterns
+## 8. Advanced Patterns
 
 ```typescript
 // Cache stampede prevention: Mutex/Lock
@@ -278,19 +223,15 @@ async function getWithLock<T>(key: string, fetchFn: () => Promise<T>, ttl: numbe
 }
 ```
 
----
+## 9. Gotchas
 
-## Anti-patterns
-
-```
-❌ Cache everything "just in case" → only cache what is read often and changes rarely
-❌ Infinite TTL without invalidation → data stays stale forever
-❌ Not handling cache miss gracefully → app breaks if Redis goes down
-❌ Keys without structure → impossible to selectively invalidate
-❌ Caching sensitive data without considering GDPR → deleted data remains in cache
-❌ Cache without monitoring → you don't know if hit rate is 5% or 95%
-❌ Invalidating with KEYS * in production → blocks Redis (O(N))
-❌ JSON.parse without try/catch → corrupted cache crashes the app
-❌ Caching errors → propagating a 500 from cache
-❌ No fallback to DB when Redis goes down
-```
+- Cache everything "just in case" — only cache what is read often and changes rarely.
+- Infinite TTL without invalidation — data stays stale forever.
+- Not handling cache miss — app breaks if Redis goes down.
+- Keys without structure — impossible to selectively invalidate.
+- Caching sensitive data without considering GDPR — deleted data remains in cache.
+- Cache without monitoring — you don't know if hit rate is 5% or 95%.
+- Invalidating with `KEYS *` in production — blocks Redis (O(N)).
+- `JSON.parse` without try/catch — corrupted cache crashes the app.
+- Caching errors — propagating a 500 from cache.
+- No fallback to DB when Redis goes down.
