@@ -1,43 +1,31 @@
 ---
 name: file-handling
 description: >
-  File handling in Node.js backend. Covers multipart uploads with
-  multer, large file streaming, file validation (type,
-  size), integration with presigned URLs (S3), processing pipelines,
-  and secure patterns for upload/download.
+  Use this skill when implementing file handling in a Node.js
+  backend. Covers multipart uploads with multer, large file
+  streaming, file validation (type, size), integration with
+  presigned URLs (S3), processing pipelines, and secure patterns
+  for upload/download.
 ---
 
-# 📁 File Handling — File Management
+# File Handling — File Management
 
-## Principle
+## Agent workflow
 
-> **Never trust the file uploaded by the user.**
-> Validate type, size, and content. Never execute or interpret
-> uploaded files. Prefer presigned URLs for large files.
+**1.** Decide between direct upload or presigned URL (section 1).
+**2.** Configure multer or presigned URLs (sections 2–5).
+**3.** Implement streaming for large files (section 6).
+**4.** Validate actual file content (section 7).
+**5.** Implement temporary file cleanup (section 8).
+**6.** Check against the gotchas list (section 9).
 
----
+## 1. Decision: Direct Upload or Presigned URL?
 
-## Decision: Direct Upload or Presigned URL?
+**Direct upload (through the backend):** small files (< 10 MB), you need to process the file before saving, immediate server-side validation. Downside: the backend is a bottleneck (CPU, memory, bandwidth).
 
-```
-DIRECT UPLOAD (through the backend):
-  ✅ Small files (< 10 MB)
-  ✅ You need to process the file before saving
-  ✅ Immediate server-side validation
-  ❌ The backend is a bottleneck (CPU, memory, bandwidth)
+**Presigned URL (direct to S3):** large files (> 10 MB), many concurrent uploads, reduces load on the backend. Downside: less control over validation before upload. Backend generates signed URL → client uploads directly to S3 → validate post-upload with Lambda trigger or webhook.
 
-PRESIGNED URL (direct to S3):
-  ✅ Large files (> 10 MB)
-  ✅ Many concurrent uploads
-  ✅ Reduce load on the backend
-  ❌ Less control over validation before upload
-  → Backend generates signed URL → client uploads directly to S3
-  → Validate post-upload with Lambda trigger or webhook
-```
-
----
-
-## Multer — Direct Upload
+## 2. Multer — Direct Upload
 
 ```typescript
 import multer from 'multer';
@@ -113,9 +101,7 @@ async function uploadAvatar(req: Request, res: Response) {
 }
 ```
 
----
-
-## NestJS — File Upload
+## 3. NestJS — File Upload
 
 ```typescript
 @Controller('files')
@@ -150,9 +136,7 @@ export class FilesController {
 }
 ```
 
----
-
-## Presigned URL — Direct Upload to S3
+## 4. Presigned URL — Direct Upload to S3
 
 ```typescript
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
@@ -213,9 +197,7 @@ router.post('/files/upload-url', authenticate, async (req, res) => {
 });
 ```
 
----
-
-## Streaming — Large Files
+## 5. Streaming — Large Files
 
 ```typescript
 import { createReadStream } from 'fs';
@@ -258,9 +240,7 @@ async function streamToS3(readableStream: Readable, key: string, contentType: st
 }
 ```
 
----
-
-## File Validation
+## 6. File Validation
 
 ```typescript
 // NEVER trust just the extension or the header mimetype
@@ -310,9 +290,7 @@ async function validateImage(buffer: Buffer) {
 }
 ```
 
----
-
-## Cleanup
+## 7. Cleanup
 
 ```typescript
 // Clean up temporary files
@@ -336,19 +314,15 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 // Delete files in /uploads/temp/ older than 1 hour
 ```
 
----
+## 8. Gotchas
 
-## Anti-patterns
-
-```
-❌ Trusting file.mimetype from the header → verify magic bytes
-❌ Saving with original name → path traversal (../../etc/passwd)
-❌ No size limit → 10 GB upload = denial of service
-❌ Loading entire file into memory → use streams for large files
-❌ Files on the server filesystem → doesn't scale, lost on deploy
-❌ Presigned URL without short expiration → shareable URL = indefinite access
-❌ No post-upload validation (presigned) → malicious files in S3
-❌ Serving uploaded files on the same domain → XSS if HTML/SVG
-❌ Not cleaning up temporary files → disk fills up
-❌ Upload endpoint without auth → upload abuse
-```
+- Trusting `file.mimetype` from the header — verify magic bytes.
+- Saving with original name — path traversal (`../../etc/passwd`).
+- No size limit — 10 GB upload = denial of service.
+- Loading entire file into memory — use streams for large files.
+- Files on the server filesystem — doesn't scale, lost on deploy.
+- Presigned URL without short expiration — shareable URL = indefinite access.
+- No post-upload validation (presigned) — malicious files in S3.
+- Serving uploaded files on the same domain — XSS if HTML/SVG.
+- Not cleaning up temporary files — disk fills up.
+- Upload endpoint without auth — upload abuse.
