@@ -1,23 +1,47 @@
 ---
 name: frontend
 description: >
-  Use this skill when working on frontend. Orchestrates 22 specialized
+  Use this skill when working on frontend. Orchestrates 24 specialized
   sub-skills covering architecture, components, rendering, styles,
   data fetching, testing, performance, and security.
-  Stack: React 19+, Next.js 15+, TypeScript strict, Tailwind CSS, pnpm.
+  Stack: React 19+, Next.js 15+, Vite 6+, TypeScript strict, Tailwind CSS, pnpm.
 ---
 
 # Frontend Skills — Master Index
 
+## Mandatory cross-references
+
+Before executing any frontend task, the agent **must** consult these external skills when applicable:
+
+| External skill | When to consult |
+|----------------|----------------|
+| [`agent-workflow`](../../agent-workflow/SKILL.md) | **Always** when starting a new project or resuming an existing one. Defines the clarification protocol, checkpoints, iteration-rules, and documentation (`docs-structure`, `project-resumption`). |
+| [`governance-risk-and-compliance`](../../governance-risk-and-compliance/SKILL.md) | When the frontend handles personal data (forms, cookies, tokens), implements consent, opt-out, or any regulated flow. Activate relevant sub-skills: `gdpr` (consent, cookies), `owasp-top-10` (XSS, CSP, sanitization), `ccpa-cpra` (Do Not Sell, GPC). |
+
+## Project type detection
+
+Before applying sub-skills, identify the project type:
+
+| Signal | Type | Implication |
+|--------|------|-------------|
+| `next.config.ts` or `next.config.js` exists | **Next.js App Router** | Use "Next.js" sections in each sub-skill. File-system routing, Server Components, Server Actions. |
+| `vite.config.ts` exists and NO `next.config.*` | **Vite + React SPA** | Use "Vite SPA" sections in each sub-skill. Routing via `react-router-dom`, all client-side, tokens in memory. |
+| Other framework (Remix, Astro, etc.) | **Other** | Adapt general principles from each sub-skill to the detected framework. |
+
+If it's a **new project**, ask the developer what type of project it is before proceeding.
+
 ## Agent workflow
 
-1. Identify the action (create component, form, hook, styles, data fetching).
-2. Consult the skills map (section 2) or the keyword activation guide (section 3).
-3. Read the specific sub-skill.
-4. Return to this index and consult "Mandatory skills by action" (section 4).
-5. Read and apply each mandatory skill for the action type.
-6. Verify compliance with universal code rules (section 5).
-7. Do not mark task as completed until all mandatory skills are satisfied.
+0. If new project or no context → consult `agent-workflow` → `project-resumption`.
+1. Detect project type (Next.js vs Vite SPA vs Other) using the table above.
+2. Identify the action (create component, form, hook, styles, data fetching).
+3. Consult the skills map (section 2) or the keyword activation guide (section 3).
+4. Read the specific sub-skill — apply the correct section based on project type.
+5. Return to this index and consult "Mandatory skills by action" (section 4).
+6. Read and apply each mandatory skill for the action type.
+7. Consult `governance-risk-and-compliance` if the action involves personal data, cookies, or tokens.
+8. Verify compliance with universal code rules (section 5).
+9. Do not mark task as completed until all mandatory skills are satisfied.
 
 ## 1. Technology Stack
 
@@ -42,7 +66,8 @@ description: >
 
 | Skill | Description | Scope |
 |-------|-------------|-------|
-| [project-structure](./project-structure/SKILL.md) | Folder structure, barrel files, path aliases | Base project organization |
+| [nextjs-project-structure](./nextjs-project-structure/SKILL.md) | App Router folder structure, route groups, barrel files, path aliases | Next.js base organization |
+| [vite-project-structure](./vite-project-structure/SKILL.md) | Vite SPA folder structure, centralized router, path aliases with vite-tsconfig-paths | Vite SPA base organization |
 | [component-patterns](./component-patterns/SKILL.md) | Composition patterns: compound, render props, HOC, slots | Generic component design |
 | [design-system-build-components-rules](./design-system-build-components-rules/SKILL.md) | Atomic Design: atoms, molecules, organisms, tokens, variants | Design System construction |
 | [monorepo-and-tooling](./monorepo-and-tooling/SKILL.md) | Turborepo, pnpm workspaces, shared configs | Multi-package architecture |
@@ -55,7 +80,8 @@ description: >
 | [state-management-rules](./state-management-rules/SKILL.md) | Zustand, Jotai, Signals, Context, tool selection | State management |
 | [rendering-strategies](./rendering-strategies/SKILL.md) | SSR, SSG, ISR, Streaming, RSC, hydration | Rendering strategies |
 | [nextjs-best-practices](./nextjs-best-practices/SKILL.md) | App Router, Server Actions, middleware, caching | Next.js specific |
-| [routing-rules](./routing-rules/SKILL.md) | Layouts, guards, route groups, parallel/intercepting routes | Navigation and routes |
+| [nextjs-routing-rules](./nextjs-routing-rules/SKILL.md) | Layouts, route groups, parallel/intercepting routes, guards in layout | Next.js App Router routing |
+| [vite-routing-rules](./vite-routing-rules/SKILL.md) | createBrowserRouter, Outlet layouts, protected routes, lazy loading | Vite SPA routing (React Router v6) |
 
 ### UI, Styles, and UX
 
@@ -95,7 +121,7 @@ description: >
 ### Keywords → Skill
 
 **Architecture and structure:**
-- `structure`, `folders`, `folder`, `barrel`, `alias`, `path` → `project-structure`
+- `structure`, `folders`, `folder`, `barrel`, `alias`, `path` → `nextjs-project-structure` / `vite-project-structure` (based on project type)
 - `compound component`, `render props`, `HOC`, `slots`, `composition`, `pattern` → `component-patterns`
 - `design system`, `atom`, `molecule`, `organism`, `token`, `variant`, `storybook` → `design-system-build-components-rules`
 - `monorepo`, `turborepo`, `workspace`, `shared config`, `multi-package` → `monorepo-and-tooling`
@@ -105,7 +131,7 @@ description: >
 - `state`, `zustand`, `jotai`, `signal`, `context`, `store`, `atom` → `state-management-rules`
 - `SSR`, `SSG`, `ISR`, `streaming`, `server component`, `RSC`, `hydration`, `suspense` → `rendering-strategies`
 - `next.js`, `app router`, `server action`, `next middleware`, `revalidate`, `next/image` → `nextjs-best-practices`
-- `route`, `layout`, `guard`, `redirect`, `parallel route`, `intercepting` → `routing-rules`
+- `route`, `layout`, `guard`, `redirect`, `parallel route`, `intercepting` → `nextjs-routing-rules` / `vite-routing-rules` (based on project type)
 
 **UI, styles, and UX:**
 - `tailwind`, `css module`, `responsive`, `dark mode`, `theme`, `custom property`, `material ui` → `css-rules`
@@ -141,6 +167,7 @@ When creating/modifying a **form** (all of the above plus):
 - `forms-and-validation-rules` — React Hook Form + Zod
 - `security-rules` — input sanitization, XSS prevention
 - `a11y-rules` — associated labels, accessible error messages
+- `governance-risk-and-compliance` → `gdpr` if capturing personal data, `owasp-top-10` for XSS
 
 When creating/modifying a **hook or store**:
 - `testing-rules` — unit tests for the hook/store
@@ -153,7 +180,16 @@ When creating/modifying **styles**:
 When creating/modifying **data fetching**:
 - `fetching-rules` — TanStack Query, cache, error states
 - `error-handling-rules` — loading/error/empty states
-- `security-rules` — don’t expose tokens, sanitize responses
+- `security-rules` — don't expose tokens, sanitize responses
+
+When implementing **authentication or token handling**:
+- `security-rules` — secure token storage based on project type
+- `governance-risk-and-compliance` → `owasp-top-10` (A07: Authentication Failures)
+- `governance-risk-and-compliance` → `gdpr` if login involves personal data
+
+When implementing **cookies or consent**:
+- `governance-risk-and-compliance` → `gdpr` (cookie banner, granular consent)
+- `governance-risk-and-compliance` → `ccpa-cpra` (Do Not Sell, GPC signal detection)
 
 ## 5. Universal Code Rules
 

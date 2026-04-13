@@ -1,23 +1,47 @@
 ---
 name: frontend
 description: >
-  Usa esta skill cuando trabajes en frontend. Orquesta 22 sub-skills
+  Usa esta skill cuando trabajes en frontend. Orquesta 24 sub-skills
   especializadas que cubren arquitectura, componentes, rendering, estilos,
   data fetching, testing, performance y seguridad.
-  Stack: React 19+, Next.js 15+, TypeScript strict, Tailwind CSS, pnpm.
+  Stack: React 19+, Next.js 15+, Vite 6+, TypeScript strict, Tailwind CSS, pnpm.
 ---
 
 # Frontend Skills — Índice Maestro
 
+## Cross-references obligatorias
+
+Antes de ejecutar cualquier tarea frontend, el agente **debe** consultar estas skills externas cuando apliquen:
+
+| Skill externa | Cuándo consultar |
+|---------------|-----------------|
+| [`agent-workflow`](../../agent-workflow/SKILL.md) | **Siempre** al iniciar un proyecto nuevo o retomar uno existente. Define el protocolo de clarificación, checkpoints, iteration-rules y documentación (`docs-structure`, `project-resumption`). |
+| [`governance-risk-and-compliance`](../../governance-risk-and-compliance/SKILL.md) | Cuando el frontend maneje datos personales (formularios, cookies, tokens), implemente consentimiento, opt-out, o cualquier flujo regulado. Activar sub-skills relevantes: `gdpr` (consentimiento, cookies), `owasp-top-10` (XSS, CSP, sanitización), `ccpa-cpra` (Do Not Sell, GPC). |
+
+## Detección del tipo de proyecto
+
+Antes de aplicar sub-skills, identificar el tipo de proyecto:
+
+| Señal | Tipo | Implicación |
+|-------|------|-------------|
+| Existe `next.config.ts` o `next.config.js` | **Next.js App Router** | Usar secciones "Next.js" en cada sub-skill. Routing vía file-system, Server Components, Server Actions. |
+| Existe `vite.config.ts` y NO hay `next.config.*` | **Vite + React SPA** | Usar secciones "Vite SPA" en cada sub-skill. Routing vía `react-router-dom`, todo client-side, tokens en memoria. |
+| Algún otro framework (Remix, Astro, etc.) | **Otro** | Adaptar los principios generales de cada sub-skill al framework detectado. |
+
+Si es un **proyecto nuevo**, preguntar al desarrollador qué tipo de proyecto es antes de proceder.
+
 ## Flujo de trabajo del agente
 
-1. Identificar la acción (crear componente, formulario, hook, estilos, data fetching).
-2. Consultar el mapa de skills (sección 2) o la guía de activación por palabras clave (sección 3).
-3. Leer la sub-skill específica.
-4. Volver a este índice y consultar "Skills obligatorias por acción" (sección 4).
-5. Leer y aplicar cada skill obligatoria según el tipo de acción.
-6. Verificar cumplimiento de reglas universales de código (sección 5).
-7. No marcar tarea como completada hasta cumplir todas las skills obligatorias.
+0. Si es proyecto nuevo o sin contexto → consultar `agent-workflow` → `project-resumption`.
+1. Detectar tipo de proyecto (Next.js vs Vite SPA vs Otro) usando la tabla anterior.
+2. Identificar la acción (crear componente, formulario, hook, estilos, data fetching).
+3. Consultar el mapa de skills (sección 2) o la guía de activación por palabras clave (sección 3).
+4. Leer la sub-skill específica — aplicar la sección correcta según tipo de proyecto.
+5. Volver a este índice y consultar "Skills obligatorias por acción" (sección 4).
+6. Leer y aplicar cada skill obligatoria según el tipo de acción.
+7. Consultar `governance-risk-and-compliance` si la acción involucra datos personales, cookies o tokens.
+8. Verificar cumplimiento de reglas universales de código (sección 5).
+9. No marcar tarea como completada hasta cumplir todas las skills obligatorias.
 
 ## 1. Stack Tecnológico
 
@@ -42,7 +66,8 @@ description: >
 
 | Skill | Descripción | Alcance |
 |-------|-------------|---------|
-| [project-structure](./project-structure/SKILL.md) | Estructura de carpetas, barrel files, path aliases | Organización base del proyecto |
+| [nextjs-project-structure](./nextjs-project-structure/SKILL.md) | Estructura de carpetas App Router, route groups, barrel files, path aliases | Organización base Next.js |
+| [vite-project-structure](./vite-project-structure/SKILL.md) | Estructura de carpetas Vite SPA, router centralizado, path aliases con vite-tsconfig-paths | Organización base Vite SPA |
 | [component-patterns](./component-patterns/SKILL.md) | Patrones de composición: compound, render props, HOC, slots | Diseño de componentes genéricos |
 | [design-system-build-components-rules](./design-system-build-components-rules/SKILL.md) | Atomic Design: átomos, moléculas, organismos, tokens, variants | Construcción de Design System |
 | [monorepo-and-tooling](./monorepo-and-tooling/SKILL.md) | Turborepo, pnpm workspaces, shared configs | Arquitectura multi-paquete |
@@ -55,7 +80,8 @@ description: >
 | [state-management-rules](./state-management-rules/SKILL.md) | Zustand, Jotai, Signals, Context, selección de herramienta | Gestión de estado |
 | [rendering-strategies](./rendering-strategies/SKILL.md) | SSR, SSG, ISR, Streaming, RSC, hydration | Estrategias de rendering |
 | [nextjs-best-practices](./nextjs-best-practices/SKILL.md) | App Router, Server Actions, middleware, caching | Next.js específico |
-| [routing-rules](./routing-rules/SKILL.md) | Layouts, guards, route groups, parallel/intercepting routes | Navegación y rutas |
+| [nextjs-routing-rules](./nextjs-routing-rules/SKILL.md) | Layouts, route groups, parallel/intercepting routes, guards en layout | Routing Next.js App Router |
+| [vite-routing-rules](./vite-routing-rules/SKILL.md) | createBrowserRouter, Outlet layouts, protected routes, lazy loading | Routing Vite SPA (React Router v6) |
 
 ### UI, Estilos y UX
 
@@ -95,7 +121,7 @@ description: >
 ### Palabras Clave → Skill
 
 **Arquitectura y estructura:**
-- `estructura`, `carpetas`, `folder`, `barrel`, `alias`, `path` → `project-structure`
+- `estructura`, `carpetas`, `folder`, `barrel`, `alias`, `path` → `nextjs-project-structure` / `vite-project-structure` (según tipo de proyecto)
 - `compound component`, `render props`, `HOC`, `slots`, `composición`, `patrón` → `component-patterns`
 - `design system`, `átomo`, `molécula`, `organismo`, `token`, `variant`, `storybook` → `design-system-build-components-rules`
 - `monorepo`, `turborepo`, `workspace`, `shared config`, `multi-paquete` → `monorepo-and-tooling`
@@ -105,7 +131,7 @@ description: >
 - `estado`, `state`, `zustand`, `jotai`, `signal`, `context`, `store`, `atom` → `state-management-rules`
 - `SSR`, `SSG`, `ISR`, `streaming`, `server component`, `RSC`, `hydration`, `suspense` → `rendering-strategies`
 - `next.js`, `app router`, `server action`, `middleware next`, `revalidate`, `next/image` → `nextjs-best-practices`
-- `ruta`, `route`, `layout`, `guard`, `redirect`, `parallel route`, `intercepting` → `routing-rules`
+- `ruta`, `route`, `layout`, `guard`, `redirect`, `parallel route`, `intercepting` → `nextjs-routing-rules` / `vite-routing-rules` (según tipo de proyecto)
 
 **UI, estilos y UX:**
 - `tailwind`, `css module`, `responsive`, `dark mode`, `theme`, `custom property`, `material ui` → `css-rules`
@@ -141,6 +167,7 @@ Al crear/modificar un **formulario** (todos los anteriores más):
 - `forms-and-validation-rules` — React Hook Form + Zod
 - `security-rules` — sanitización de inputs, XSS prevention
 - `a11y-rules` — labels asociados, mensajes de error accesibles
+- `governance-risk-and-compliance` → `gdpr` si captura datos personales, `owasp-top-10` para XSS
 
 Al crear/modificar un **hook o store**:
 - `testing-rules` — tests unitarios del hook/store
@@ -154,6 +181,15 @@ Al crear/modificar **data fetching**:
 - `fetching-rules` — TanStack Query, cache, error states
 - `error-handling-rules` — loading/error/empty estados
 - `security-rules` — no exponer tokens, sanitizar respuestas
+
+Al implementar **autenticación o manejo de tokens**:
+- `security-rules` — almacenamiento seguro de tokens según tipo de proyecto
+- `governance-risk-and-compliance` → `owasp-top-10` (A07: Authentication Failures)
+- `governance-risk-and-compliance` → `gdpr` si el login involucra datos personales
+
+Al implementar **cookies o consentimiento**:
+- `governance-risk-and-compliance` → `gdpr` (cookie banner, consentimiento granular)
+- `governance-risk-and-compliance` → `ccpa-cpra` (Do Not Sell, GPC signal detection)
 
 ## 5. Reglas Universales de Código
 

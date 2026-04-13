@@ -1,21 +1,34 @@
 ---
 name: security-rules
 description: >
-  Use this skill when implementing security in React/Next.js applications:
-  XSS prevention, Content Security Policy, input sanitization, CORS,
-  secure token storage, security headers, and env vars.
+  Use this skill when implementing security in frontend applications:
+  XSS prevention, CSP, input sanitization, CORS, secure token storage
+  (httpOnly cookies in Next.js, in-memory for SPA), security headers,
+  env vars, and cross-reference with GRC skills.
 ---
 
 # Frontend Security — Rules
 
+## Mandatory cross-references
+
+| GRC Skill | When to activate |
+|-----------|-----------------|
+| [`owasp-top-10`](../../../governance-risk-and-compliance/owasp-top-10/SKILL.md) | **Always** in any frontend development handling user input or authentication. |
+| [`gdpr`](../../../governance-risk-and-compliance/gdpr/SKILL.md) | When the frontend captures personal data, implements tracking cookies, or consent. |
+| [`ccpa-cpra`](../../../governance-risk-and-compliance/ccpa-cpra/SKILL.md) | When implementing data sale/sharing opt-out or detecting the browser GPC signal. |
+
 ## Agent workflow
 
-1. Validate ALL user input with Zod on server. Client-side validation is UX only (section 5).
-2. Auth tokens in httpOnly cookies, never localStorage (section 4).
-3. CSP with nonce for inline scripts via middleware (section 2).
-4. Security headers in `next.config` (section 3).
-5. `dangerouslySetInnerHTML` only with DOMPurify. Validate `href` against `javascript:` (section 1).
-6. Explicit CORS with origin whitelist (section 6).
+1. Detect project type: Next.js → sections 2-4 + 4A. Vite SPA → section 4B.
+2. Validate ALL user input with Zod on server. Client-side validation is UX only (section 5).
+3. **Next.js**: Auth tokens in httpOnly cookies, never localStorage (section 4A).
+4. **Vite SPA**: Tokens in memory (variable/signal), never localStorage (section 4B).
+5. **Next.js**: CSP with nonce for inline scripts via middleware (section 2).
+6. **Next.js**: Security headers in `next.config` (section 3).
+7. `dangerouslySetInnerHTML` only with DOMPurify. Validate `href` against `javascript:` (section 1).
+8. Explicit CORS with origin whitelist (section 6).
+9. Consult `governance-risk-and-compliance` → `owasp-top-10` for vulnerability checklist.
+10. Env vars validated with Zod at startup. Secrets never in `NEXT_PUBLIC_*` or `VITE_*` (section 7).
 7. Env vars validated with Zod at startup. Secrets never in `NEXT_PUBLIC_*` (section 7).
 
 ## 1. XSS Prevention
@@ -142,7 +155,7 @@ export default {
 };
 ```
 
-## 4. Secure Token Storage
+## 4A. Secure Token Storage — Next.js (httpOnly Cookies)
 
 ```typescript
 // Auth tokens in httpOnly cookies (NOT localStorage)
@@ -166,6 +179,78 @@ export async function loginAction(formData: FormData) {
 ```
 
 Never store tokens in localStorage, sessionStorage, cookies without httpOnly, or URL query params. Implement refresh token rotation: if a refresh token is used twice, invalidate all user tokens.
+
+## 4B. Secure Token Storage — Vite SPA (In Memory)
+
+In a pure SPA where you don't control the server (can't set httpOnly cookies), the token is stored **in memory** (JavaScript variable, signal, or state store). This is more secure than localStorage because:
+- It's not accessible from XSS via `document.cookie` or `localStorage.getItem()`
+- It's lost when the tab closes (user must re-authenticate)
+
+```typescript
+// features/auth/services/auth.service.ts
+import { signal } from '@preact/signals-react';
+
+interface AuthState {
+  token: string | null;
+  user: { id: string; email: string; name: string } | null;
+}
+
+// Token lives ONLY in memory — lost on close/refresh
+const authState = signal<AuthState>({ token: null, user: null });
+
+export function setAuth(token: string, user: AuthState['user']) {
+  authState.value = { token, user };
+}
+
+export function clearAuth() {
+  authState.value = { token: null, user: null };
+}
+
+export function getToken(): string | null {
+  return authState.value.token;
+}
+```
+
+```typescript
+// shared/lib/api-client.ts — Inject token automatically
+import { getToken, clearAuth } from '@features/auth';
+import { env } from '@config/env';
+
+export async function apiClient<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const token = getToken();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  if (token) {
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${env.VITE_API_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (response.status === 401) {
+    clearAuth(); // Token expired → clear state
+    window.location.href = '/login';
+    throw new Error('Session expired');
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Request failed' }));
+    throw new Error(error.message ?? `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+```
+
+**Key SPA rule:** The in-memory token is lost on page refresh. If the API supports refresh tokens, implement an endpoint that returns a new access token via httpOnly cookie (set from the backend). If there's no refresh token, the user must re-authenticate.
 
 ## 5. Input Validation
 

@@ -270,6 +270,122 @@ function ProductList() {
 }
 ```
 
+## 6. API Client Layer (Vite SPA)
+
+En un SPA, todas las queries y mutations pasan por un API client que encapsula base URL, auth header injection y normalización de errores:
+
+```typescript
+// shared/lib/api-client.ts
+import { getToken, clearAuth } from '@features/auth';
+import { env } from '@config/env';
+
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    message: string,
+    public errors?: Record<string, string[]>,
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+export async function apiClient<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getToken();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  if (token) {
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${env.VITE_API_URL}${path}`, { ...options, headers });
+
+  if (response.status === 401) {
+    clearAuth();
+    window.location.href = '/login';
+    throw new ApiError(401, 'Session expired');
+  }
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new ApiError(response.status, body.message ?? `HTTP ${response.status}`, body.errors);
+  }
+
+  return response.json();
+}
+```
+
+```typescript
+// features/persons/services/persons.service.ts
+import { apiClient } from '@shared/lib/api-client';
+import type { Person, CreatePersonData, UpdatePersonData } from '../types/persons.types';
+
+export const personsApi = {
+  list: (params?: { page?: number; search?: string }) =>
+    apiClient<{ data: Person[]; meta: { total: number } }>(
+      `/api/v1/persons?${new URLSearchParams(params as Record<string, string>)}`,
+    ),
+  getById: (id: string) => apiClient<{ data: Person }>(`/api/v1/persons/${id}`),
+  create: (data: CreatePersonData) =>
+    apiClient<{ data: Person }>('/api/v1/persons', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  update: (id: string, data: UpdatePersonData) =>
+    apiClient<{ data: Person }>(`/api/v1/persons/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+  delete: (id: string) => apiClient<void>(`/api/v1/persons/${id}`, { method: 'DELETE' }),
+};
+```
+
+```typescript
+// features/persons/hooks/usePersons.ts — TanStack Query usando el service
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { personsApi } from '../services/persons.service';
+
+export const personKeys = {
+  all: ['persons'] as const,
+  lists: () => [...personKeys.all, 'list'] as const,
+  list: (filters: Record<string, unknown>) => [...personKeys.lists(), filters] as const,
+  details: () => [...personKeys.all, 'detail'] as const,
+  detail: (id: string) => [...personKeys.details(), id] as const,
+};
+
+export function usePersons(filters: { page?: number; search?: string }) {
+  return useQuery({
+    queryKey: personKeys.list(filters),
+    queryFn: () => personsApi.list(filters),
+  });
+}
+
+export function useCreatePerson() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: personsApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: personKeys.lists() });
+    },
+  });
+}
+
+export function useDeletePerson() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: personsApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: personKeys.lists() });
+    },
+  });
+}
+```
+
 ## Gotchas
 
 - `fetch` en `useEffect` sin AbortController ni estados de loading/error produce race conditions y fugas de memoria — usar TanStack Query.

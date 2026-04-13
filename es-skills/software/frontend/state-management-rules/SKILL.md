@@ -223,6 +223,94 @@ function Counter() {
 
 Ideal para formularios complejos, dashboards real-time, y actualizaciones granulares sin memo/selector.
 
+### Auth State con Signals
+
+```tsx
+import { signal, computed } from '@preact/signals-react';
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+interface AuthState {
+  token: string | null;
+  user: User | null;
+}
+
+// Signals globales — definidos una vez, importados donde se necesiten
+export const authSignal = signal<AuthState>({ token: null, user: null });
+export const isAuthenticated = computed(() => authSignal.value.token !== null);
+export const currentUser = computed(() => authSignal.value.user);
+
+// Actions
+export function login(token: string, user: User) {
+  authSignal.value = { token, user };
+}
+
+export function logout() {
+  authSignal.value = { token: null, user: null };
+}
+```
+
+### UI State con Signals
+
+```tsx
+// Estado de UI global: sidebars, modals, toasts
+export const sidebarOpen = signal(true);
+export const activeModal = signal<string | null>(null);
+
+// Uso directo en JSX — no necesita hook ni selector
+function ToggleSidebar() {
+  return (
+    <button onClick={() => (sidebarOpen.value = !sidebarOpen.value)}>
+      {sidebarOpen.value ? 'Cerrar' : 'Abrir'}
+    </button>
+  );
+}
+```
+
+### Effects y Cleanup
+
+```tsx
+import { effect } from '@preact/signals-react';
+
+// effect() se ejecuta cuando cambian las signals leídas dentro de él
+const dispose = effect(() => {
+  console.log('Token changed:', authSignal.value.token);
+});
+
+// Cleanup manual cuando sea necesario
+dispose();
+```
+
+### Gotchas de Signals
+
+- **`@preact/signals-react` ≥ 2.0** requiere el plugin de Babel (`@preact/signals-react-transform`) o el plugin de Vite para que funcione con React. Sin el plugin, las signals no se integran automáticamente al render.
+- Signals NO reemplazan TanStack Query para estado de servidor — usar signals para UI state y auth, TanStack Query para datos de API.
+- Al pasar un signal como prop, pasar `.value` si el hijo es un componente React normal, o pasar el signal completo si el hijo sabe leer signals.
+- Los signals son globales por defecto (módulo scope). Para signals locales a un componente, usar `useSignal()` de `@preact/signals-react`.
+
+```tsx
+import { useSignal, useComputed } from '@preact/signals-react';
+
+function EditPersonForm({ person }: { person: Person }) {
+  // Signal local al componente
+  const name = useSignal(person.name);
+  const email = useSignal(person.email);
+  const isValid = useComputed(() => name.value.length > 0 && email.value.includes('@'));
+
+  return (
+    <form>
+      <input value={name.value} onChange={(e) => (name.value = e.target.value)} />
+      <input value={email.value} onChange={(e) => (email.value = e.target.value)} />
+      <button disabled={!isValid.value}>Guardar</button>
+    </form>
+  );
+}
+```
+
 ## 6. Context — Solo Para Estado Que Cambia Poco
 
 ```tsx

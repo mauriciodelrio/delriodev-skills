@@ -173,6 +173,73 @@ export function CreateProductForm() {
 }
 ```
 
+## 2B. SPA Mutation — React Hook Form + TanStack Query (Vite)
+
+In an SPA without Server Actions, forms use `useMutation` from TanStack Query as the submit layer:
+
+```tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { personSchema, type PersonFormData } from '../schemas/person.schema';
+import { personsApi } from '../services/persons.service';
+import { personKeys } from '../hooks/usePersons';
+import type { ApiError } from '@shared/lib/api-client';
+
+export function CreatePersonForm({ onSuccess }: { onSuccess?: () => void }) {
+  const queryClient = useQueryClient();
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<PersonFormData>({
+    resolver: zodResolver(personSchema),
+  });
+
+  const mutation = useMutation({
+    mutationFn: personsApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: personKeys.lists() });
+      onSuccess?.();
+    },
+    onError: (error: ApiError) => {
+      // Map backend validation errors to form fields
+      if (error.errors) {
+        for (const [field, messages] of Object.entries(error.errors)) {
+          setError(field as keyof PersonFormData, { message: messages[0] });
+        }
+      }
+    },
+  });
+
+  return (
+    <form onSubmit={handleSubmit((data) => mutation.mutate(data))} noValidate>
+      <input {...register('name')} />
+      {errors.name && <p className="text-red-600" role="alert">{errors.name.message}</p>}
+
+      <input {...register('email')} type="email" />
+      {errors.email && <p className="text-red-600" role="alert">{errors.email.message}</p>}
+
+      {mutation.error && !mutation.error.errors && (
+        <p className="text-red-600" role="alert">{mutation.error.message}</p>
+      )}
+
+      <button type="submit" disabled={mutation.isPending}>
+        {mutation.isPending ? 'Saving...' : 'Create person'}
+      </button>
+    </form>
+  );
+}
+```
+
+**Key rules:**
+- Client-side validation with Zod + RHF (immediate UX), re-validation on server (security).
+- `setError` maps 422 backend errors to individual fields.
+- `isPending` disables the button to prevent double-submit.
+- `invalidateQueries` automatically refreshes the list after creation.
+
 ## 3. Multi-Step Forms
 
 ```tsx

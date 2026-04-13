@@ -1,38 +1,38 @@
 ---
-name: routing-rules
+name: nextjs-routing-rules
 description: >
-  Use this skill when implementing routing in Next.js App Router: nested
-  layouts, route groups, parallel routes, intercepting routes, authentication
-  guards, redirects, typed search params, and breadcrumbs.
+  Usa esta skill cuando implementes routing en Next.js App Router:
+  layouts anidados, route groups, parallel routes, intercepting routes,
+  guards de autenticación, search params tipados, redirects y rewrites.
 ---
 
-# Routing — Rules and Patterns
+# Routing Next.js App Router — Reglas y Patrones
 
-## Agent workflow
+## Flujo de trabajo del agente
 
-1. Organize routes into route groups by shared layout: `(marketing)`, `(app)`, `(auth)` (section 2).
-2. Auth guards in the protected group's layout, not in each page (section 5).
-3. Nested layouts for persistent UI (sidebar, tabs). Each sub-layout inherits from parent (section 1).
-4. Search params validated with Zod — never trust raw input (section 6).
-5. Parallel routes (`@slot`) for independent zones with their own loading (section 3).
-6. Intercepting routes for modals over lists with shareable URLs (section 4).
-7. Permanent redirects in `next.config.ts`, programmatic via `redirect()` in Server Components (section 7).
+1. Organizar rutas en route groups según layout compartido: `(marketing)`, `(app)`, `(auth)` (sección 2).
+2. Auth guards en el layout del grupo protegido, no en cada page (sección 5).
+3. Layouts anidados para UI persistente (sidebar, tabs). Cada sub-layout hereda del padre (sección 1).
+4. Search params validados con Zod — nunca confiar en el input raw (sección 6).
+5. Parallel routes (`@slot`) para zonas independientes con carga propia (sección 3).
+6. Intercepting routes para modales sobre listas con URL propios (sección 4).
+7. Redirects permanentes en `next.config.ts`, programáticos vía `redirect()` en Server Components (sección 7).
 
-## 1. Nested Layouts
+## 1. Layouts Anidados
 
 ```
 app/
 ├── layout.tsx                    # Root: html, body, providers
-├── (marketing)/                  # Route group with no URL prefix
-│   ├── layout.tsx                # Layout: marketing header + footer
+├── (marketing)/                  # Route group sin prefijo URL
+│   ├── layout.tsx                # Layout: header + footer marketing
 │   ├── page.tsx                  # → /
 │   └── pricing/page.tsx          # → /pricing
-├── (app)/                        # Authenticated route group
+├── (app)/                        # Route group autenticado
 │   ├── layout.tsx                # Layout: sidebar + topbar
 │   ├── dashboard/page.tsx        # → /dashboard
 │   └── settings/
-│       ├── layout.tsx            # Sub-layout: settings tabs
-│       ├── page.tsx              # → /settings (redirect to profile)
+│       ├── layout.tsx            # Sub-layout: tabs de settings
+│       ├── page.tsx              # → /settings (redirect a profile)
 │       ├── profile/page.tsx      # → /settings/profile
 │       └── billing/page.tsx      # → /settings/billing
 ```
@@ -54,33 +54,33 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 }
 ```
 
-## 2. Route Groups — Different Layouts, Same URL
+## 2. Route Groups — Layouts Diferentes, Misma URL
 
 ```
-// Route groups with () do NOT affect the URL
+// Route groups con () NO afectan la URL
 app/
-├── (auth)/                      # No sidebar/header
-│   ├── layout.tsx               # Minimalist layout
+├── (auth)/                      # Sin sidebar/header
+│   ├── layout.tsx               # Layout minimalista
 │   ├── login/page.tsx           # → /login
 │   └── register/page.tsx        # → /register
-├── (dashboard)/                 # With sidebar
-│   ├── layout.tsx               # Layout with sidebar
+├── (dashboard)/                 # Con sidebar
+│   ├── layout.tsx               # Layout con sidebar
 │   └── home/page.tsx            # → /home
 ```
 
-## 3. Parallel Routes — Multiple Pages in One Layout
+## 3. Parallel Routes — Múltiples Páginas en un Layout
 
 ```
-// Notation: @slotName
+// Notación: @nombreSlot
 app/(dashboard)/
 ├── layout.tsx
-├── page.tsx                     # Default slot
-├── @analytics/                  # Parallel slot
+├── page.tsx                     # Slot default
+├── @analytics/                  # Slot parallelo
 │   ├── page.tsx
 │   └── loading.tsx
-└── @notifications/              # Another parallel slot
+└── @notifications/              # Otro slot parallelo
     ├── page.tsx
-    └── default.tsx              # Fallback when the route doesn't match
+    └── default.tsx              # Fallback cuando la ruta no matchea
 ```
 
 ```tsx
@@ -106,21 +106,21 @@ export default function DashboardLayout({
 }
 ```
 
-Each slot loads independently with Suspense. If one slot fails, it doesn't affect the others.
+Cada slot carga independientemente con Suspense. Si un slot falla, no afecta a los demás.
 
-## 4. Intercepting Routes — Modals Over Routes
+## 4. Intercepting Routes — Modales sobre Rutas
 
 ```
-// Notation: (.) same level, (..) one level up, (...) root
+// Notación: (.) mismo nivel, (..) un nivel arriba, (...) root
 app/
 ├── feed/
-│   ├── page.tsx                 # Post list
+│   ├── page.tsx                 # Lista de posts
 │   └── @modal/
-│       └── (.)photo/[id]/       # Intercepts /feed/photo/[id]
-│           └── page.tsx         # Shows as modal
+│       └── (.)photo/[id]/       # Intercepta /feed/photo/[id]
+│           └── page.tsx         # Muestra como modal
 └── photo/
     └── [id]/
-        └── page.tsx             # Full photo page (direct access/refresh)
+        └── page.tsx             # Página completa del photo (acceso directo/refresh)
 ```
 
 ```tsx
@@ -143,12 +143,12 @@ export default async function PhotoModal({
 }
 ```
 
-Click in feed → opens modal (intercepted). Direct URL or refresh → loads full page.
+Click en feed → abre modal (interceptado). URL directa o refresh → carga página completa.
 
-## 5. Authentication Guards
+## 5. Guards de Autenticación
 
 ```tsx
-// Auth guard in layout (NOT in each page)
+// Auth guard en layout (NO en cada page)
 import { redirect } from 'next/navigation';
 import { auth } from '@shared/lib/auth';
 
@@ -166,7 +166,7 @@ export default async function ProtectedLayout({
   return <>{children}</>;
 }
 
-// Role-based access in page
+// Role-based access en page
 export default async function AdminPage() {
   const session = await auth();
 
@@ -178,9 +178,9 @@ export default async function AdminPage() {
 }
 ```
 
-Never use client-side guards as the only protection. Middleware + server guards are the source of truth.
+Nunca usar guards client-side como única protección. Middleware + server guards son la fuente de verdad.
 
-## 6. Typed Search Params
+## 6. Search Params Tipados
 
 ```tsx
 import { z } from 'zod';
@@ -213,7 +213,7 @@ export default async function ProductsPage({
   return <ProductGrid products={products} filters={params} />;
 }
 
-// Client: update search params without full page reload
+// Client: actualizar search params sin full page reload
 'use client';
 
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
@@ -235,15 +235,15 @@ export function SearchFilter() {
       value={searchParams.get('sort') ?? 'date'}
       onChange={(e) => updateFilter('sort', e.target.value)}
     >
-      <option value="date">Date</option>
-      <option value="name">Name</option>
-      <option value="price">Price</option>
+      <option value="date">Fecha</option>
+      <option value="name">Nombre</option>
+      <option value="price">Precio</option>
     </select>
   );
 }
 ```
 
-## 7. Redirects and Rewrites
+## 7. Redirects y Rewrites
 
 ```tsx
 const config = {
@@ -260,18 +260,24 @@ const config = {
   },
 };
 
-// Programmatic redirect in Server Components
+// Redirect programático en Server Components
 import { redirect, permanentRedirect } from 'next/navigation';
 
-redirect('/dashboard');          // 307 temporary
-permanentRedirect('/new-url');   // 308 permanent
+redirect('/dashboard');          // 307 temporal
+permanentRedirect('/new-url');   // 308 permanente
 ```
 
 ## Gotchas
 
-- Auth check in EVERY page.tsx — use the protected route group's layout.
-- Intercepting routes for multi-step flows — use normal pages.
-- Search params without Zod validation — always parse and validate.
-- Client-side redirects with `useEffect` for auth — use server `redirect()`.
-- Data between routes via global state — use search params or server state.
-- Huge layouts with conditional logic — split into route groups.
+- Auth check en CADA page.tsx — usar layout del route group protegido.
+- Intercepting routes para flujos multi-step — usar páginas normales.
+- Search params sin validación Zod — siempre parsear y validar.
+- Client-side redirects con `useEffect` para auth — usar server `redirect()`.
+- Datos entre rutas vía estado global — usar search params o server state.
+- Layouts enormes con lógica condicional — dividir en route groups.
+
+## Skills Relacionadas
+
+- `nextjs-project-structure` — organización de rutas y layouts en App Router
+- `security-rules` — guards de autenticación, tokens httpOnly
+- `error-handling-rules` — error.tsx, global-error.tsx en App Router
