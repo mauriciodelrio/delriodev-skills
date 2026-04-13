@@ -1,19 +1,21 @@
 ---
 name: monorepo-and-tooling
 description: >
-  Reglas para gestión de monorepos con Turborepo y pnpm workspaces. Cubre
-  estructura de workspaces, configuración compartida, pipelines de build,
-  dependencias internas, y estrategias de deploy.
+  Usa esta skill cuando configures o trabajes con monorepos:
+  Turborepo + pnpm workspaces, estructura de workspaces, configs
+  compartidas, pipelines de build, dependencias internas, y deploy.
 ---
 
-# 🏗️ Monorepo y Tooling
+# Monorepo y Tooling
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Código compartido como paquetes internos.** Turborepo para orquestar builds.
-> pnpm workspaces para dependencias. Una config, N aplicaciones.
-
----
+1. Estructura: `apps/` para aplicaciones, `packages/` para código compartido (sección 1).
+2. pnpm workspaces con `workspace:*` para dependencias internas (sección 2).
+3. Turborepo pipeline: `dependsOn: ["^build"]`, outputs cacheables (sección 3).
+4. Configs compartidas en `packages/config-*`: TypeScript, ESLint, Tailwind (sección 4).
+5. Comandos filtrados: `pnpm --filter @scope/web dev` (sección 5).
+6. Deploy por app en Vercel con `--filter` en build command (sección 6).
 
 ## 1. Estructura del Monorepo
 
@@ -52,8 +54,6 @@ my-monorepo/
 └── .npmrc
 ```
 
----
-
 ## 2. pnpm Workspaces
 
 ```yaml
@@ -64,7 +64,6 @@ packages:
 ```
 
 ```json
-// Root package.json
 {
   "private": true,
   "scripts": {
@@ -85,7 +84,6 @@ packages:
 ```
 
 ```json
-// packages/ui/package.json
 {
   "name": "@scope/ui",
   "version": "0.0.0",
@@ -106,7 +104,6 @@ packages:
 ```
 
 ```json
-// apps/web/package.json — consumir paquete interno
 {
   "name": "@scope/web",
   "dependencies": {
@@ -116,12 +113,9 @@ packages:
 }
 ```
 
----
-
 ## 3. Turborepo — Pipeline
 
 ```json
-// turbo.json
 {
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
@@ -153,21 +147,13 @@ packages:
 }
 ```
 
-### Conceptos clave:
-
-- `dependsOn: ["^build"]` — Primero build de dependencias internas
-- `outputs` — Qué cachear (evita re-builds innecesarios)
-- `inputs` — Qué archivos invalidan el cache
-- `persistent: true` — Para procesos que no terminan (dev servers)
-
----
+`dependsOn: ["^build"]` ejecuta primero las dependencias internas. `outputs` define qué cachear. `inputs` qué archivos invalidan el cache. `persistent: true` para dev servers.
 
 ## 4. Configs Compartidas
 
 ### TypeScript
 
 ```json
-// packages/config-typescript/base.json
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
@@ -189,7 +175,7 @@ packages:
   "exclude": ["node_modules", "dist", ".next"]
 }
 
-// packages/config-typescript/nextjs.json
+// nextjs.json
 {
   "extends": "./base.json",
   "compilerOptions": {
@@ -215,7 +201,6 @@ packages:
 ### ESLint
 
 ```javascript
-// packages/config-eslint/next.mjs
 import baseConfig from './base.mjs';
 import nextPlugin from '@next/eslint-plugin-next';
 
@@ -227,31 +212,19 @@ export default [
   },
 ];
 
-// apps/web/eslint.config.mjs
 import nextConfig from '@scope/config-eslint/next.mjs';
 export default [...nextConfig];
 ```
 
----
-
 ## 5. Comandos Filtrados
 
 ```bash
-# Ejecutar en un workspace específico
 pnpm --filter @scope/web dev
 pnpm --filter @scope/ui build
-
-# Ejecutar en todos excepto uno
 pnpm --filter '!@scope/docs' build
-
-# Ejecutar en dependientes de un paquete
-pnpm --filter '...@scope/ui' build   # @scope/ui + todos los que lo usan
-
-# Agregar dependencia a un workspace
+pnpm --filter '...@scope/ui' build
 pnpm --filter @scope/web add zod
 ```
-
----
 
 ## 6. Estrategia de Deploy
 
@@ -266,18 +239,11 @@ Vercel config (por app):
   Install Command: pnpm install --frozen-lockfile
 ```
 
----
+## Gotchas
 
-## Anti-patrones
-
-```bash
-# ❌ Importar directamente de rutas relativas entre apps
-# import { Button } from '../../../packages/ui/src/Button'  ← NUNCA
-# import { Button } from '@scope/ui'                        ← SIEMPRE
-
-# ❌ Instalar misma dependencia con versiones diferentes en cada workspace
-# ❌ Scripts que no usan Turborepo (pierden cache + paralelismo)
-# ❌ Configs duplicadas en cada app (extraer a packages/config-*)
-# ❌ Circular dependencies entre packages
-# ❌ packages/* con "version": "1.0.0" si no se publican (usar "0.0.0")
-```
+- Importar con rutas relativas entre apps (`../../../packages/ui/src/Button`) rompe el contrato de workspaces — usar `@scope/ui`.
+- Misma dependencia con versiones diferentes en cada workspace causa conflictos de tipos y bundles duplicados — alinear versiones.
+- Scripts que no pasan por Turborepo pierden cache y paralelismo — siempre `turbo <task>`.
+- Configs duplicadas en cada app son difíciles de mantener — extraer a `packages/config-*`.
+- Dependencias circulares entre packages causan builds infinitos — revisar grafo con `turbo ls --affected`.
+- `"version": "1.0.0"` en packages internos no publicados confunde — usar `"0.0.0"`.
