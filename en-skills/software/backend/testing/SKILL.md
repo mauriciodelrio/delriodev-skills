@@ -13,7 +13,7 @@ description: >
 
 **1.** Identify the test type based on the layer (section 1).
 **2.** Choose tools from the stack (section 2).
-**3.** Write unit or integration test as appropriate (sections 3–5).
+**3.** Write unit tests for services/utils (section 3) and integration tests for endpoints (sections 4–5).
 **4.** Configure DB testing and fixtures if needed (sections 6–7).
 **5.** Apply mocking rules and configuration (sections 8–9).
 **6.** Check against the gotchas list (section 10).
@@ -340,6 +340,8 @@ export default defineConfig({
 - Testing happy path only — also test errors and edge cases.
 - Generic describe/it ("should work") — describe the expected behavior.
 - Snapshot tests for JSON responses — fragile, use specific assertions.
+- Only integration tests without unit tests — the service is tested indirectly and any change breaks tests massively.
+- Only unit tests without integration tests — mocks pass but the actual endpoint fails.
 
 ## Related Skills
 
