@@ -1,64 +1,22 @@
 ---
 name: hipaa
 description: >
-  HIPAA compliance skill (Health Insurance Portability and Accountability Act). Activate
-  this skill when the software processes, stores, or transmits Protected Health Information (PHI)
-  in the context of the United States healthcare system. Includes technical, administrative,
-  and physical safeguards, audit trails, encryption, and access control.
+  Use this skill when the software processes, stores, or transmits Protected
+  Health Information (PHI). Although HIPAA is U.S. legislation, this skill
+  applies as a health data protection standard for any software regardless of
+  the geographic location of users. Covers technical safeguards (RBAC access
+  control, AES-256 encryption, audit trail), administrative and physical
+  safeguards, breach notification, BAA with third parties, and compliance
+  checklist.
 ---
 
-# 🏥 HIPAA — Health Insurance Portability and Accountability Act
+# HIPAA — Health Insurance Portability and Accountability Act
 
-## General Description
+HIPAA defines the health information protection standard that should be applied to any software handling medical or patient data, regardless of user geography. It is structured in 5 rules: Privacy Rule (PHI use and disclosure), Security Rule (technical, administrative, and physical safeguards for ePHI), Breach Notification Rule (breach notification), Enforcement Rule (penalties), and Omnibus Rule (extension to Business Associates). PHI is any health information combined with any of the 18 HIPAA identifiers that can identify an individual.
 
-**HIPAA** is the U.S. federal law that protects patient health information. It establishes national standards for the protection of electronic and physical Protected Health Information (PHI).
+## Implementation
 
-**Fines**: From $100 to $50,000 per individual violation, with an annual maximum of $1.5 million per category. Violations with willful neglect can result in criminal charges.
-
-### Main Rules
-
-| Rule | Description |
-|-------|-------------|
-| **Privacy Rule** | Establishes standards for the use and disclosure of PHI |
-| **Security Rule** | Requires technical, administrative, and physical safeguards for ePHI |
-| **Breach Notification Rule** | Requires notification in case of unsecured PHI breach |
-| **Enforcement Rule** | Establishes penalties for non-compliance |
-| **Omnibus Rule** | Extends requirements to Business Associates |
-
----
-
-## When to Activate this Skill
-
-Activate this skill **whenever** you:
-
-- Develop software for the U.S. healthcare sector
-- Process medical data: diagnoses, treatments, medications, lab results
-- Work with patient identifiers (name + any health data)
-- Implement patient portals or telemedicine
-- Develop integrations with EHR/EMR systems (Electronic Health Records)
-- Implement medical billing systems
-- Work with health APIs (HL7 FHIR, etc.)
-- Your application is a Business Associate of a covered entity
-
----
-
-## Fundamental Concepts
-
-### What is PHI (Protected Health Information)?
-
-PHI is any health information that can identify an individual:
-
-| Type | Examples | Classification |
-|------|----------|---------------|
-| **Medical data** | Diagnoses, treatments, medications, allergies | PHI |
-| **Billing data** | Procedure codes, amounts, insurance | PHI |
-| **Identifiers** | Name, date of birth, SSN, medical record number | Identifier |
-| **Genetic data** | Genetic test results, family history | Sensitive PHI |
-| **Mental health data** | Psychotherapy notes, psychiatric diagnoses | Highly protected PHI |
-
-### The 18 HIPAA Identifiers
-
-When combined with health data, these identifiers convert data into PHI:
+### 1. The 18 HIPAA Identifiers
 
 ```typescript
 // The 18 HIPAA identifiers that make data PHI
@@ -84,11 +42,7 @@ const HIPAA_IDENTIFIERS = [
 ] as const;
 ```
 
----
-
-## Technical Implementation Requirements
-
-### 1. Technical Safeguards
+### 2. Technical Safeguards
 
 #### Access Control (§164.312(a))
 
@@ -968,31 +922,20 @@ export function verifyBAA(serviceName: string): boolean {
 
 ---
 
-## HIPAA Best Practices
+## Agent workflow
 
-### ✅ DO
+1. Identify what health data the application processes and classify as standard PHI, highly sensitive, or restricted.
+2. Implement the data model with RBAC access control, PHI field encryption, and complete audit trail.
+3. Implement the access control service with per-role permission matrix, minimum necessary principle, and break-the-glass mechanism.
+4. Add AES-256-GCM encryption for ePHI at rest with key versioning and Safe Harbor de-identification method.
+5. Implement HIPAA audit middleware for all routes handling PHI and auto-logoff for inactivity.
+6. Configure the breach notification service with 4-factor risk assessment and notification timelines.
+7. Verify that all third-party services have a signed and current BAA before processing PHI.
+8. Validate against the compliance checklist (technical, administrative, physical, BAs) before deploying.
 
-1. **Encrypt all ePHI** — at rest (AES-256) and in transit (TLS 1.2+)
-2. **Implement MFA** for all access to systems with PHI
-3. **Auto-logoff** after 15 minutes of inactivity
-4. **Complete audit trail** — who accessed what, when, from where
-5. **Minimum Necessary Principle** — only access to the PHI required for the function
-6. **Break-the-glass** — emergency access mechanism with exhaustive logging
-7. **Signed BAA** with all Business Associates before sharing PHI
-8. **Encrypted backups** with periodic restoration tests
-9. **Patch management** — keep systems updated
-10. **Annual training** for all personnel who access PHI
+## Gotchas
 
-### ❌ DO NOT
-
-1. **DO NOT** send PHI via unencrypted email
-2. **DO NOT** store PHI on unencrypted devices
-3. **DO NOT** use cloud services without a signed BAA
-4. **DO NOT** share access credentials
-5. **DO NOT** leave sessions open unattended
-6. **DO NOT** log PHI in plain text in log files
-7. **DO NOT** copy PHI to development environments without de-identifying
-8. **DO NOT** discard hardware containing PHI without certified sanitization
+Encrypting all ePHI at rest (AES-256) and in transit (TLS 1.2+) is mandatory, not optional. MFA is required for all access to systems with PHI. Auto-logoff must activate after 15 minutes of inactivity maximum (§164.312(a)(2)(iii)). The audit trail must record who accessed what PHI, when, from where, and whether it was successful or failed. The break-the-glass mechanism for emergency access must exist but with exhaustive logging. Do not send PHI via unencrypted email. Do not use cloud services without a signed BAA. Do not log PHI in plain text in log files. Do not copy PHI to development environments without de-identifying using the Safe Harbor method (remove all 18 identifiers). Do not share access credentials — each user must have a unique ID. Do not discard hardware containing PHI without certified sanitization. Breaches must be reported to affected individuals within 60 days maximum, and to HHS immediately if more than 500 individuals are affected. Breach documentation must be retained for 6 years.
 
 ---
 
