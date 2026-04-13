@@ -1,79 +1,18 @@
 ---
 name: gdpr
 description: >
-  GDPR compliance skill (General Data Protection Regulation). Activate this skill
-  when the software processes personal data of citizens or residents of the European Union
-  or the European Economic Area. Includes consent, ARCO+ rights, legal bases,
-  impact assessments (DPIA), international transfers, and technical measures.
+  Use this skill when the software processes personal data from users. Although
+  GDPR is EU legislation, this skill applies as a data protection standard for
+  any software regardless of the geographic location of users. Covers granular
+  consent system, data subject rights (ARCO+), encryption and pseudonymization,
+  retention policy, cookie banner, and compliance checklist.
 ---
 
-# 🇪🇺 GDPR — General Data Protection Regulation
+# GDPR — General Data Protection Regulation
 
-## General Description
+GDPR (EU Regulation 2016/679) defines the most rigorous data protection standard globally and should be applied to any software processing personal data, regardless of user geography. Every implementation must respect the 7 principles of Art. 5: lawfulness/fairness/transparency, purpose limitation, data minimization, accuracy, storage limitation, integrity/confidentiality, and accountability. Each processing activity requires a valid legal basis (Art. 6): consent, contract, legal obligation, vital interests, public interest, or legitimate interest. Sensitive data (Art. 9) requires additional legal bases.
 
-The **GDPR** (General Data Protection Regulation - EU Regulation 2016/679) is the most influential data protection regulation in the world. It applies to any organization that processes personal data of individuals in the EU/EEA, regardless of where the organization is located.
-
-**Fines**: Up to €20 million or 4% of annual global turnover (whichever is greater).
-
----
-
-## When to Activate this Skill
-
-Activate this skill **whenever** you:
-
-- Collect, store, or process data from users in the EU/EEA
-- Implement registration, login, or user profile forms
-- Configure cookies, analytics, or tracking
-- Design database schemas with personal data
-- Implement data export or deletion functionality
-- Work with APIs that receive or send personal data
-- Configure data transfers outside the EU
-- Implement email marketing or notification systems
-- Develop search features that index personal data
-
----
-
-## Fundamental Concepts
-
-### What is Personal Data?
-
-Any information that can directly or indirectly identify a person:
-
-| Category | Examples | Sensitivity Level |
-|-----------|----------|----------------------|
-| **Direct identifiers** | Name, email, phone, national ID | High |
-| **Indirect identifiers** | IP address, cookies, device ID, geolocation | Medium-High |
-| **Sensitive data (Art. 9)** | Health, biometrics, sexual orientation, religious beliefs, political affiliation | **Critical** |
-| **Financial data** | Account number, transaction history | High |
-| **Behavioral data** | Browsing history, preferences, purchasing habits | Medium |
-
-### The 7 Legal Bases (Art. 6)
-
-```typescript
-enum GDPRLegalBasis {
-  CONSENT = 'consent',                  // The user gave explicit consent
-  CONTRACT = 'contract',                // Necessary to perform a contract
-  LEGAL_OBLIGATION = 'legal_obligation', // Required by law
-  VITAL_INTERESTS = 'vital_interests',   // Protect someone's life
-  PUBLIC_INTEREST = 'public_interest',   // Task in the public interest
-  LEGITIMATE_INTEREST = 'legitimate_interest', // Legitimate interest of the controller
-  // Art. 9 - Sensitive data requires additional bases
-}
-```
-
-### The GDPR Principles (Art. 5)
-
-1. **Lawfulness, fairness, and transparency**: Legal, fair, and transparent processing
-2. **Purpose limitation**: Data collected for specific and explicit purposes
-3. **Data minimization**: Only strictly necessary data
-4. **Accuracy**: Accurate and up-to-date data
-5. **Storage limitation**: Do not retain longer than necessary
-6. **Integrity and confidentiality**: Adequate data security
-7. **Accountability**: Ability to demonstrate compliance
-
----
-
-## Technical Implementation Requirements
+## Implementation
 
 ### 1. Consent System
 
@@ -1077,40 +1016,20 @@ export function setConsentAwareCookie(
 
 ---
 
-## GDPR Best Practices
+## Agent workflow
 
-### ✅ DO
+1. Identify what personal data the application processes and document the legal basis (Art. 6) for each processing activity.
+2. Implement the granular consent system with Prisma schema, service, and verification middleware.
+3. Implement the data subject rights service (access, rectification, erasure, restriction, portability, objection).
+4. Add the privacy REST API with endpoints for data access, deletion, portability, and consent management.
+5. Implement encryption of personal data at rest (AES-256-GCM) and pseudonymization where applicable.
+6. Configure the data retention policy as a cron job with per-model actions (anonymize/delete/archive).
+7. Implement cookie banner with granular consent per category (essential/functional/analytics/advertising).
+8. Validate against the compliance checklist before deploying.
 
-1. **Implement Privacy by Design and Privacy by Default** (Art. 25)
-   - Every new feature must be evaluated against GDPR before implementation
-   - The most restrictive privacy settings are the defaults
+## Gotchas
 
-2. **Maintain a Record of Processing Activities** (Art. 30)
-   - Document what data is processed, for what purposes, legal bases, etc.
-
-3. **Conduct DPIAs** (Data Protection Impact Assessment, Art. 35)
-   - Mandatory when there is high risk to individuals' rights
-   - Large-scale processing, profiling, new technologies
-
-4. **Implement breach notification** (Art. 33-34)
-   - Notify the supervisory authority within 72 hours
-   - Notify affected individuals without undue delay if there is high risk
-
-5. **Always use HTTPS** — encryption in transit is mandatory
-
-6. **Audit logs for all access to personal data**
-
-7. **Minimize data collected** — only request what is strictly necessary
-
-### ❌ DO NOT
-
-1. **DO NOT** collect data "just in case" — violates minimization
-2. **DO NOT** use pre-checked consent — must be an affirmative action
-3. **DO NOT** make it difficult to withdraw consent
-4. **DO NOT** transfer data outside the EU without a legal mechanism (SCCs, adequacy, BCRs)
-5. **DO NOT** store data without an expiration date or retention policy
-6. **DO NOT** log personal data in plain text
-7. **DO NOT** use personal data in development/testing environments without anonymizing
+Implement Privacy by Design and Privacy by Default (Art. 25): every new feature must be evaluated against GDPR before implementation, and the most restrictive privacy settings are the defaults. Do not use pre-checked consent — it must be a clear affirmative action (Art. 7). Withdrawing consent must be as easy as granting it. Maintain a Record of Processing Activities (ROPA, Art. 30). Conduct DPIAs (Art. 35) for large-scale processing, profiling, or new technologies. Security breaches must be reported to the supervisory authority within 72 hours (Art. 33) and to affected individuals without delay if there is high risk (Art. 34). Do not transfer data outside the EU without a legal mechanism (SCCs, adequacy, BCRs). Do not store data without a retention policy. Do not log personal data in plain text. Do not use personal data in development/testing environments without anonymizing.
 
 ---
 
