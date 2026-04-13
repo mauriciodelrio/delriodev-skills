@@ -1,28 +1,27 @@
 ---
 name: clean-code-principles
 description: >
-  Principios fundamentales de construcción de software limpio. Esta skill es el
-  núcleo que aplica ANTES que cualquier otra: SOLID, DRY, KISS, YAGNI, métodos
-  atómicos, encapsulación, inyección de dependencias, documentación JSDoc orientada
-  al negocio, naming expresivo, guard clauses, composición, inmutabilidad, y
-  separación de concerns. Todo acto de escribir código debe pasar por estas reglas.
+  Usa esta skill en TODA generación de código. Aplica SOLID, DRY, KISS, YAGNI,
+  funciones atómicas, guard clauses, composición, inmutabilidad, encapsulación,
+  naming expresivo, documentación JSDoc de negocio, validación en boundaries y
+  separación de concerns. Esta skill es el núcleo obligatorio que precede a
+  cualquier otra skill de software.
 ---
 
-# 🧱 Clean Code Principles
+# Clean Code Principles
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **El código se lee 10x más de lo que se escribe.**
-> Escribe para el humano que lo leerá en 6 meses — probablemente tú.
-> Esta skill es el **núcleo**: aplica antes que cualquier otra skill específica.
+1. Aplicar TODOS los principios de esta skill en cada bloque de código generado
+2. Usar los patrones ✅ de cada sección como referencia de estilo obligatoria
+3. Preferir funciones atómicas, guard clauses y composición por defecto
+4. Validar contra la sección Gotchas antes de entregar código
 
 ---
 
 ## 1. SOLID
 
 ### S — Single Responsibility Principle
-
-Cada clase, módulo o función tiene **una sola razón para cambiar**.
 
 ```typescript
 // ❌ Hace demasiado: valida, persiste, notifica
@@ -57,8 +56,6 @@ async function notifyOrderCreated(order: Order): Promise<void> {
 
 ### O — Open/Closed Principle
 
-Abierto para extensión, cerrado para modificación. Extender comportamiento sin tocar código existente.
-
 ```typescript
 // ❌ Switch que crece con cada tipo nuevo
 function calculateDiscount(type: string, amount: number) {
@@ -90,8 +87,6 @@ function calculateDiscount(type: string, amount: number): number {
 
 ### L — Liskov Substitution Principle
 
-Subtipos deben ser sustituibles por sus tipos base sin romper el programa.
-
 ```typescript
 // ❌ Rompe LSP: Square no se comporta como Rectangle
 class Rectangle {
@@ -119,8 +114,6 @@ class Square implements Shape {
 ```
 
 ### I — Interface Segregation Principle
-
-No forzar a implementar métodos que no se usan.
 
 ```typescript
 // ❌ Interfaz gorda
@@ -151,8 +144,6 @@ interface ReportRepository extends Readable<Report> {} // Solo lectura
 ```
 
 ### D — Dependency Inversion Principle
-
-Depender de abstracciones, no de implementaciones concretas.
 
 ```typescript
 // ❌ Dependencia directa a implementación concreta
@@ -267,8 +258,6 @@ interface ProductRepository {
 
 ## 5. Funciones Atómicas
 
-Cada función hace **una sola cosa**, tiene un **nombre que describe qué hace**, es **corta** (idealmente < 20 líneas) y opera en **un solo nivel de abstracción**.
-
 ```typescript
 // ❌ Función larga con múltiples niveles de abstracción
 async function processOrder(input: RawOrderInput) {
@@ -323,8 +312,6 @@ function calculateTotals(items: OrderItem[]): OrderTotals {
 
 ## 6. Guard Clauses — Early Returns
 
-Evitar nesting profundo. Validar y salir temprano.
-
 ```typescript
 // ❌ Nesting excesivo
 function processPayment(order: Order | null, user: User | null) {
@@ -362,8 +349,6 @@ function processPayment(order: Order | null, user: User | null) {
 ---
 
 ## 7. Encapsulación y Exposición
-
-Exponer solo lo que el consumidor necesita. Ocultar detalles de implementación.
 
 ```typescript
 // ❌ Todo público — el consumidor puede romper invariantes
@@ -480,9 +465,7 @@ interface Config {
 
 ---
 
-## 10. Naming Expresivo — El Código se Auto-documenta
-
-El nombre de una variable, función o clase debe hacer innecesario un comentario.
+## 10. Naming Expresivo
 
 ```typescript
 // ❌ Nombres crípticos + comentario compensatorio
@@ -513,10 +496,7 @@ function getUserProfile() {} // ✅
 
 ## 11. Documentación In-Code (JSDoc)
 
-### Filosofía
-
-> **Documentar el POR QUÉ y el QUÉ del negocio, no el CÓMO técnico.**
-> Si una función necesita un comentario explicando cómo funciona, es demasiado compleja — refactorizarla.
+Documentar el POR QUÉ y el QUÉ del negocio, no el CÓMO técnico. Si necesitas explicar cómo funciona, refactorizar.
 
 ### Cuándo SÍ documentar (JSDoc)
 
@@ -660,8 +640,6 @@ function ProductPage() {
 
 ## 13. Manejo de Errores en Boundaries
 
-Validar inputs en los bordes del sistema — no en cada función interna.
-
 ```typescript
 // ❌ Validación defensiva en cada capa
 function calculateTax(amount: number) {
@@ -709,47 +687,21 @@ function applyDiscount(price: number, discountRate: number): number {
 
 ---
 
-## Checklist Pre-Commit Mental
+## Gotchas
 
-Antes de hacer commit, preguntarse:
-
-- [ ] ¿Cada función hace **una sola cosa**?
-- [ ] ¿Los nombres describen la intención sin necesidad de comentarios?
-- [ ] ¿Hay duplicación que debería extraerse?
-- [ ] ¿Estoy construyendo solo lo que se necesita **hoy**?
-- [ ] ¿Las dependencias se inyectan, no se instancian internamente?
-- [ ] ¿Los datos público son de solo lectura donde sea posible?
-- [ ] ¿La documentación describe el **negocio**, no la mecánica?
-- [ ] ¿Hay comentarios inline que sobran?
-- [ ] ¿Puedo leer la función de alto nivel como un resumen ejecutivo?
-
----
-
-## Anti-patrones Universales
-
-```typescript
-// ❌ any — usar unknown + type guards
-// ❌ Funciones de > 30 líneas — dividir
-// ❌ Más de 3 parámetros — usar objeto de opciones
-// ❌ Nested ternaries — usar early returns o variables con nombre
-// ❌ Magic numbers — extraer a constantes con nombre de negocio
-// ❌ God class / God function — violan SRP
-// ❌ Herencia profunda (> 2 niveles) — usar composición
-// ❌ Comentarios tipo "// TODO: fix later" en main
-// ❌ Código comentado — eliminarlo (Git es tu historial)
-// ❌ Defensive programming en capas internas — validar en boundaries
-// ❌ Premature abstraction — abstraer en la 3ra repetición, no la 1ra
-// ❌ Importar módulos enteros por una función — import { pick } from 'lodash-es'
-```
+- Nunca usar `any` — siempre `unknown` + type guards. El agente debe generar tipos estrictos.
+- Funciones > 30 líneas indican que deben dividirse. Más de 3 parámetros → objeto de opciones.
+- Los ternarios anidados son ilegibles — usar early returns o variables con nombre descriptivo.
+- Números mágicos deben ser constantes con nombre de negocio (`GRACE_PERIOD_DAYS`, no `15`).
+- Nunca herencia > 2 niveles — preferir composición.
+- Nunca dejar `// TODO` en main ni código comentado — Git es el historial.
+- No hacer validación defensiva en capas internas — solo en boundaries (API handlers, form submits).
+- No abstraer prematuramente — regla de tres: abstraer en la 3ra repetición, no en la 1ra.
+- Importar funciones específicas, no módulos completos: `import { pick } from 'lodash-es'`.
 
 ---
 
 ## Skills Relacionadas
-
-> **Esta skill es transversal — aplica a TODO código generado.**
-> Los índices maestros [`frontend/SKILL.md`](../frontend/SKILL.md) y
-> [`backend/SKILL.md`](../backend/SKILL.md) referencian esta skill como
-> obligatoria en cada acción. El agente DEBE aplicarla siempre.
 
 | Skill | Relación |
 |-------|----------|
