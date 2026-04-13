@@ -1,25 +1,26 @@
 ---
 name: forms-and-validation-rules
 description: >
-  Form rules for React applications. Covers React Hook Form + Zod,
-  client/server validation, multi-step forms, file upload, error UX,
-  accessible forms, and Server Actions with useActionState.
+  Use this skill when implementing forms in React:
+  React Hook Form + Zod, client/server validation, multi-step,
+  file upload, error UX, accessibility, and Server Actions
+  with useActionState.
 ---
 
-# 📝 Forms and Validation
+# Forms and Validation
 
-## Guiding Principle
+## Agent workflow
 
-> **Validate on both sides.** Shared Zod schema between client and server.
-> React Hook Form for form state, Server Actions for mutations.
-
----
+1. Define shared Zod schema for client/server (section 1).
+2. Wire React Hook Form with zodResolver and accessible `FormField` component.
+3. Server Action with useActionState for mutations (section 2).
+4. Multi-step: schema per step, `trigger(fields)` for partial validation (section 3).
+5. File upload: validate size/type with Zod, preview with `URL.createObjectURL` (section 4).
+6. UX: mode `onTouched`, focus first error, accessible error summary (section 5).
 
 ## 1. React Hook Form + Zod — Base Setup
 
 ```tsx
-// features/products/schemas/product.schema.ts
-// Schema shared between client and server
 import { z } from 'zod';
 
 export const productSchema = z.object({
@@ -48,7 +49,6 @@ export type ProductFormData = z.infer<typeof productSchema>;
 ```
 
 ```tsx
-// features/products/components/ProductForm.tsx
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -73,7 +73,6 @@ export function ProductForm({ onSubmit }: { onSubmit: (data: ProductFormData) =>
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
-      {/* Text field */}
       <FormField label="Name" htmlFor="name" error={errors.name?.message} required>
         <input
           id="name"
@@ -84,7 +83,6 @@ export function ProductForm({ onSubmit }: { onSubmit: (data: ProductFormData) =>
         />
       </FormField>
 
-      {/* Numeric field */}
       <FormField label="Price" htmlFor="price" error={errors.price?.message} required>
         <input
           id="price"
@@ -95,7 +93,6 @@ export function ProductForm({ onSubmit }: { onSubmit: (data: ProductFormData) =>
         />
       </FormField>
 
-      {/* Select */}
       <FormField label="Category" htmlFor="category" error={errors.category?.message} required>
         <select id="category" {...register('category')} aria-invalid={!!errors.category}>
           <option value="">Select...</option>
@@ -113,12 +110,9 @@ export function ProductForm({ onSubmit }: { onSubmit: (data: ProductFormData) =>
 }
 ```
 
----
-
 ## 2. Server Action + useActionState
 
 ```tsx
-// features/products/actions/createProduct.ts
 'use server';
 
 import { productSchema } from '../schemas/product.schema';
@@ -154,7 +148,6 @@ export async function createProductAction(
   return { success: true, message: 'Product created successfully' };
 }
 
-// Component
 'use client';
 
 import { useActionState } from 'react';
@@ -180,18 +173,14 @@ export function CreateProductForm() {
 }
 ```
 
----
-
 ## 3. Multi-Step Forms
 
 ```tsx
-// ✅ Multi-step with React Hook Form + stepper
 'use client';
 
 import { useForm, FormProvider, useFormContext } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-// Schema per step
 const step1Schema = z.object({ name: z.string().min(1), email: z.string().email() });
 const step2Schema = z.object({ address: z.string().min(1), city: z.string().min(1) });
 const step3Schema = z.object({ cardNumber: z.string(), expiry: z.string() });
@@ -209,14 +198,13 @@ export function MultiStepForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const methods = useForm<FullFormData>({
     resolver: zodResolver(fullSchema),
-    mode: 'onTouched', // Validate when field is touched
+    mode: 'onTouched',
   });
 
   async function handleNext() {
     const currentSchema = STEPS[currentStep]!.schema;
     const fields = Object.keys(currentSchema.shape) as (keyof FullFormData)[];
 
-    // Validate only the current step's fields
     const isValid = await methods.trigger(fields);
     if (isValid) setCurrentStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
@@ -253,12 +241,9 @@ export function MultiStepForm() {
 }
 ```
 
----
-
 ## 4. File Upload
 
 ```tsx
-// ✅ Upload with preview and validation
 'use client';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -318,17 +303,10 @@ export function ImageUpload({ onUpload }: { onUpload: (url: string) => void }) {
 }
 ```
 
----
-
-## 5. Validation UX — Rules
+## 5. Validation UX
 
 ```tsx
-// ✅ Validation: mode 'onTouched' — show error on field blur
 useForm({ mode: 'onTouched' });
-
-// ✅ Errors disappear when corrected (onChange by default)
-// ✅ Server errors are mapped to specific fields
-// ✅ Auto-focus on first field with error
 
 function focusFirstError(errors: FieldErrors) {
   const firstError = Object.keys(errors)[0];
@@ -337,7 +315,6 @@ function focusFirstError(errors: FieldErrors) {
   }
 }
 
-// ✅ Error summary for a11y
 {Object.keys(errors).length > 0 && (
   <div role="alert" className="rounded-md bg-red-50 p-4">
     <p className="font-medium text-red-800">
@@ -354,31 +331,19 @@ function focusFirstError(errors: FieldErrors) {
 )}
 ```
 
----
+## Gotchas
 
-## Anti-patterns
+- Client-only validation without server revalidation allows malicious data — use the same Zod schema on both sides.
+- `useState` per form field is a poor reimplementation of React Hook Form — use `useForm` + `register`.
+- `onSubmit` without disabling the button allows double-submit — use `isSubmitting` for disabled.
+- Errors that don’t clear when corrected frustrate users — RHF clears them on `onChange` by default.
+- Generic messages ("Invalid field") are unhelpful — Zod supports specific messages per validation.
+- Form without `noValidate` mixes browser native validation with custom — always add `noValidate`.
+- File upload without size or type limits is a security risk — validate with Zod refine.
 
-```tsx
-// ❌ Client-only validation (server blindly trusts)
-// ❌ useState for each field (use React Hook Form)
-// ❌ onSubmit without preventing double-submit
-// ❌ Errors that don't disappear when corrected
-// ❌ Validation on onBlur without immediate feedback
-// ❌ Generic error messages ("Invalid field")
-// ❌ Form without noValidate (mixes native + custom validation)
-// ❌ File upload without size or type limits
-```
+## Related skills
 
----
-
-## Related Skills
-
-> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for forms.
-
-| Skill | Why |
-|-------|-----|
-| `testing-rules` | Form tests with userEvent + queries by label |
-| `a11y-rules` | Associated labels, accessible error messages, fieldset |
-| `i18n-rules` | Translated validation messages |
-| `security-rules` | Input sanitization, XSS prevention |
-| `backend/data-validation` | Shared Zod schemas between client and server |
+- `testing-rules` — tests with userEvent + queries by label
+- `a11y-rules` — labels, accessible error messages, fieldset
+- `i18n-rules` — translated validation messages
+- `security-rules` — input sanitization, XSS prevention
