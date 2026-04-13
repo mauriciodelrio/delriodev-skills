@@ -1,22 +1,22 @@
 ---
 name: request-pipeline
 description: >
-  Request processing pipeline in Node.js backend. Covers Express middleware,
-  NestJS guards/interceptors/pipes, execution order, CORS, correlation IDs,
-  code-level rate limiting, and middleware composition patterns.
+  Use this skill when configuring the request processing pipeline in a
+  Node.js backend. Covers Express middleware, NestJS guards/interceptors/pipes,
+  execution order, CORS, correlation IDs, rate limiting, and middleware
+  composition patterns.
 ---
 
-# 🔄 Request Pipeline — Middleware and Lifecycle
+# Request Pipeline — Middleware and Lifecycle
 
-## Principle
+## Agent workflow
 
-> **Every request passes through a predictable pipeline.**
-> Understanding the execution order is key to debugging and knowing
-> where to place each piece of logic.
+**1.** Identify whether the project uses NestJS or Express (sections 1–2).
+**2.** Implement essential middleware: correlation ID, CORS, logger (section 3).
+**3.** Configure guards/auth and rate limiting (sections 4, 7).
+**4.** Check against the gotchas list (section 8).
 
----
-
-## NestJS — Request Lifecycle
+## 1. NestJS — Request Lifecycle
 
 ```
 Incoming request
@@ -42,9 +42,7 @@ Incoming request
                               (if something failed at any step)
 ```
 
----
-
-## Express — Middleware Order
+## 2. Express — Middleware Order
 
 ```
 Incoming request
@@ -61,9 +59,7 @@ Incoming request
   └── 10. Error handler      → Catch-all error formatter
 ```
 
----
-
-## Essential Middleware
+## 3. Essential Middleware
 
 ### Correlation ID
 
@@ -142,9 +138,7 @@ function requestLogger(req: Request, res: Response, next: NextFunction) {
 }
 ```
 
----
-
-## NestJS — Guards
+## 4. NestJS — Guards
 
 ```typescript
 // Global authentication guard
@@ -175,9 +169,7 @@ export const Public = () => SetMetadata('isPublic', true);
 async login(@Body() dto: LoginDto) { ... }
 ```
 
----
-
-## NestJS — Interceptors
+## 5. NestJS — Interceptors
 
 ```typescript
 // Timeout interceptor — prevent hanging requests
@@ -216,9 +208,7 @@ export class CacheInterceptor implements NestInterceptor {
 }
 ```
 
----
-
-## Express — Middleware Composition
+## 6. Express — Middleware Composition
 
 ```typescript
 // Group middleware by concern
@@ -232,9 +222,7 @@ router.post('/products', ...adminRoute, validate(createProductSchema), createPro
 router.patch('/products/:id', ...protectedRoute, validate(updateProductSchema), updateProduct);
 ```
 
----
-
-## Rate Limiting (code)
+## 7. Rate Limiting (code)
 
 ```typescript
 // Express — express-rate-limit
@@ -271,18 +259,14 @@ app.use('/api/auth/login', authLimiter);
 // Apply globally with APP_GUARD
 ```
 
----
+## 8. Gotchas
 
-## Anti-patterns
-
-```
-❌ Middleware that modifies the body without documenting → hard to debug
-❌ Guard that queries DB on every request without cache → performance killer
-❌ Interceptor that silently swallows exceptions → invisible bugs
-❌ CORS with origin: '*' + credentials: true → doesn't work and is insecure
-❌ Rate limiting only at API Gateway without code-level fallback
-❌ No correlation ID → impossible to trace a request in logs
-❌ Incorrect middleware order → auth before body parser = crash
-❌ Middleware that doesn't call next() → request hangs
-❌ try/catch in every controller instead of global exception filter
-```
+- Middleware that modifies the body without documenting — hard to debug.
+- Guard that queries DB on every request without cache — performance killer.
+- Interceptor that silently swallows exceptions — invisible bugs.
+- CORS with `origin: '*'` + `credentials: true` — doesn't work and is insecure.
+- Rate limiting only at API Gateway without code-level fallback.
+- No correlation ID — impossible to trace a request in logs.
+- Incorrect middleware order — auth before body parser = crash.
+- Middleware that doesn't call `next()` — request hangs.
+- try/catch in every controller instead of global exception filter.

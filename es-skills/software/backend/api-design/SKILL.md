@@ -1,98 +1,78 @@
 ---
 name: api-design
 description: >
-  Convenciones de diseño de API REST para backend Node.js. Cubre naming de
-  endpoints, métodos HTTP correctos, status codes, paginación, filtrado,
-  ordenamiento, response envelope, versionado y generación de documentación
-  con OpenAPI/Swagger.
+  Usa esta skill cuando diseñes o modifiques endpoints REST en un backend
+  Node.js. Cubre naming, métodos HTTP, status codes, paginación, filtrado,
+  response envelope, versionado y documentación OpenAPI/Swagger.
 ---
 
-# 🌐 API Design — Convenciones REST
+# API Design — Convenciones REST
 
-## Principio
+## Flujo de trabajo del agente
 
-> **La API es el contrato público del backend.**
-> Debe ser predecible, consistente y auto-documentada.
-> Un consumidor debe poder adivinar un endpoint sin leer docs.
+**1.** Definir el recurso y elegir naming según las reglas de la sección 1.
+**2.** Seleccionar método HTTP y status codes correctos (secciones 2–3).
+**3.** Implementar response envelope y paginación (secciones 4–5).
+**4.** Documentar con OpenAPI (sección 9).
+**5.** Verificar contra la lista de gotchas (sección 10).
 
----
+## 1. Naming de Endpoints
 
-## Naming de Endpoints
-
-```
-REGLAS:
-  1. Sustantivos en plural para recursos: /users, /orders, /products
-  2. Kebab-case para multi-palabra: /order-items, /payment-methods
-  3. Anidación máxima 2 niveles: /users/:id/orders (ok) 
-     ❌ /users/:id/orders/:orderId/items/:itemId/reviews
-  4. Acciones como sub-recurso o verbo: POST /orders/:id/cancel
-  5. Sin verbos en el path (el método HTTP es el verbo)
-     ❌ GET /getUsers, POST /createUser
-
-EJEMPLOS:
-  GET    /users              → Listar usuarios
-  POST   /users              → Crear usuario
-  GET    /users/:id          → Obtener usuario por ID
-  PATCH  /users/:id          → Actualizar parcialmente
-  PUT    /users/:id          → Reemplazar completo
-  DELETE /users/:id          → Eliminar usuario
-  GET    /users/:id/orders   → Listar órdenes del usuario
-  POST   /orders/:id/cancel  → Acción sobre recurso
-```
-
----
-
-## Métodos HTTP
+1. Sustantivos en plural para recursos: `/users`, `/orders`, `/products`
+2. Kebab-case para multi-palabra: `/order-items`, `/payment-methods`
+3. Anidación máxima 2 niveles: `/users/:id/orders` — nunca `/users/:id/orders/:orderId/items/:itemId/reviews`
+4. Acciones como sub-recurso o verbo: `POST /orders/:id/cancel`
+5. Sin verbos en el path (el método HTTP es el verbo) — nunca `GET /getUsers`
 
 ```
-GET     → Leer recurso(s). Idempotente. No body. Cacheable.
-POST    → Crear recurso o ejecutar acción. No idempotente.
-PUT     → Reemplazar recurso completo. Idempotente.
-PATCH   → Actualizar campos parciales. Idempotente.
-DELETE  → Eliminar recurso. Idempotente.
-
-PREFERIR PATCH SOBRE PUT:
-  PUT requiere enviar TODOS los campos → propenso a errores
-  PATCH envía solo lo que cambia → más seguro y práctico
-  Usar PUT solo cuando semánticamente se reemplaza todo el recurso
+GET    /users              → Listar usuarios
+POST   /users              → Crear usuario
+GET    /users/:id          → Obtener usuario por ID
+PATCH  /users/:id          → Actualizar parcialmente
+PUT    /users/:id          → Reemplazar completo
+DELETE /users/:id          → Eliminar usuario
+GET    /users/:id/orders   → Listar órdenes del usuario
+POST   /orders/:id/cancel  → Acción sobre recurso
 ```
 
----
+## 2. Métodos HTTP
 
-## Status Codes
+**GET** — Leer recurso(s). Idempotente. Sin body. Cacheable.
+**POST** — Crear recurso o ejecutar acción. No idempotente.
+**PUT** — Reemplazar recurso completo. Idempotente.
+**PATCH** — Actualizar campos parciales. Idempotente.
+**DELETE** — Eliminar recurso. Idempotente.
 
-```
-ÉXITO:
-  200 OK              → GET exitoso, PATCH exitoso, DELETE con body
-  201 Created         → POST que crea recurso (incluir Location header)
-  204 No Content      → DELETE exitoso sin body, PUT/PATCH sin body
+**Preferir PATCH sobre PUT.** PUT requiere enviar TODOS los campos (propenso a errores). PATCH envía solo lo que cambia. Usar PUT solo cuando semánticamente se reemplaza todo el recurso.
 
-REDIRECCIÓN:
-  301 Moved           → Endpoint movido permanentemente
-  304 Not Modified    → Cache hit (ETag / Last-Modified)
+## 3. Status Codes
 
-ERROR DEL CLIENTE:
-  400 Bad Request     → Validación falló (body, query params)
-  401 Unauthorized    → No autenticado (falta token o token inválido)
-  403 Forbidden       → Autenticado pero sin permisos
-  404 Not Found       → Recurso no existe
-  409 Conflict        → Duplicado, violación de constraint
-  422 Unprocessable   → Datos válidos pero lógica de negocio los rechaza
-  429 Too Many Req    → Rate limit exceeded
+**Éxito:**
+- **200 OK** — GET exitoso, PATCH exitoso, DELETE con body
+- **201 Created** — POST que crea recurso (incluir Location header)
+- **204 No Content** — DELETE exitoso sin body, PUT/PATCH sin body
 
-ERROR DEL SERVIDOR:
-  500 Internal        → Error inesperado (no exponer detalles al cliente)
-  502 Bad Gateway     → Upstream service falló
-  503 Unavailable     → Servicio en mantenimiento
+**Redirección:**
+- **301 Moved** — Endpoint movido permanentemente
+- **304 Not Modified** — Cache hit (ETag / Last-Modified)
 
-REGLA GENERAL:
-  4xx → el cliente puede arreglar el request
-  5xx → el cliente no puede hacer nada, es culpa del servidor
-```
+**Error del cliente:**
+- **400 Bad Request** — Validación falló (body, query params)
+- **401 Unauthorized** — No autenticado (falta token o token inválido)
+- **403 Forbidden** — Autenticado pero sin permisos
+- **404 Not Found** — Recurso no existe
+- **409 Conflict** — Duplicado, violación de constraint
+- **422 Unprocessable** — Datos válidos pero lógica de negocio los rechaza
+- **429 Too Many Req** — Rate limit exceeded
 
----
+**Error del servidor:**
+- **500 Internal** — Error inesperado (no exponer detalles al cliente)
+- **502 Bad Gateway** — Upstream service falló
+- **503 Unavailable** — Servicio en mantenimiento
 
-## Response Envelope
+**Regla general:** 4xx → el cliente puede arreglar el request. 5xx → el cliente no puede hacer nada, es culpa del servidor.
+
+## 4. Response Envelope
 
 ```typescript
 // Respuesta exitosa — objeto individual
@@ -159,24 +139,19 @@ export class TransformInterceptor<T> implements NestInterceptor<T, { data: T }> 
 }
 ```
 
----
+## 5. Paginación
 
-## Paginación
+**Offset-based** (`page` + `pageSize`) — Simple, problemas con datos que cambian.
+**Cursor-based** (`cursor` + `limit`) — Estable, mejor para infinite scroll.
 
-```
-TIPOS:
-  Offset-based → page + pageSize (simple, problemas con datos que cambian)
-  Cursor-based → cursor + limit (estable, mejor para infinite scroll)
+**Usar offset para:**
+- Admin panels con paginación numérica
+- Datasets estáticos o que cambian poco
 
-USAR OFFSET PARA:
-  ✅ Admin panels con paginación numérica
-  ✅ Datasets estáticos o que cambian poco
-
-USAR CURSOR PARA:
-  ✅ Feeds, timelines, listas que crecen
-  ✅ Datasets grandes (> 100k registros)
-  ✅ Cuando el offset profundo es costoso (OFFSET 100000)
-```
+**Usar cursor para:**
+- Feeds, timelines, listas que crecen
+- Datasets grandes (> 100k registros)
+- Cuando el offset profundo es costoso (OFFSET 100000)
 
 ```typescript
 // Offset-based: GET /users?page=2&pageSize=20
@@ -210,96 +185,74 @@ interface CursorResponse<T> {
 }
 ```
 
----
+## 6. Filtrado y Ordenamiento
 
-## Filtrado y Ordenamiento
-
-```
-FILTRADO:
-  GET /users?status=active&role=admin
-  GET /orders?createdAfter=2024-01-01&createdBefore=2024-12-31
-  GET /products?minPrice=10&maxPrice=100
-
-  Regla: filtros como query params planos, no nested objects.
-  
-BÚSQUEDA:
-  GET /users?search=juan          ← Búsqueda general (full-text)
-  GET /users?email=juan@test.com  ← Filtro exacto por campo
-
-ORDENAMIENTO:
-  GET /users?sort=createdAt       ← Ascendente por defecto
-  GET /users?sort=-createdAt      ← Descendente (prefijo -)
-  GET /users?sort=-createdAt,name ← Múltiples campos
-
-  Alternativa explícita:
-  GET /users?sortBy=createdAt&sortOrder=desc
-```
-
----
-
-## IDs
+**Filtrado** — Filtros como query params planos, no nested objects:
 
 ```
-PREFERIR:
-  ✅ UUID v7 (sortable, no expone secuencia) → crypto.randomUUID()
-  ✅ Prefixed IDs: usr_abc123, ord_xyz789 → claridad en logs y debugging
-  ✅ CUID2 / NanoID → más cortos, URL-safe
-
-EVITAR:
-  ❌ Auto-increment integers expuestos al cliente → enumeration attacks
-  ❌ UUID v4 sin prefijo → imposible saber el tipo en logs
-
-IMPLEMENTACIÓN:
-  El ID se genera en el backend, nunca en el frontend.
-  El ID se incluye en la respuesta de creación (201 Created).
+GET /users?status=active&role=admin
+GET /orders?createdAfter=2024-01-01&createdBefore=2024-12-31
+GET /products?minPrice=10&maxPrice=100
 ```
 
----
-
-## Versionado
+**Búsqueda:**
 
 ```
-ESTRATEGIA RECOMENDADA: URL prefix
-
-  /api/v1/users
-  /api/v2/users
-
-CUÁNDO VERSIONAR:
-  ✅ Breaking changes (cambio de estructura de response, campos removidos)
-  ❌ Agregar campos opcionales NO es breaking change
-
-REGLAS:
-  1. v1 siempre. Incluso si "no hay planes de v2"
-  2. Versión anterior activa mínimo 6 meses post-deprecation
-  3. Header Sunset con fecha de end-of-life
-  4. No más de 2 versiones activas simultáneas
+GET /users?search=juan          ← Búsqueda general (full-text)
+GET /users?email=juan@test.com  ← Filtro exacto por campo
 ```
 
----
-
-## OpenAPI / Swagger
+**Ordenamiento:**
 
 ```
-REGLA: Toda API pública o compartida con frontend DEBE tener documentación
-  OpenAPI generada automáticamente.
-
-NestJS:
-  Usar @nestjs/swagger con decorators
-  @ApiTags, @ApiOperation, @ApiResponse, @ApiProperty
-  El DTO ES la documentación — no duplicar.
-
-Express:
-  Usar swagger-jsdoc + swagger-ui-express
-  JSDoc comments sobre los handlers → genera spec
-  O spec OpenAPI manual en /docs/openapi.yaml
-
-REGLAS:
-  1. Generar spec, no escribirla a mano (salvo Express simple)
-  2. Incluir todos los status codes posibles
-  3. Incluir ejemplos de request/response
-  4. Swagger UI accesible en /api/docs (solo development/staging)
-  5. Spec exportable como JSON/YAML para clients (codegen)
+GET /users?sort=createdAt       ← Ascendente por defecto
+GET /users?sort=-createdAt      ← Descendente (prefijo -)
+GET /users?sort=-createdAt,name ← Múltiples campos
 ```
+
+Alternativa explícita: `GET /users?sortBy=createdAt&sortOrder=desc`
+
+## 7. IDs
+
+**Preferir:**
+- UUID v7 (sortable, no expone secuencia) — `crypto.randomUUID()`
+- Prefixed IDs: `usr_abc123`, `ord_xyz789` — claridad en logs y debugging
+- CUID2 / NanoID — más cortos, URL-safe
+
+**Evitar:**
+- Auto-increment integers expuestos al cliente — enumeration attacks
+- UUID v4 sin prefijo — imposible saber el tipo en logs
+
+**Implementación:** El ID se genera en el backend, nunca en el frontend. Se incluye en la respuesta de creación (201 Created).
+
+## 8. Versionado
+
+**Estrategia recomendada:** URL prefix — `/api/v1/users`, `/api/v2/users`
+
+**Cuándo versionar:**
+- Breaking changes (cambio de estructura de response, campos removidos)
+- Agregar campos opcionales NO es breaking change
+
+**Reglas:**
+1. v1 siempre, incluso si "no hay planes de v2"
+2. Versión anterior activa mínimo 6 meses post-deprecation
+3. Header `Sunset` con fecha de end-of-life
+4. No más de 2 versiones activas simultáneas
+
+## 9. OpenAPI / Swagger
+
+Toda API pública o compartida con frontend DEBE tener documentación OpenAPI generada automáticamente.
+
+**NestJS:** Usar `@nestjs/swagger` con decorators (`@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiProperty`). El DTO ES la documentación — no duplicar.
+
+**Express:** Usar `swagger-jsdoc` + `swagger-ui-express`. JSDoc comments sobre los handlers genera spec. Alternativa: spec OpenAPI manual en `/docs/openapi.yaml`.
+
+**Reglas:**
+1. Generar spec, no escribirla a mano (salvo Express simple)
+2. Incluir todos los status codes posibles
+3. Incluir ejemplos de request/response
+4. Swagger UI accesible en `/api/docs` (solo development/staging)
+5. Spec exportable como JSON/YAML para clients (codegen)
 
 ```typescript
 // NestJS — ejemplo con @nestjs/swagger
@@ -317,27 +270,19 @@ export class UsersController {
 }
 ```
 
----
+## 10. Gotchas
 
-## Anti-patrones
+- Mezclar plural y singular: `/user/:id/orders` — siempre plural `/users/:id/orders`.
+- Verbos en URLs: `/getUsers` — el método HTTP es el verbo: `GET /users`.
+- Anidación profunda: `/a/:id/b/:id/c/:id` — aplanar la ruta.
+- Status 200 para todo (incluso errores) — usar los status codes correctos.
+- Response sin envelope — siempre `{ data }` o `{ error }`.
+- Pagination sin límite máximo — un atacante pide `pageSize=999999`.
+- IDs secuenciales expuestos — usar UUIDs/CUIDs.
+- Ignorar Content-Type — validar siempre `application/json`.
+- API sin documentación — OpenAPI es obligatorio para APIs compartidas.
 
-```
-❌ Mezclar plural y singular: /user/:id/orders → /users/:id/orders
-❌ Verbos en URLs: /getUsers → GET /users
-❌ Anidación profunda: /a/:id/b/:id/c/:id → flatten
-❌ Status 200 para todo (incluso errores) → usar codes correctos
-❌ Response sin envelope → siempre { data } o { error }
-❌ Pagination sin límite máximo → atacante pide pageSize=999999
-❌ IDs secuenciales expuestos → usar UUIDs/CUIDs
-❌ Ignorar Content-Type → validar siempre application/json
-❌ API sin documentación → OpenAPI es obligatorio para APIs compartidas
-```
-
----
-
-## Skills Relacionadas
-
-> **Consultar el índice maestro [`backend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para endpoints.
+## 11. Skills Relacionadas
 
 | Skill | Por qué |
 |-------|--------|

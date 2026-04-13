@@ -1,43 +1,38 @@
 ---
 name: data-validation
 description: >
-  Validación y transformación de datos de entrada en backend Node.js.
-  Cubre Zod (schema-first), class-validator (NestJS pipes), DTOs,
-  sanitización de input, transformación de tipos, validación de archivos,
-  y patrones para validación de negocio vs validación de formato.
+  Usa esta skill cuando valides o transformes datos de entrada en un
+  backend Node.js. Cubre Zod (schema-first), class-validator (NestJS pipes),
+  DTOs, sanitización, transformación de tipos y patrones para validación
+  de negocio vs validación de formato.
 ---
 
-# ✅ Data Validation — Validación de Input
+# Data Validation — Validación de Input
 
-## Principio
+## Flujo de trabajo del agente
 
-> **Nunca confiar en datos del cliente.**
-> Todo input se valida en el backend, aunque el frontend ya valide.
-> Validar formato en el boundary (controller/middleware),
-> validar reglas de negocio en el service.
+**1.** Elegir stack de validación: Zod o class-validator (sección 1).
+**2.** Definir schemas/DTOs para el endpoint (secciones 2–3).
+**3.** Separar validación de formato (controller) vs negocio (service) (sección 4).
+**4.** Aplicar sanitización y validar params/IDs (secciones 5–6).
+**5.** Verificar contra la lista de gotchas (sección 8).
 
----
+## 1. Stack de Validación
 
-## Stack de Validación
+**Zod (preferido):**
+- Schema-first: define schema → infiere tipo TypeScript.
+- Funciona en NestJS y Express.
+- Mismo schema compartible con frontend.
+- Composable: `.extend()`, `.merge()`, `.pick()`, `.omit()`.
+- Runtime validation + TypeScript types.
 
-```
-Zod (PREFERIDO):
-  ✅ Schema-first: define schema → infiere tipo TypeScript
-  ✅ Funciona en NestJS y Express
-  ✅ Mismo schema compartible con frontend
-  ✅ Composable: .extend(), .merge(), .pick(), .omit()
-  ✅ Runtime validation + TypeScript types
+**class-validator + class-transformer (NestJS nativo):**
+- Decorators en clases DTO.
+- Integración directa con NestJS `ValidationPipe`.
+- Usar cuando el equipo prefiere el approach OOP.
+- No comparte schemas con frontend.
 
-class-validator + class-transformer (NestJS nativo):
-  ✅ Decorators en clases DTO
-  ✅ Integración directa con NestJS ValidationPipe
-  ✅ Usar cuando el equipo prefiere el approach OOP
-  ❌ No comparte schemas con frontend
-```
-
----
-
-## Zod — Schemas y DTOs
+## 2. Zod — Schemas y DTOs
 
 ```typescript
 import { z } from 'zod';
@@ -132,9 +127,7 @@ create(@Body(new ZodValidationPipe(createUserSchema)) dto: CreateUserDto) {
 }
 ```
 
----
-
-## class-validator — NestJS nativo
+## 3. class-validator — NestJS nativo
 
 ```typescript
 import { IsString, IsEmail, MinLength, IsEnum, IsOptional } from 'class-validator';
@@ -170,31 +163,17 @@ app.useGlobalPipes(new ValidationPipe({
 }));
 ```
 
----
+## 4. Validación por Capas
 
-## Validación por Capas
+**Capa 1 — Formato (Controller / Middleware):**
+¿Es un email válido? ¿El string tiene mínimo 8 chars? ¿El number es positivo? ¿El enum es válido? → Zod / class-validator → Retorna **400 Bad Request**.
 
-```
-CAPA 1 — FORMATO (Controller / Middleware)
-  ¿Es un email válido? ¿El string tiene mínimo 8 chars?
-  ¿El number es positivo? ¿El enum es válido?
-  → Zod / class-validator
-  → Retorna 400 Bad Request
+**Capa 2 — Negocio (Service):**
+¿El email ya está registrado? ¿El usuario tiene saldo suficiente? ¿La fecha de reserva es futura? ¿El producto tiene stock? → Lógica en el service → Retorna **409 Conflict / 422 Unprocessable Entity**.
 
-CAPA 2 — NEGOCIO (Service)
-  ¿El email ya está registrado? ¿El usuario tiene saldo suficiente?
-  ¿La fecha de reserva es futura? ¿El producto tiene stock?
-  → Lógica en el service
-  → Retorna 409 Conflict / 422 Unprocessable Entity
+**No mezclar:** verificar "email duplicado" en el validator es lógica de negocio. Verificar "es email válido" en el service es formato.
 
-NO MEZCLAR:
-  ❌ Verificar "email duplicado" en el validator → eso es lógica de negocio
-  ❌ Verificar "es email válido" en el service → eso es formato
-```
-
----
-
-## Sanitización
+## 5. Sanitización
 
 ```typescript
 // REGLAS DE SANITIZACIÓN:
@@ -219,9 +198,7 @@ const commentSchema = z.object({
 //   ❌ Usar regex para "limpiar" HTML → usar librería (sanitize-html, DOMPurify)
 ```
 
----
-
-## Validación de Params y IDs
+## 6. Validación de Params y IDs
 
 ```typescript
 // Siempre validar que IDs tienen el formato correcto
@@ -239,9 +216,7 @@ findOne(@Param('id', ParseUUIDPipe) id: string) {
 }
 ```
 
----
-
-## Schemas Reutilizables
+## 7. Schemas Reutilizables
 
 ```typescript
 // Shared schemas para patterns comunes
@@ -266,27 +241,19 @@ const listOrdersQuery = paginationSchema
   });
 ```
 
----
+## 8. Gotchas
 
-## Anti-patrones
+- Validar solo en frontend — el backend **siempre** valida.
+- Zod y class-validator mezclados en el mismo proyecto — elegir uno.
+- DTOs sin whitelist — el cliente puede inyectar campos extra.
+- Confiar en tipos TypeScript para runtime safety — TS no existe en runtime.
+- Regex complejo para validar emails — usar `z.string().email()`.
+- Validación de negocio en el schema — eso va en el service.
+- Schema gigante de 100+ campos — dividir en sub-schemas composables.
+- `transform()` que muta datos de forma inesperada — solo sanitización y format.
+- No validar query params — `pageSize=999999`, SQL injection en sort.
 
-```
-❌ Validar solo en frontend → el backend SIEMPRE valida
-❌ Zod y class-validator mezclados en el mismo proyecto → elegir uno
-❌ DTOs sin whitelist → el cliente puede inyectar campos extra
-❌ Confiar en tipos TypeScript para runtime safety → TS no existe en runtime
-❌ Regex complejo para validar emails → usar z.string().email()
-❌ Validación de negocio en el schema → eso va en el service
-❌ Schema gigante de 100+ campos → dividir en sub-schemas composables
-❌ transform() que muta datos de forma inesperada → solo sanitización y format
-❌ No validar query params → pageSize=999999, SQL injection en sort
-```
-
----
-
-## Skills Relacionadas
-
-> **Consultar el índice maestro [`backend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para la cadena completa.
+## 9. Skills Relacionadas
 
 | Skill | Por qué |
 |-------|--------|

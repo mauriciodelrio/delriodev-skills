@@ -1,43 +1,38 @@
 ---
 name: data-validation
 description: >
-  Input data validation and transformation in Node.js backend. Covers
-  Zod (schema-first), class-validator (NestJS pipes), DTOs, input
-  sanitization, type transformation, file validation, and patterns
-  for business validation vs format validation.
+  Use this skill when validating or transforming input data in a Node.js
+  backend. Covers Zod (schema-first), class-validator (NestJS pipes),
+  DTOs, sanitization, type transformation, and patterns for business
+  validation vs format validation.
 ---
 
-# ✅ Data Validation — Input Validation
+# Data Validation — Input Validation
 
-## Principle
+## Agent workflow
 
-> **Never trust client data.**
-> All input is validated on the backend, even if the frontend already validates.
-> Validate format at the boundary (controller/middleware),
-> validate business rules in the service.
+**1.** Choose validation stack: Zod or class-validator (section 1).
+**2.** Define schemas/DTOs for the endpoint (sections 2–3).
+**3.** Separate format validation (controller) vs business (service) (section 4).
+**4.** Apply sanitization and validate params/IDs (sections 5–6).
+**5.** Check against the gotchas list (section 8).
 
----
+## 1. Validation Stack
 
-## Validation Stack
+**Zod (preferred):**
+- Schema-first: define schema → infer TypeScript type.
+- Works with NestJS and Express.
+- Same schema shareable with frontend.
+- Composable: `.extend()`, `.merge()`, `.pick()`, `.omit()`.
+- Runtime validation + TypeScript types.
 
-```
-Zod (PREFERRED):
-  ✅ Schema-first: define schema → infer TypeScript type
-  ✅ Works with NestJS and Express
-  ✅ Same schema shareable with frontend
-  ✅ Composable: .extend(), .merge(), .pick(), .omit()
-  ✅ Runtime validation + TypeScript types
+**class-validator + class-transformer (NestJS native):**
+- Decorators on DTO classes.
+- Direct integration with NestJS `ValidationPipe`.
+- Use when the team prefers the OOP approach.
+- Doesn't share schemas with frontend.
 
-class-validator + class-transformer (NestJS native):
-  ✅ Decorators on DTO classes
-  ✅ Direct integration with NestJS ValidationPipe
-  ✅ Use when the team prefers the OOP approach
-  ❌ Doesn't share schemas with frontend
-```
-
----
-
-## Zod — Schemas and DTOs
+## 2. Zod — Schemas and DTOs
 
 ```typescript
 import { z } from 'zod';
@@ -132,9 +127,7 @@ create(@Body(new ZodValidationPipe(createUserSchema)) dto: CreateUserDto) {
 }
 ```
 
----
-
-## class-validator — NestJS Native
+## 3. class-validator — NestJS Native
 
 ```typescript
 import { IsString, IsEmail, MinLength, IsEnum, IsOptional } from 'class-validator';
@@ -170,31 +163,17 @@ app.useGlobalPipes(new ValidationPipe({
 }));
 ```
 
----
+## 4. Layered Validation
 
-## Layered Validation
+**Layer 1 — Format (Controller / Middleware):**
+Is it a valid email? Does the string have at least 8 chars? Is the number positive? Is the enum valid? → Zod / class-validator → Returns **400 Bad Request**.
 
-```
-LAYER 1 — FORMAT (Controller / Middleware)
-  Is it a valid email? Does the string have at least 8 chars?
-  Is the number positive? Is the enum valid?
-  → Zod / class-validator
-  → Returns 400 Bad Request
+**Layer 2 — Business (Service):**
+Is the email already registered? Does the user have sufficient balance? Is the reservation date in the future? Does the product have stock? → Logic in the service → Returns **409 Conflict / 422 Unprocessable Entity**.
 
-LAYER 2 — BUSINESS (Service)
-  Is the email already registered? Does the user have sufficient balance?
-  Is the reservation date in the future? Does the product have stock?
-  → Logic in the service
-  → Returns 409 Conflict / 422 Unprocessable Entity
+**Do not mix:** checking "duplicate email" in the validator is business logic. Checking "is valid email" in the service is format validation.
 
-DO NOT MIX:
-  ❌ Checking "duplicate email" in the validator → that's business logic
-  ❌ Checking "is valid email" in the service → that's format validation
-```
-
----
-
-## Sanitization
+## 5. Sanitization
 
 ```typescript
 // SANITIZATION RULES:
@@ -219,9 +198,7 @@ const commentSchema = z.object({
 //   ❌ Use regex to "clean" HTML → use a library (sanitize-html, DOMPurify)
 ```
 
----
-
-## Params and ID Validation
+## 6. Params and ID Validation
 
 ```typescript
 // Always validate that IDs have the correct format
@@ -239,9 +216,7 @@ findOne(@Param('id', ParseUUIDPipe) id: string) {
 }
 ```
 
----
-
-## Reusable Schemas
+## 7. Reusable Schemas
 
 ```typescript
 // Shared schemas for common patterns
@@ -266,27 +241,19 @@ const listOrdersQuery = paginationSchema
   });
 ```
 
----
+## 8. Gotchas
 
-## Anti-patterns
+- Validate only on frontend — the backend **always** validates.
+- Zod and class-validator mixed in the same project — pick one.
+- DTOs without whitelist — the client can inject extra fields.
+- Trusting TypeScript types for runtime safety — TS doesn't exist at runtime.
+- Complex regex to validate emails — use `z.string().email()`.
+- Business validation in the schema — that belongs in the service.
+- Giant schema with 100+ fields — split into composable sub-schemas.
+- `transform()` that mutates data unexpectedly — only sanitization and formatting.
+- Not validating query params — `pageSize=999999`, SQL injection in sort.
 
-```
-❌ Validate only on frontend → the backend ALWAYS validates
-❌ Zod and class-validator mixed in the same project → pick one
-❌ DTOs without whitelist → the client can inject extra fields
-❌ Trusting TypeScript types for runtime safety → TS doesn't exist at runtime
-❌ Complex regex to validate emails → use z.string().email()
-❌ Business validation in the schema → that belongs in the service
-❌ Giant schema with 100+ fields → split into composable sub-schemas
-❌ transform() that mutates data unexpectedly → only sanitization and formatting
-❌ Not validating query params → pageSize=999999, SQL injection in sort
-```
-
----
-
-## Related Skills
-
-> **Consult the master index [`backend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
+## 9. Related Skills
 
 | Skill | Why |
 |-------|-----|

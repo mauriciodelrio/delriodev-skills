@@ -1,71 +1,44 @@
 ---
 name: backend
 description: >
-  Índice orquestador de sub-skills para desarrollo backend con Node.js
-  (NestJS, Express). Cubre estructura de proyecto, diseño de API REST,
-  autenticación, middleware, validación, error handling, patrones de DB,
-  caching, jobs, testing, seguridad, logging, real-time, archivos,
-  diseño de esquemas DB y consumo de APIs externas.
+  Usa esta skill cuando desarrolles backend con Node.js (NestJS, Express).
+  Índice orquestador de sub-skills que cubren estructura de proyecto,
+  diseño de API REST, autenticación, middleware, validación, error handling,
+  patrones de DB, caching, jobs, testing, seguridad, logging, real-time,
+  archivos, diseño de esquemas DB y consumo de APIs externas.
   Cada sub-skill es atómica y enfocada en CÓMO implementar en código,
   no en qué servicio cloud usar (eso lo cubre architecture/).
 ---
 
-# 🔧 Backend — Node.js (NestJS / Express)
+# Backend — Node.js (NestJS / Express)
+
+## Flujo de trabajo del agente
+
+**1.** Identificar qué acción backend se necesita.
+**2.** Leer la sub-skill correspondiente (tabla en sección 3).
+**3.** Consultar "Skills obligatorias por acción" (sección 5) para saber qué otras skills aplicar en paralelo.
+**4.** Aplicar cada skill obligatoria marcada.
+**5.** Verificar que el código cumple todas antes de marcar como completado.
 
 ## Scope
 
-```
-Esta skill cubre IMPLEMENTACIÓN en código backend:
-  ✅ Cómo estructurar el proyecto
-  ✅ Cómo diseñar endpoints REST
-  ✅ Cómo implementar auth, middleware, validación
-  ✅ Cómo usar ORM, cache, queues en código
-  ✅ Cómo testear, loguear, proteger
+Esta skill cubre implementación en código backend: cómo estructurar el proyecto, diseñar endpoints REST, implementar auth/middleware/validación, usar ORM/cache/queues en código, testear/loguear/proteger. No cubre: qué DB usar → `architecture/databases`, qué servicio de cache elegir → `architecture/databases`, qué servicio de queue usar → `architecture/messaging-and-events`, dónde deployar → `architecture/compute`, IAM/VPC/WAF → `architecture/networking-and-security`, principios generales (SOLID, DRY) → `clean-code-principles`.
 
-NO cubre:
-  ❌ Qué DB usar → architecture/databases
-  ❌ Qué servicio de cache elegir → architecture/databases (Redis decision)
-  ❌ Qué servicio de queue usar → architecture/messaging-and-events
-  ❌ Dónde deployar → architecture/compute
-  ❌ IAM, VPC, WAF → architecture/networking-and-security
-  ❌ Principios generales (SOLID, DRY) → clean-code-principles
-```
+## 1. Stack cubierto
 
----
+**Frameworks:** NestJS (primera preferencia — estructura opinada, DI, decorators), Express (alternativa ligera — cuando NestJS es overkill), Fastify (bajo NestJS o standalone — cuando performance es crítico).
 
-## Stack Cubierto
+**Runtime:** Node.js 20+ (LTS), TypeScript strict mode obligatorio.
 
-```
-Frameworks:
-  - NestJS (primera preferencia — estructura opinada, DI, decorators)
-  - Express (alternativa ligera — cuando NestJS es overkill)
-  - Fastify (bajo NestJS o standalone — cuando performance es crítico)
+**ORM / Query Builder:** Prisma (type-safe, migraciones, studio), Drizzle (ligero, SQL-first, más control), TypeORM (legacy, solo si ya existe en el proyecto).
 
-Runtime:
-  - Node.js 20+ (LTS)
-  - TypeScript strict mode obligatorio
+**Validation:** Zod (runtime validation, schema-first), class-validator + class-transformer (NestJS pipes).
 
-ORM / Query Builder:
-  - Prisma (type-safe, migraciones, studio)
-  - Drizzle (ligero, SQL-first, más control)
-  - TypeORM (legacy, solo si ya existe en el proyecto)
+**Testing:** Vitest (unit + integration), Supertest (HTTP integration tests), Testcontainers (DB testing con containers reales).
 
-Validation:
-  - Zod (runtime validation, schema-first)
-  - class-validator + class-transformer (NestJS pipes)
+**Package Manager:** pnpm 9+.
 
-Testing:
-  - Vitest (unit + integration)
-  - Supertest (HTTP integration tests)
-  - Testcontainers (DB testing con containers reales)
-
-Package Manager:
-  - pnpm 9+
-```
-
----
-
-## Sub-Skills
+## 2. Sub-Skills
 
 | Sub-skill | Alcance |
 |-----------|---------|
@@ -86,83 +59,28 @@ Package Manager:
 | `database-design` | Modelado de esquemas, relaciones, normalización, índices, naming |
 | `api-consumption` | Consumo de APIs externas, retry, circuit breaker, webhooks, SDKs |
 
----
+## 3. Decisión: ¿NestJS o Express?
 
-## Decisión: ¿NestJS o Express?
+**¿Cuándo NestJS?** Proyecto mediano-grande (> 10 endpoints), equipo de 2+ devs (estructura opinada = consistencia), necesitas DI/modules/guards/interceptors, API con lógica de negocio compleja, microservicios.
 
-```
-¿Cuándo NestJS?
-  ✅ Proyecto mediano-grande (> 10 endpoints)
-  ✅ Equipo de 2+ devs (estructura opinada = consistencia)
-  ✅ Necesitas DI, modules, guards, interceptors
-  ✅ API con lógica de negocio compleja
-  ✅ Microservicios
+**¿Cuándo Express?** API simple (< 10 endpoints), Lambda functions (lightweight), prototipo rápido, dev solo que prefiere simplicidad.
 
-¿Cuándo Express?
-  ✅ API simple (< 10 endpoints)
-  ✅ Lambda functions (lightweight)
-  ✅ Prototipo rápido
-  ✅ Dev solo que prefiere simplicidad
+**¿Cuándo Fastify?** Performance es prioridad (benchmarks importan), se puede usar bajo NestJS como adapter, API con alto throughput.
 
-¿Cuándo Fastify?
-  ✅ Performance es prioridad (benchmarks importan)
-  ✅ Se puede usar bajo NestJS como adapter
-  ✅ API con alto throughput
-```
+## 4. Skills obligatorias por acción
 
----
+Estas reglas aplican siempre que se crea o modifica código backend. Cada sub-skill individual debe consultar esta sección para saber qué otras skills son obligatorias en paralelo.
 
-## Skills Obligatorias por Acción
+**Al crear/modificar un endpoint:** testing (coverage ≥ 80%), data-validation (DTOs, Zod/class-validator), error-handling (error classes tipados, global handler), security (Helmet, rate limiting, sanitización), logging (structured logging, correlation IDs), api-design (REST conventions, status codes, OpenAPI), clean-code-principles (JSDoc, SRP, guard clauses, naming).
 
-> **Estas reglas aplican SIEMPRE que se crea o modifica código backend.**
-> Cada sub-skill individual debe consultar esta sección para saber qué
-> otras skills son obligatorias en paralelo.
+**Al crear/modificar auth:** todos los anteriores + auth (JWT, hashing, RBAC, guards), governance/owasp-top-10 (A07 Auth Failures, rate limiting).
 
-```
-AL CREAR/MODIFICAR UN ENDPOINT:
-  1. ☐ testing              → Tests unitarios + integración (coverage ≥ 80%)
-  2. ☐ data-validation      → DTOs, Zod/class-validator en inputs
-  3. ☐ error-handling       → Error classes tipados, global handler
-  4. ☐ security             → Helmet, rate limiting, sanitización
-  5. ☐ logging              → Structured logging, correlation IDs
-  6. ☐ api-design           → REST conventions, status codes, OpenAPI
-  7. ☐ clean-code-principles → JSDoc, SRP, guard clauses, naming
+**Al crear/modificar lógica de DB:** testing (Testcontainers o mocks), database-patterns (repository, transactions, N+1), database-design (índices, naming, migraciones), clean-code-principles (separación de concerns, DI).
 
-AL CREAR/MODIFICAR AUTH:
-  1. ☐ Todos los anteriores +
-  2. ☐ auth                 → JWT, hashing, RBAC, guards
-  3. ☐ governance/owasp-top-10 → A07 Auth Failures, rate limiting
+**Al crear/modificar background jobs:** testing (workers y scheduling), background-jobs (BullMQ, retries, dead letter queues), error-handling (retry strategies, failure logging), logging (job lifecycle logging).
 
-AL CREAR/MODIFICAR LÓGICA DE DB:
-  1. ☐ testing              → Tests con DB real (Testcontainers) o mocks
-  2. ☐ database-patterns    → Repository, transactions, N+1 prevention
-  3. ☐ database-design      → Índices, naming, migraciones
-  4. ☐ clean-code-principles → Separación de concerns, DI
+**Al consumir APIs externas:** api-consumption (retry, circuit breaker, timeouts), error-handling (error mapping, fallback responses), logging (request/response logging sin PII), security (no exponer secrets, token rotation).
 
-AL CREAR/MODIFICAR BACKGROUND JOBS:
-  1. ☐ testing              → Tests de workers y scheduling
-  2. ☐ background-jobs      → BullMQ, retries, dead letter queues
-  3. ☐ error-handling       → Retry strategies, failure logging
-  4. ☐ logging              → Job lifecycle logging
+### Cadena de consulta
 
-AL CONSUMIR APIs EXTERNAS:
-  1. ☐ api-consumption      → Retry, circuit breaker, timeouts
-  2. ☐ error-handling       → Error mapping, fallback responses
-  3. ☐ logging              → Request/response logging (sin PII)
-  4. ☐ security             → No exponer secrets, token rotation
-```
-
-### Cadena de Consulta
-
-```
-Cuando una sub-skill se activa, el agente DEBE:
-
-  1. Leer la sub-skill solicitada (ej: auth)
-  2. Volver a ESTE índice (backend/SKILL.md)
-  3. Consultar "Skills Obligatorias por Acción" según lo que está haciendo
-  4. Leer y aplicar cada skill obligatoria marcada con ☐
-  5. Verificar que el código cumple TODAS antes de marcar como completado
-
-El agente NO marca una tarea como completada si falta alguna skill
-obligatoria de esta lista.
-```
+Cuando una sub-skill se activa, el agente debe: leer la sub-skill solicitada, volver a este índice (`backend/SKILL.md`), consultar "Skills obligatorias por acción" según lo que está haciendo, leer y aplicar cada skill obligatoria, y verificar que el código cumple todas antes de marcar como completado.

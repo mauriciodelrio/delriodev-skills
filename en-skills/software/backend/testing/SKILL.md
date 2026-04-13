@@ -1,73 +1,42 @@
 ---
 name: testing
 description: >
-  Node.js backend testing. Covers unit tests (services, utils),
-  integration tests (API with supertest), mocking (DI, repositories),
-  database testing (testcontainers, test DB), fixtures,
-  factories, and testing strategy by layer.
+  Use this skill when writing tests for a Node.js backend. Covers
+  unit tests (services, utils), integration tests (API with supertest),
+  mocking (DI, repositories), database testing (testcontainers,
+  test DB), fixtures, factories, and testing strategy by layer.
 ---
 
-# 🧪 Testing — Backend Tests
+# Testing — Backend Tests
 
-## Principle
+## Agent workflow
 
-> **Test behavior, not implementation.**
-> A test should fail when the feature breaks,
-> not when you do an internal refactor.
+**1.** Identify the test type based on the layer (section 1).
+**2.** Choose tools from the stack (section 2).
+**3.** Write unit or integration test as appropriate (sections 3–5).
+**4.** Configure DB testing and fixtures if needed (sections 6–7).
+**5.** Apply mocking rules and configuration (sections 8–9).
+**6.** Check against the gotchas list (section 10).
 
----
+## 1. Testing strategy by layer
 
-## Testing Strategy by Layer
+**Unit tests (70%)** — fast, isolated: services (pure business logic), utils/helpers (pure functions), validators (schemas). Do not unit test controllers (use integration), or framework code (guards, pipes).
 
-```
-UNIT TESTS (70%) — Fast, isolated
-  ✅ Services: pure business logic
-  ✅ Utils / helpers: pure functions
-  ✅ Validators: validation schemas
-  ❌ DO NOT unit test controllers → test them as integration
-  ❌ DO NOT test framework code (guards, pipes) → already tested
+**Integration tests (25%)** — HTTP request → response: full endpoints (request → middleware → controller → service → DB → response), auth flows, validation (invalid body → 400), permissions (missing role → 403).
 
-INTEGRATION TESTS (25%) — HTTP request → response
-  ✅ Full endpoints: request → middleware → controller → service → DB → response
-  ✅ Auth flows: login → access → refresh → logout
-  ✅ Validation: send invalid body → expect 400
-  ✅ Permissions: user without role → expect 403
+**E2E tests (5%)** — only critical flows: register → login → create resource → verify, full checkout. Few but critical.
 
-E2E TESTS (5%) — Only critical business flows
-  ✅ Register → login → create resource → verify
-  ✅ Full checkout (if applicable)
-  → Few but critical
-```
+## 2. Testing stack
 
----
+**Vitest (preferred):** fast (native ESM, threads), compatible with Jest API, in-source testing available, same config as the project.
 
-## Testing Stack
+**Jest:** mature ecosystem, but slower than Vitest. CJS/ESM configuration can be problematic.
 
-```
-Vitest (PREFERRED):
-  ✅ Fast (native ESM, threads)
-  ✅ Compatible with Jest API
-  ✅ In-source testing available
-  ✅ Same config as the project (vite.config)
+**Supertest:** HTTP integration tests, sends requests to Express/NestJS without starting a server.
 
-Jest (if already in the project):
-  ✅ Mature ecosystem
-  ❌ Slower than Vitest
-  ❌ CJS/ESM configuration can be problematic
+**Testcontainers:** real DB in container for integration tests (ephemeral Redis, PostgreSQL). More reliable than DB mocks.
 
-Supertest:
-  ✅ HTTP integration tests
-  ✅ Send requests to Express/NestJS without starting a server
-
-Testcontainers:
-  ✅ Real DB in container for integration tests
-  ✅ Ephemeral Redis, PostgreSQL, etc.
-  ✅ More reliable tests than DB mocks
-```
-
----
-
-## Unit Tests — Services
+## 3. Unit Tests — Services
 
 ```typescript
 // users.service.test.ts
@@ -127,9 +96,7 @@ describe('UsersService', () => {
 });
 ```
 
----
-
-## Integration Tests — Supertest
+## 4. Integration Tests — Supertest
 
 ```typescript
 // users.e2e-spec.ts
@@ -222,9 +189,7 @@ describe('Users API', () => {
 });
 ```
 
----
-
-## NestJS — Testing Module
+## 5. NestJS — Testing Module
 
 ```typescript
 // users.service.spec.ts (NestJS)
@@ -259,9 +224,7 @@ describe('UsersService', () => {
 });
 ```
 
----
-
-## Database Testing
+## 6. Database Testing
 
 ```typescript
 // Option 1: Testcontainers (real DB in container)
@@ -288,9 +251,7 @@ beforeEach(async () => {
 });
 ```
 
----
-
-## Fixtures and Factories
+## 7. Fixtures and Factories
 
 ```typescript
 // test/fixtures/user.fixture.ts
@@ -326,28 +287,13 @@ export async function createTestUser(prisma: PrismaClient, overrides?: Partial<U
 }
 ```
 
----
+## 8. Mocking
 
-## Mocking
+Mock external dependencies (DB, Redis, APIs, email). Do not mock the unit under test. Do not mock TypeScript types—mock implementations. Prefer dependency injection to make mocking easier. In integration tests prefer real DB over Prisma mocks.
 
-```
-MOCKING RULES:
-  1. Mock external dependencies (DB, Redis, APIs, email)
-  2. DO NOT mock the unit under test
-  3. DO NOT mock TypeScript types → mock implementations
-  4. Prefer dependency injection → makes mocking easier
-  5. In integration tests: prefer real DB over Prisma mocks
+**Tools:** `vi.fn()` (mock function), `vi.spyOn()` (spy on existing method), `vi.mock()` (mock entire module), `vitest-mock-extended` (mockDeep for Prisma).
 
-TOOLS:
-  vi.fn()          → mock function
-  vi.spyOn()       → spy on existing method
-  vi.mock()        → mock entire module
-  vitest-mock-extended → mockDeep for Prisma
-```
-
----
-
-## Configuration
+## 9. Configuration
 
 ```typescript
 // vitest.config.ts
@@ -382,28 +328,20 @@ export default defineConfig({
 // "test:e2e": "vitest run --config vitest.e2e.config.ts"
 ```
 
----
+## 10. Gotchas
 
-## Anti-patterns
-
-```
-❌ Testing internal implementation → test fails on every refactor
-❌ Mocking everything → test passes but feature is broken
-❌ Test without assertions → a test that never fails is useless
-❌ Shared mutable state between tests → tests that only fail together
-❌ Tests that depend on order → each test must be independent
-❌ Ignoring flaky tests → fix or remove them
-❌ Integration test without cleanup → data from one test contaminates another
-❌ Testing happy path only → also test errors and edge cases
-❌ Generic describe/it ("should work") → describe the expected behavior
-❌ Snapshot tests for JSON responses → fragile, use specific assertions
-```
-
----
+- Testing internal implementation — test fails on every refactor.
+- Mocking everything — test passes but feature is broken.
+- Test without assertions — a test that never fails is useless.
+- Shared mutable state between tests — tests that only fail together.
+- Tests that depend on order — each test must be independent.
+- Ignoring flaky tests — fix or remove them.
+- Integration test without cleanup — data from one test contaminates another.
+- Testing happy path only — also test errors and edge cases.
+- Generic describe/it ("should work") — describe the expected behavior.
+- Snapshot tests for JSON responses — fragile, use specific assertions.
 
 ## Related Skills
-
-> **Consult the master index [`backend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full chain.
 
 | Skill | Why |
 |-------|-----|

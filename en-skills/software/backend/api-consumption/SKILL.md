@@ -1,44 +1,33 @@
 ---
 name: api-consumption
 description: >
-  Consuming APIs and external services from the backend. Covers
-  HTTP client abstraction, SDKs, retry with exponential backoff,
-  circuit breaker, timeouts, rate limiting, webhook handling,
-  idempotency, and resilience patterns. Complements api-design
-  (building APIs) with HOW to consume third-party APIs.
+  Use this skill when consuming APIs and external services from
+  the backend. Covers HTTP client abstraction, SDKs, retry with
+  exponential backoff, circuit breaker, timeouts, rate limiting,
+  webhook handling, idempotency, and resilience patterns.
+  Complements api-design (building APIs) with HOW to consume
+  third-party APIs.
 ---
 
-# 🔌 API Consumption — Consuming External APIs
+# API Consumption — Consuming External APIs
 
-## Principle
+## Agent workflow
 
-> **Every external dependency is a point of failure.**
-> Third-party APIs fail, slow down, and change without notice.
-> Your code must be resilient to all of these situations.
+**1.** Create base HTTP client with timeout and retry (sections 1–2).
+**2.** Implement circuit breaker for critical services (section 3).
+**3.** Encapsulate each provider in a typed Service (section 4).
+**4.** Configure timeouts per operation type (section 5).
+**5.** Implement webhooks with signature verification (section 6).
+**6.** Add idempotency and rate limiting (sections 7–8).
+**7.** Check against the gotchas list (section 9).
 
 ---
 
 ## Scope
 
-```
-✅ This skill covers:
-  - Typed HTTP clients
-  - SDKs and service wrappers
-  - Retry with exponential backoff
-  - Circuit breaker
-  - Timeouts and abort
-  - Handling incoming webhooks
-  - Idempotency in calls
+This skill covers: typed HTTP clients, SDKs and service wrappers, retry with exponential backoff, circuit breaker, timeouts and abort, handling incoming webhooks, idempotency in calls. Does not cover: designing your own API → `backend/api-design`, choosing external services → `architecture/*`, authentication → `backend/auth`.
 
-❌ DOES NOT cover:
-  - Designing your own API → backend/api-design
-  - Choosing external services → architecture/*
-  - Authentication → backend/auth
-```
-
----
-
-## Base HTTP Client
+## 1. Base HTTP Client
 
 ```typescript
 // src/lib/http-client.ts
@@ -100,9 +89,7 @@ class HttpClient {
 }
 ```
 
----
-
-## Retry with Exponential Backoff
+## 2. Retry with Exponential Backoff
 
 ```typescript
 interface RetryConfig {
@@ -156,21 +143,9 @@ function sleep(ms: number): Promise<void> {
 }
 ```
 
-```
-RETRY RULES:
-  1. ONLY retry on transient errors (5xx, timeout, network)
-  2. NEVER retry on 4xx (except 408 Request Timeout, 429 Too Many Requests)
-  3. Exponential backoff: 1s → 2s → 4s → 8s
-  4. ALWAYS add jitter (random) to avoid thundering herd
-  5. Maximum 3-5 retries — more doesn't make sense
-  6. Respect the server's Retry-After header
-  7. Only retry if the operation is idempotent (GET, PUT, DELETE)
-     ❌ NEVER retry POST without an idempotency key
-```
+**Retry rules:** only retry on transient errors (5xx, timeout, network). Never retry on 4xx (except 408, 429). Exponential backoff: 1s → 2s → 4s → 8s. Always add jitter (random) to avoid thundering herd. Maximum 3–5 retries. Respect the server's `Retry-After` header. Only retry if the operation is idempotent (GET, PUT, DELETE) — never retry POST without an idempotency key.
 
----
-
-## Circuit Breaker
+## 3. Circuit Breaker
 
 ```typescript
 // Pattern: If a service fails a lot, stop calling it temporarily
@@ -234,25 +209,9 @@ async function chargeCustomer(amount: number) {
 }
 ```
 
-```
-WHEN TO USE CIRCUIT BREAKER:
-  ✅ Payment services (Stripe, PayPal)
-  ✅ Non-critical third-party APIs (analytics, email)
-  ✅ Internal microservices
+**When to use circuit breaker:** payment services (Stripe, PayPal), non-critical third-party APIs (analytics, email), internal microservices. Typical parameters: threshold 5 consecutive failures → open circuit, resetTimeout 30 seconds → try again. Fallback when circuit is open: return default/cached response, queue for later processing, notify the user that the service is temporarily unavailable.
 
-TYPICAL PARAMETERS:
-  threshold: 5 consecutive failures → open circuit
-  resetTimeout: 30 seconds → try again
-  
-FALLBACK when circuit is open:
-  - Return default/cached response
-  - Queue for later processing
-  - Notify the user that the service is temporarily unavailable
-```
-
----
-
-## SDK / Service Client Abstraction
+## 4. SDK / Service Client Abstraction
 
 ```typescript
 // Each external service has its own encapsulated client
@@ -312,28 +271,9 @@ class StripeService {
 }
 ```
 
-```
-ABSTRACTION RULES:
-  1. NEVER use SDKs directly in controllers/resolvers
-     → Always encapsulate in a Service
-  
-  2. Own types for input/output
-     → Don't expose Stripe/AWS/etc types to the rest of the app
-     → Map to internal types
-  
-  3. One service per external provider
-     → StripeService, SendGridService, S3Service
-  
-  4. Pin the API version
-     → apiVersion: '2024-04-10' — don't rely on the default
-  
-  5. Inject config (don't import from env directly)
-     → Constructor receives apiKey, makes testing easier
-```
+**Abstraction rules:** never use SDKs directly in controllers/resolvers — always encapsulate in a Service. Own types for input/output — don't expose Stripe/AWS/etc types to the rest of the app, map to internal types. One service per external provider (StripeService, SendGridService, S3Service). Pin the API version (`apiVersion: '2024-04-10'`) — don't rely on the default. Inject config (don't import from env directly) — constructor receives apiKey, makes testing easier.
 
----
-
-## Timeouts
+## 5. Timeouts
 
 ```typescript
 // RULE: Every external request MUST have a timeout
@@ -362,9 +302,7 @@ async function fetchWithTimeout(url: string, timeout: number): Promise<Response>
 }
 ```
 
----
-
-## Webhooks — Receiving Events from Third Parties
+## 6. Webhooks — Receiving Events from Third Parties
 
 ```typescript
 // POST /webhooks/stripe
@@ -396,38 +334,9 @@ async function handleStripeWebhook(req: Request, res: Response) {
 }
 ```
 
-```
-WEBHOOK RULES:
-  1. VERIFY SIGNATURE — ALWAYS
-     Each provider has its own method: HMAC, asymmetric, etc.
-     Stripe: stripe-signature header
-     GitHub: x-hub-signature-256 header
-     ❌ NEVER trust the payload without verification
+**Webhook rules:** verify signature always — each provider has its own method (Stripe: `stripe-signature`, GitHub: `x-hub-signature-256`), never trust the payload without verification. Respond 200 immediately — don't process in the handler, enqueue and process in background, if you take too long the provider retries and creates duplicates. Idempotency — store processed event_ids, check before processing, webhooks are resent. Raw body for verification — Express: `express.raw()`, NestJS: `@RawBody()`. Dedicated endpoint — `/webhooks/stripe`, `/webhooks/github`, don't mix with API routes, separate middleware.
 
-  2. RESPOND 200 IMMEDIATELY
-     Don't process in the handler
-     Enqueue and process in the background
-     If you take too long, the provider retries → duplicates
-
-  3. IDEMPOTENCY
-     Store processed event_ids
-     Before processing: check if already processed
-     Webhooks ARE RESENT — your code must be idempotent
-
-  4. RAW BODY FOR VERIFICATION
-     Configure endpoint to receive raw body
-     Express: app.use('/webhooks/stripe', express.raw({ type: 'application/json' }))
-     NestJS: @RawBody() in the controller
-
-  5. DEDICATED ENDPOINT
-     /webhooks/stripe, /webhooks/github
-     DO NOT mix with your API routes
-     Separate middleware (no app auth, with signature verification)
-```
-
----
-
-## Idempotency in Outgoing Calls
+## 7. Idempotency in Outgoing Calls
 
 ```typescript
 // Problem: If you retry a POST, you might create duplicates
@@ -466,9 +375,7 @@ await db.externalCalls.update({
 });
 ```
 
----
-
-## Outgoing Call Rate Limiting
+## 8. Outgoing Call Rate Limiting
 
 ```typescript
 // Respect the provider's rate limits
@@ -515,20 +422,16 @@ async function callStripe() {
 }
 ```
 
----
+## 9. Gotchas
 
-## Anti-patterns
-
-```
-❌ Calling external APIs without timeout → a slow service freezes your app
-❌ Retry on POST without idempotency key → duplicates in charges, emails
-❌ Retry on 4xx errors → the request is wrong, repeating it won't fix it
-❌ Using SDK directly in controllers → hard to test and replace
-❌ Exposing SDK types to the rest of the app → coupling to provider
-❌ Webhooks without signature verification → anyone can forge events
-❌ Processing webhook in the handler → timeout, provider retries
-❌ Ignoring provider rate limits → you get temporarily banned
-❌ Circuit breaker on critical services without fallback → ungraceful error
-❌ Not logging external calls → impossible to debug in production
-❌ Hardcoding API keys → use env vars or secrets manager
-```
+- Calling external APIs without timeout — a slow service freezes your app.
+- Retry on POST without idempotency key — duplicates in charges, emails.
+- Retry on 4xx errors — the request is wrong, repeating it won't fix it.
+- Using SDK directly in controllers — hard to test and replace.
+- Exposing SDK types to the rest of the app — coupling to provider.
+- Webhooks without signature verification — anyone can forge events.
+- Processing webhook in the handler — timeout, provider retries.
+- Ignoring provider rate limits — you get temporarily banned.
+- Circuit breaker on critical services without fallback — ungraceful error.
+- Not logging external calls — impossible to debug in production.
+- Hardcoding API keys — use env vars or secrets manager.

@@ -1,73 +1,42 @@
 ---
 name: testing
 description: >
-  Testing de backend Node.js. Cubre unit tests (services, utils),
-  integration tests (API con supertest), mocking (DI, repositories),
-  testing de base de datos (testcontainers, test DB), fixtures,
-  factories, y estrategia de testing por capa.
+  Usa esta skill cuando escribas tests para backend Node.js. Cubre
+  unit tests (services, utils), integration tests (API con supertest),
+  mocking (DI, repositories), testing de base de datos (testcontainers,
+  test DB), fixtures, factories y estrategia por capa.
 ---
 
-# 🧪 Testing — Tests Backend
+# Testing — Tests Backend
 
-## Principio
+## Flujo de trabajo del agente
 
-> **Testea el comportamiento, no la implementación.**
-> Un test debe fallar cuando el feature se rompe,
-> no cuando haces un refactor interno.
+**1.** Identificar el tipo de test según la capa (sección 1).
+**2.** Elegir herramientas del stack (sección 2).
+**3.** Escribir unit o integration test según corresponda (secciones 3–5).
+**4.** Configurar DB testing y fixtures si necesario (secciones 6–7).
+**5.** Aplicar reglas de mocking y configuración (secciones 8–9).
+**6.** Verificar contra la lista de gotchas (sección 10).
 
----
+## 1. Estrategia de testing por capa
 
-## Estrategia de Testing por Capa
+**Unit tests (70%)** — rápidos, aislados: services (lógica de negocio pura), utils/helpers (funciones puras), validators (schemas). No testear controllers como unit (usar integration), ni código del framework (guards, pipes).
 
-```
-UNIT TESTS (70%) — Rápidos, aislados
-  ✅ Services: lógica de negocio pura
-  ✅ Utils / helpers: funciones puras
-  ✅ Validators: schemas de validación
-  ❌ NO testear controllers como unit → testearlos como integration
-  ❌ NO testear código del framework (guards, pipes) → ya está testeado
+**Integration tests (25%)** — HTTP request → response: endpoints completos (request → middleware → controller → service → DB → response), flujos de auth, validación (body inválido → 400), permisos (sin rol → 403).
 
-INTEGRATION TESTS (25%) — HTTP request → response
-  ✅ Endpoints completos: request → middleware → controller → service → DB → response
-  ✅ Flujos de auth: login → access → refresh → logout
-  ✅ Validación: enviar body inválido → esperar 400
-  ✅ Permisos: user sin rol → esperar 403
+**E2E tests (5%)** — solo flujos críticos: registro → login → crear recurso → verificar, checkout completo. Pocos pero críticos.
 
-E2E TESTS (5%) — Solo flujos críticos de negocio
-  ✅ Registro → login → crear recurso → verificar
-  ✅ Checkout completo (si aplica)
-  → Pocos pero críticos
-```
+## 2. Stack de testing
 
----
+**Vitest (preferido):** rápido (ESM nativo, threads), compatible con API de Jest, in-source testing disponible, mismo config que el proyecto.
 
-## Stack de Testing
+**Jest:** ecosistema maduro, pero más lento que Vitest. Config CJS/ESM puede ser problemática.
 
-```
-Vitest (PREFERIDO):
-  ✅ Rápido (ESM nativo, threads)
-  ✅ Compatible con API de Jest
-  ✅ In-source testing disponible
-  ✅ Mismo config que el proyecto (vite.config)
+**Supertest:** integration tests HTTP, envía requests a Express/NestJS sin levantar servidor.
 
-Jest (si ya existe en el proyecto):
-  ✅ Ecosistema maduro
-  ❌ Más lento que Vitest
-  ❌ Configuración CJS/ESM puede ser problemática
+**Testcontainers:** DB real en container para integration tests (Redis, PostgreSQL efímeros). Más confiable que mocks de DB.
 
-Supertest:
-  ✅ Integration tests HTTP
-  ✅ Enviar requests a Express/NestJS sin levantar servidor
-
-Testcontainers:
-  ✅ DB real en container para integration tests
-  ✅ Redis, PostgreSQL, etc. efímeros
-  ✅ Tests más confiables que mocks de DB
-```
-
----
-
-## Unit Tests — Services
+## 3. Unit Tests — Services
 
 ```typescript
 // users.service.test.ts
@@ -127,9 +96,7 @@ describe('UsersService', () => {
 });
 ```
 
----
-
-## Integration Tests — Supertest
+## 4. Integration Tests — Supertest
 
 ```typescript
 // users.e2e-spec.ts
@@ -222,9 +189,7 @@ describe('Users API', () => {
 });
 ```
 
----
-
-## NestJS — Testing Module
+## 5. NestJS — Testing Module
 
 ```typescript
 // users.service.spec.ts (NestJS)
@@ -259,9 +224,7 @@ describe('UsersService', () => {
 });
 ```
 
----
-
-## Database Testing
+## 6. Database Testing
 
 ```typescript
 // Opción 1: Testcontainers (DB real en container)
@@ -288,9 +251,7 @@ beforeEach(async () => {
 });
 ```
 
----
-
-## Fixtures y Factories
+## 7. Fixtures y Factories
 
 ```typescript
 // test/fixtures/user.fixture.ts
@@ -326,28 +287,13 @@ export async function createTestUser(prisma: PrismaClient, overrides?: Partial<U
 }
 ```
 
----
+## 8. Mocking
 
-## Mocking
+Mockear dependencias externas (DB, Redis, APIs, email). No mockear la unidad bajo test. No mockear tipos de TypeScript, mockear implementaciones. Preferir dependency injection para facilitar mocking. En integration tests preferir DB real sobre mocks de Prisma.
 
-```
-REGLAS DE MOCKING:
-  1. Mockear dependencias externas (DB, Redis, APIs, email)
-  2. NO mockear la unidad bajo test
-  3. NO mockear tipos de TypeScript → mockear implementaciones
-  4. Preferir dependency injection → facilita mocking
-  5. En integration tests: preferir DB real sobre mocks de Prisma
+**Herramientas:** `vi.fn()` (mock function), `vi.spyOn()` (spy on existing method), `vi.mock()` (mock de módulo entero), `vitest-mock-extended` (mockDeep para Prisma).
 
-HERRAMIENTAS:
-  vi.fn()          → mock function
-  vi.spyOn()       → spy on existing method
-  vi.mock()        → mock de módulo entero
-  vitest-mock-extended → mockDeep para Prisma
-```
-
----
-
-## Configuración
+## 9. Configuración
 
 ```typescript
 // vitest.config.ts
@@ -382,28 +328,20 @@ export default defineConfig({
 // "test:e2e": "vitest run --config vitest.e2e.config.ts"
 ```
 
----
+## 10. Gotchas
 
-## Anti-patrones
-
-```
-❌ Testear implementación interna → el test falla en cada refactor
-❌ Mockear todo → test pasa pero feature está rota
-❌ Test sin assertions → test que nunca falla no sirve
-❌ Shared mutable state entre tests → tests que fallan solo juntos
-❌ Tests que dependen de orden → cada test debe ser independiente
-❌ Ignorar test flaky → arreglarlo o eliminarlo
-❌ Integration test sin cleanup → datos de un test contaminan otro
-❌ Test de happy path solamente → testear también errores y edge cases
-❌ describe/it genéricos ("should work") → describir comportamiento esperado
-❌ Snapshot tests para JSON responses → frágiles, usar assertions específicas
-```
-
----
+- Testear implementación interna — el test falla en cada refactor.
+- Mockear todo — test pasa pero feature está rota.
+- Test sin assertions — test que nunca falla no sirve.
+- Shared mutable state entre tests — tests que fallan solo juntos.
+- Tests que dependen de orden — cada test debe ser independiente.
+- Ignorar test flaky — arreglarlo o eliminarlo.
+- Integration test sin cleanup — datos de un test contaminan otro.
+- Test de happy path solamente — testear también errores y edge cases.
+- describe/it genéricos ("should work") — describir comportamiento esperado.
+- Snapshot tests para JSON responses — frágiles, usar assertions específicas.
 
 ## Skills Relacionadas
-
-> **Consultar el índice maestro [`backend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para la cadena completa.
 
 | Skill | Por qué |
 |-------|--------|

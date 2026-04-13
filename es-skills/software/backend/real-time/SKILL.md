@@ -1,48 +1,33 @@
 ---
 name: real-time
 description: >
-  Comunicación en tiempo real en backend Node.js. Cubre WebSocket
-  (Socket.IO, ws), Server-Sent Events (SSE), rooms/namespaces,
-  scaling con Redis adapter, autenticación en WebSocket, y reconexión.
-  Cuándo usar eventos → architecture/messaging-and-events.
+  Usa esta skill cuando implementes comunicación en tiempo real en
+  backend Node.js. Cubre WebSocket (Socket.IO, ws), Server-Sent
+  Events (SSE), rooms/namespaces, scaling con Redis adapter,
+  autenticación en WebSocket, y reconexión. Cuándo usar eventos
+  → architecture/messaging-and-events.
 ---
 
-# 🔴 Real-Time — WebSocket y SSE
+# Real-Time — WebSocket y SSE
 
-## Principio
+## Flujo de trabajo del agente
 
-> **Real-time solo cuando el cliente NECESITA datos sin pedir.**
-> Si el cliente puede hacer polling cada 30s, no necesitas WebSocket.
-> Evaluar complejidad vs beneficio antes de implementar.
+**1.** Decidir tecnología: WebSocket, SSE o polling (sección 1).
+**2.** Configurar Socket.IO o SSE según el caso (secciones 2–5).
+**3.** Organizar rooms y namespaces (sección 6).
+**4.** Configurar Redis adapter para múltiples instancias (sección 7).
+**5.** Implementar reconexión client-side (sección 8).
+**6.** Verificar contra la lista de gotchas (sección 9).
 
----
+## 1. ¿WebSocket o SSE?
 
-## ¿WebSocket o SSE?
+**WebSocket (bidireccional):** chat, mensajería, juegos multiplayer, collaborative editing, cualquier caso donde el cliente envía datos en tiempo real. Más complejo: manejo de conexiones, reconexión, scaling.
 
-```
-WEBSOCKET (bidireccional):
-  ✅ Chat, mensajería
-  ✅ Juegos multiplayer
-  ✅ Collaborative editing
-  ✅ Cualquier caso donde el CLIENTE envía datos en tiempo real
-  → Más complejo: manejo de conexiones, reconexión, scaling
+**SSE — Server-Sent Events (unidireccional: server → client):** notificaciones, live feeds (stock prices, scores), progress updates (file processing, deployment), cualquier caso donde solo el server envía datos. Más simple: HTTP nativo, reconexión automática, no necesita library.
 
-SSE — Server-Sent Events (unidireccional: server → client):
-  ✅ Notificaciones
-  ✅ Live feeds (stock prices, scores)
-  ✅ Progress updates (file processing, deployment)
-  ✅ Cualquier caso donde solo el SERVER envía datos
-  → Más simple: HTTP nativo, reconexión automática, no necesita library
+**Polling (fallback simple):** datos que cambian cada 30s+ (dashboard metrics), no justifica la complejidad de WS/SSE. Long polling si necesitas < 5s de latencia sin WS.
 
-POLLING (fallback simple):
-  ✅ Datos que cambian cada 30s+ (dashboard metrics)
-  ✅ No justifica la complejidad de WS/SSE
-  → Long polling si necesitas < 5s de latencia sin WS
-```
-
----
-
-## Socket.IO — Setup
+## 2. Socket.IO — Setup
 
 ```typescript
 // server.ts
@@ -114,9 +99,7 @@ io.on('connection', (socket) => {
 });
 ```
 
----
-
-## NestJS — Gateway
+## 3. NestJS — Gateway
 
 ```typescript
 @WebSocketGateway({
@@ -165,9 +148,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 }
 ```
 
----
-
-## SSE — Server-Sent Events
+## 4. SSE — Server-Sent Events
 
 ```typescript
 // Express — SSE endpoint
@@ -220,27 +201,11 @@ export class NotificationsController {
 }
 ```
 
----
+## 5. Rooms y Namespaces
 
-## Rooms y Namespaces
+**Namespaces (Socket.IO):** `/chat` → mensajería, `/dashboard` → métricas en tiempo real, `/support` → chat de soporte. Cada namespace puede tener sus propios middleware y handlers. El client se conecta a un namespace específico.
 
-```
-NAMESPACES (Socket.IO):
-  /chat       → Mensajería
-  /dashboard  → Métricas en tiempo real
-  /support    → Chat de soporte
-  
-  Cada namespace puede tener sus propios middleware y handlers.
-  Client se conecta a un namespace específico.
-
-ROOMS:
-  user:usr_123           → Room personal (notificaciones directas)
-  chat:room_456          → Sala de chat
-  org:org_789            → Organización
-  
-  Un socket puede estar en múltiples rooms.
-  Broadcast a room = todos los sockets en ese room reciben.
-```
+**Rooms:** `user:usr_123` → room personal (notificaciones directas), `chat:room_456` → sala de chat, `org:org_789` → organización. Un socket puede estar en múltiples rooms. Broadcast a room = todos los sockets en ese room reciben.
 
 ```typescript
 // Emit a room específico
@@ -256,9 +221,7 @@ socket.to('chat:room_456').emit('newMessage', message);
 io.to('room1').to('room2').emit('announcement', data);
 ```
 
----
-
-## Scaling con Redis Adapter
+## 6. Scaling con Redis Adapter
 
 ```typescript
 // SIN Redis adapter: cada instancia tiene sus propios sockets
@@ -280,9 +243,7 @@ io.adapter(createAdapter(pubClient, subClient));
 //   → llega a TODOS los sockets en room:123, sin importar la instancia
 ```
 
----
-
-## Reconexión
+## 7. Reconexión
 
 ```typescript
 // CLIENT-SIDE: Socket.IO reconecta automáticamente
@@ -308,19 +269,15 @@ io.use(async (socket, next) => {
 });
 ```
 
----
+## 8. Gotchas
 
-## Anti-patrones
-
-```
-❌ WebSocket para todo → SSE o polling cuando solo el server envía
-❌ Sin autenticación en WS → cualquiera se conecta
-❌ Sin validación de input en messages → XSS/injection vía WS
-❌ Broadcast sin rooms → enviar a TODOS incluyendo usuarios no relevantes
-❌ Sin Redis adapter en múltiples instancias → mensajes se pierden
-❌ Mensajes pesados por WS → enviar solo IDs/diffs, cliente hace fetch del resto
-❌ Sin heartbeat/ping → conexiones zombie
-❌ Sin rate limiting en WS → un client puede floodar con mensajes
-❌ Lógica de negocio en el gateway → mover a services
-❌ Sin graceful disconnect → recursos no se limpian
-```
+- WebSocket para todo — SSE o polling cuando solo el server envía.
+- Sin autenticación en WS — cualquiera se conecta.
+- Sin validación de input en messages — XSS/injection vía WS.
+- Broadcast sin rooms — enviar a todos incluyendo usuarios no relevantes.
+- Sin Redis adapter en múltiples instancias — mensajes se pierden.
+- Mensajes pesados por WS — enviar solo IDs/diffs, cliente hace fetch del resto.
+- Sin heartbeat/ping — conexiones zombie.
+- Sin rate limiting en WS — un client puede floodar con mensajes.
+- Lógica de negocio en el gateway — mover a services.
+- Sin graceful disconnect — recursos no se limpian.

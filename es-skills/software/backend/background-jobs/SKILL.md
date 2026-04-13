@@ -1,43 +1,31 @@
 ---
 name: background-jobs
 description: >
-  Procesamiento de tareas en background para backend Node.js. Cubre BullMQ
-  (queues, workers, scheduling), patrones de retry, dead letter queues,
-  cron jobs, prioridades, y monitoreo de jobs. Enfocado en implementación
-  en código (qué servicio de queue cloud usar → architecture/messaging).
+  Usa esta skill cuando implementes procesamiento de tareas en
+  background para backend Node.js. Cubre BullMQ (queues, workers,
+  scheduling), patrones de retry, dead letter queues, cron jobs,
+  prioridades y monitoreo. Enfocado en implementación (qué servicio
+  de queue cloud usar → architecture/messaging).
 ---
 
-# ⏳ Background Jobs — Queues y Workers
+# Background Jobs — Queues y Workers
 
-## Principio
+## Flujo de trabajo del agente
 
-> **Si tarda más de 500ms o puede fallar intermitentemente, no lo hagas en el request.**
-> Envíalo a una queue y responde inmediatamente al cliente.
+**1.** Decidir si la tarea requiere background (sección 1).
+**2.** Configurar queue y worker con BullMQ (secciones 2–3).
+**3.** Integrar con NestJS si aplica (sección 4).
+**4.** Configurar retry, backoff e idempotencia (sección 5).
+**5.** Agregar cron jobs y DLQ según necesidad (secciones 6–7).
+**6.** Verificar contra la lista de gotchas (sección 9).
 
----
+## 1. Cuándo usar background jobs
 
-## ¿Cuándo Usar Background Jobs?
+**Usar para:** envío de emails (welcome, password reset, notificaciones), generación de reportes (PDFs, CSVs), procesamiento de imágenes (resize, thumbnails), webhooks salientes con retry, sincronización con servicios externos, import/export masivos, cron jobs (limpieza, mantenimiento), notificaciones push.
 
-```
-✅ USAR PARA:
-  - Envío de emails (welcome, password reset, notificaciones)
-  - Generación de reportes (PDFs, CSVs)
-  - Procesamiento de imágenes (resize, thumbnails)
-  - Webhooks salientes (retry si falla)
-  - Sincronización con servicios externos
-  - Import/export de datos masivos
-  - Cron jobs (limpieza, mantenimiento)
-  - Notificaciones push
+**No usar para:** validación de input (hacerlo en el request), lectura simple de DB (respuesta inmediata), autenticación (bloqueante por naturaleza).
 
-❌ NO USAR PARA:
-  - Validación de input → hacerlo en el request
-  - Lectura simple de DB → respuesta inmediata
-  - Autenticación → bloqueante por naturaleza
-```
-
----
-
-## BullMQ — Setup
+## 2. BullMQ — Setup
 
 ```typescript
 // queue.ts — definición de la queue
@@ -88,9 +76,7 @@ export const emailWorker = new Worker(
 );
 ```
 
----
-
-## Agregar Jobs
+## 3. Agregar Jobs
 
 ```typescript
 // Desde un service
@@ -123,9 +109,7 @@ await emailQueue.add('sync-user', { userId }, {
 });
 ```
 
----
-
-## NestJS — BullMQ Module
+## 4. NestJS — BullMQ Module
 
 ```typescript
 // app.module.ts
@@ -187,23 +171,11 @@ export class UsersService {
 }
 ```
 
----
+## 5. Retry y Backoff
 
-## Retry y Backoff
+**Estrategias:** fixed (siempre el mismo delay), exponential (crece: 1 s, 2 s, 4 s, 8 s), custom (función según intento).
 
-```
-ESTRATEGIAS DE RETRY:
-  fixed:       Siempre el mismo delay (1s, 1s, 1s)
-  exponential: Delay crece exponencialmente (1s, 2s, 4s, 8s)
-  custom:      Función custom según el intento
-
-REGLAS:
-  1. Siempre poner límite de attempts (3-5 típico)
-  2. Exponential backoff por defecto → evita thundering herd
-  3. Jobs que fallan N veces → van a dead letter queue
-  4. Idempotencia: el worker DEBE poder procesar el mismo job 2+ veces
-     sin efectos secundarios duplicados
-```
+Siempre poner límite de attempts (3–5 típico). Exponential backoff por defecto para evitar thundering herd. Jobs que fallan N veces van a dead letter queue. El worker DEBE ser idempotente: poder procesar el mismo job 2+ veces sin efectos duplicados.
 
 ```typescript
 // Job idempotente
@@ -224,9 +196,7 @@ async function processPayment(job: Job<{ orderId: string }>) {
 }
 ```
 
----
-
-## Cron Jobs / Scheduled Tasks
+## 6. Cron Jobs / Scheduled Tasks
 
 ```typescript
 // BullMQ — repeatable jobs
@@ -269,9 +239,7 @@ export class TasksService {
 //   BullMQ: tareas que necesitan retry, distribución, persistencia
 ```
 
----
-
-## Dead Letter Queue
+## 7. Dead Letter Queue
 
 ```typescript
 // Jobs que exceden max attempts van a una DLQ para revisión manual
@@ -301,24 +269,11 @@ emailWorker.on('failed', async (job, error) => {
 });
 ```
 
----
+## 8. Monitoreo
 
-## Monitoreo
+**Herramientas:** Bull Board (dashboard web, desarrollo/staging), BullMQ Pro (métricas avanzadas), custom metrics (Prometheus + Grafana).
 
-```
-HERRAMIENTAS:
-  Bull Board      → Dashboard web para BullMQ (desarrollo/staging)
-  BullMQ Pro      → Métricas avanzadas
-  Custom metrics  → Prometheus + Grafana
-
-MÉTRICAS CLAVE:
-  - Jobs waiting       → cola creciendo = workers insuficientes
-  - Jobs active        → workers ocupados
-  - Jobs completed/min → throughput
-  - Jobs failed        → tasa de error
-  - Job duration avg   → performance del worker
-  - DLQ size           → jobs que necesitan atención manual
-```
+**Métricas clave:** jobs waiting (cola creciendo = workers insuficientes), jobs active (workers ocupados), jobs completed/min (throughput), jobs failed (tasa de error), job duration avg (performance), DLQ size (atención manual).
 
 ```typescript
 // Bull Board setup (desarrollo)
@@ -338,19 +293,15 @@ createBullBoard({
 app.use('/admin/queues', serverAdapter.getRouter());
 ```
 
----
+## 9. Gotchas
 
-## Anti-patrones
-
-```
-❌ Job no idempotente → retries causan duplicados (cobros dobles, emails dobles)
-❌ Datos pesados en el job payload → pasar solo IDs, leer datos en el worker
-❌ Sin límite de retry → job fallido se reintenta para siempre
-❌ Worker sin error handling → un throw sin catch mata el worker
-❌ Cron job en cada instancia → usar BullMQ repeat (se ejecuta una vez)
-❌ Jobs sin logging → imposible debuggear failures
-❌ Queue sin monitoreo → no sabes si hay 50k jobs atrasados
-❌ Worker con side effects no reversibles → transferencia de dinero sin idempotencia
-❌ Jobs que dependen de orden → queues no garantizan orden (salvo FIFO explícito)
-❌ Redis efímero para jobs críticos → usar Redis con persistencia (AOF)
-```
+- Job no idempotente — retries causan duplicados (cobros dobles, emails dobles).
+- Datos pesados en el job payload — pasar solo IDs, leer datos en el worker.
+- Sin límite de retry — job fallido se reintenta para siempre.
+- Worker sin error handling — un throw sin catch mata el worker.
+- Cron job en cada instancia — usar BullMQ repeat (se ejecuta una vez).
+- Jobs sin logging — imposible debuggear failures.
+- Queue sin monitoreo — no sabes si hay 50k jobs atrasados.
+- Worker con side effects no reversibles — transferencia de dinero sin idempotencia.
+- Jobs que dependen de orden — queues no garantizan orden (salvo FIFO explícito).
+- Redis efímero para jobs críticos — usar Redis con persistencia (AOF).

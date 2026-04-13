@@ -1,43 +1,31 @@
 ---
 name: background-jobs
 description: >
-  Background task processing for Node.js backend. Covers BullMQ
-  (queues, workers, scheduling), retry patterns, dead letter queues,
-  cron jobs, priorities, and job monitoring. Focused on code-level
-  implementation (which cloud queue service to use → architecture/messaging).
+  Use this skill when implementing background task processing in a
+  Node.js backend. Covers BullMQ (queues, workers, scheduling),
+  retry patterns, dead letter queues, cron jobs, priorities, and
+  job monitoring. Focused on implementation (which cloud queue
+  service to use → architecture/messaging).
 ---
 
-# ⏳ Background Jobs — Queues and Workers
+# Background Jobs — Queues and Workers
 
-## Principle
+## Agent workflow
 
-> **If it takes more than 500ms or can fail intermittently, don't do it in the request.**
-> Send it to a queue and respond immediately to the client.
+**1.** Decide whether the task requires background processing (section 1).
+**2.** Configure queue and worker with BullMQ (sections 2–3).
+**3.** Integrate with NestJS if applicable (section 4).
+**4.** Configure retry, backoff, and idempotency (section 5).
+**5.** Add cron jobs and DLQ as needed (sections 6–7).
+**6.** Check against the gotchas list (section 9).
 
----
+## 1. When to use background jobs
 
-## When to Use Background Jobs?
+**Use for:** sending emails (welcome, password reset, notifications), report generation (PDFs, CSVs), image processing (resize, thumbnails), outgoing webhooks with retry, synchronization with external services, bulk data import/export, cron jobs (cleanup, maintenance), push notifications.
 
-```
-✅ USE FOR:
-  - Sending emails (welcome, password reset, notifications)
-  - Report generation (PDFs, CSVs)
-  - Image processing (resize, thumbnails)
-  - Outgoing webhooks (retry on failure)
-  - Synchronization with external services
-  - Bulk data import/export
-  - Cron jobs (cleanup, maintenance)
-  - Push notifications
+**Do not use for:** input validation (do it in the request), simple DB reads (respond immediately), authentication (blocking by nature).
 
-❌ DO NOT USE FOR:
-  - Input validation → do it in the request
-  - Simple DB reads → respond immediately
-  - Authentication → blocking by nature
-```
-
----
-
-## BullMQ — Setup
+## 2. BullMQ — Setup
 
 ```typescript
 // queue.ts — queue definition
@@ -88,9 +76,7 @@ export const emailWorker = new Worker(
 );
 ```
 
----
-
-## Adding Jobs
+## 3. Adding Jobs
 
 ```typescript
 // From a service
@@ -123,9 +109,7 @@ await emailQueue.add('sync-user', { userId }, {
 });
 ```
 
----
-
-## NestJS — BullMQ Module
+## 4. NestJS — BullMQ Module
 
 ```typescript
 // app.module.ts
@@ -187,23 +171,11 @@ export class UsersService {
 }
 ```
 
----
+## 5. Retry and Backoff
 
-## Retry and Backoff
+**Strategies:** fixed (always the same delay), exponential (grows: 1 s, 2 s, 4 s, 8 s), custom (function based on the attempt).
 
-```
-RETRY STRATEGIES:
-  fixed:       Always the same delay (1s, 1s, 1s)
-  exponential: Delay grows exponentially (1s, 2s, 4s, 8s)
-  custom:      Custom function based on the attempt
-
-RULES:
-  1. Always set an attempts limit (3-5 is typical)
-  2. Exponential backoff by default → avoids thundering herd
-  3. Jobs that fail N times → go to dead letter queue
-  4. Idempotency: the worker MUST be able to process the same job 2+ times
-     without duplicate side effects
-```
+Always set an attempts limit (3–5 is typical). Exponential backoff by default to avoid thundering herd. Jobs that fail N times go to a dead letter queue. The worker MUST be idempotent: able to process the same job 2+ times without duplicate side effects.
 
 ```typescript
 // Idempotent job
@@ -224,9 +196,7 @@ async function processPayment(job: Job<{ orderId: string }>) {
 }
 ```
 
----
-
-## Cron Jobs / Scheduled Tasks
+## 6. Cron Jobs / Scheduled Tasks
 
 ```typescript
 // BullMQ — repeatable jobs
@@ -269,9 +239,7 @@ export class TasksService {
 //   BullMQ: tasks that need retry, distribution, persistence
 ```
 
----
-
-## Dead Letter Queue
+## 7. Dead Letter Queue
 
 ```typescript
 // Jobs that exceed max attempts go to a DLQ for manual review
@@ -301,24 +269,11 @@ emailWorker.on('failed', async (job, error) => {
 });
 ```
 
----
+## 8. Monitoring
 
-## Monitoring
+**Tools:** Bull Board (web dashboard, development/staging), BullMQ Pro (advanced metrics), custom metrics (Prometheus + Grafana).
 
-```
-TOOLS:
-  Bull Board      → Web dashboard for BullMQ (development/staging)
-  BullMQ Pro      → Advanced metrics
-  Custom metrics  → Prometheus + Grafana
-
-KEY METRICS:
-  - Jobs waiting       → queue growing = insufficient workers
-  - Jobs active        → workers busy
-  - Jobs completed/min → throughput
-  - Jobs failed        → error rate
-  - Job duration avg   → worker performance
-  - DLQ size           → jobs that need manual attention
-```
+**Key metrics:** jobs waiting (queue growing = insufficient workers), jobs active (workers busy), jobs completed/min (throughput), jobs failed (error rate), job duration avg (performance), DLQ size (needs manual attention).
 
 ```typescript
 // Bull Board setup (development)
@@ -338,19 +293,15 @@ createBullBoard({
 app.use('/admin/queues', serverAdapter.getRouter());
 ```
 
----
+## 9. Gotchas
 
-## Anti-patterns
-
-```
-❌ Non-idempotent job → retries cause duplicates (double charges, double emails)
-❌ Heavy data in the job payload → pass only IDs, read data in the worker
-❌ No retry limit → failed job retries forever
-❌ Worker without error handling → an unhandled throw kills the worker
-❌ Cron job on every instance → use BullMQ repeat (runs only once)
-❌ Jobs without logging → impossible to debug failures
-❌ Queue without monitoring → you don't know if there are 50k backlogged jobs
-❌ Worker with non-reversible side effects → money transfer without idempotency
-❌ Jobs that depend on order → queues don't guarantee order (unless explicit FIFO)
-❌ Ephemeral Redis for critical jobs → use Redis with persistence (AOF)
-```
+- Non-idempotent job — retries cause duplicates (double charges, double emails).
+- Heavy data in the job payload — pass only IDs, read data in the worker.
+- No retry limit — failed job retries forever.
+- Worker without error handling — an unhandled throw kills the worker.
+- Cron job on every instance — use BullMQ repeat (runs only once).
+- Jobs without logging — impossible to debug failures.
+- Queue without monitoring — you don't know if there are 50k backlogged jobs.
+- Worker with non-reversible side effects — money transfer without idempotency.
+- Jobs that depend on order — queues don't guarantee order (unless explicit FIFO).
+- Ephemeral Redis for critical jobs — use Redis with persistence (AOF).

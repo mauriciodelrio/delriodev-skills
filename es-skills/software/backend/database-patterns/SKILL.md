@@ -1,52 +1,48 @@
 ---
 name: database-patterns
 description: >
-  Patrones de acceso a datos en backend Node.js. Cubre ORM setup (Prisma,
-  Drizzle, TypeORM), migraciones, seeders, repository pattern, transacciones,
-  connection pooling, N+1, soft deletes, y patrones de consulta eficientes.
+  Usa esta skill cuando implementes patrones de acceso a datos en backend
+  Node.js. Cubre ORM setup (Prisma, Drizzle, TypeORM), migraciones, seeders,
+  transacciones, connection pooling, N+1, soft deletes y consultas eficientes.
   Enfocado en CÓMO usar el ORM en código (qué DB usar → architecture/databases).
 ---
 
-# 🗄️ Database Patterns — Acceso a Datos
+# Database Patterns — Acceso a Datos
 
-## Principio
+## Flujo de trabajo del agente
 
-> **El ORM es una herramienta, no una excusa para ignorar SQL.**
-> Entiende las queries que genera el ORM. Revisa el query log en desarrollo.
-> Si una query es ineficiente, optimízala directamente en SQL.
+**1.** Elegir ORM según contexto del proyecto (sección 1).
+**2.** Configurar schema y service pattern (secciones 2–3).
+**3.** Implementar migraciones y seeders (secciones 4–5).
+**4.** Aplicar transacciones, N+1 fixes, pooling y soft deletes (secciones 6–9).
+**5.** Verificar contra la lista de gotchas (sección 10).
 
----
+## 1. Decisión: ¿Qué ORM?
 
-## Decisión: ¿Qué ORM?
+**Prisma** (preferido para proyectos nuevos):
+- Type-safe queries generadas desde schema
+- Migraciones declarativas
+- Prisma Studio (GUI para explorar datos)
+- Relations sin JOIN manual
+- Excelente DX: autocomplete, error messages
+- Overhead en queries complejas (N+1 si no cuidas includes)
+- No soporta raw SQL tipado nativamente (usar `$queryRaw`)
 
-```
-Prisma (PREFERIDO para proyectos nuevos):
-  ✅ Type-safe queries generadas desde schema
-  ✅ Migraciones declarativas
-  ✅ Prisma Studio (GUI para explorar datos)
-  ✅ Relations sin JOIN manual
-  ✅ Excelente DX: autocomplete, error messages
-  ❌ Overhead en queries complejas (N+1 si no cuidas includes)
-  ❌ No soporta raw SQL tipado nativamente (usar $queryRaw)
+**Drizzle** (preferido para performance y control):
+- SQL-first: queries que parecen SQL
+- Zero overhead, genera queries óptimas
+- Full type-safety sin code generation
+- Soporte nativo para raw SQL tipado
+- Menos tooling (sin Studio GUI)
+- Curva de aprendizaje si vienes de ORM clásico
 
-Drizzle (PREFERIDO para performance y control):
-  ✅ SQL-first: queries que parecen SQL
-  ✅ Zero overhead → genera queries óptimas
-  ✅ Full type-safety sin code generation
-  ✅ Soporte nativo para raw SQL tipado
-  ❌ Menos tooling (sin Studio GUI)
-  ❌ Curva de aprendizaje si vienes de ORM clásico
+**TypeORM** (solo si ya existe en el proyecto):
+- Bugs conocidos sin fix por años
+- Type-safety parcial
+- Migraciones frágiles
+- No usar en proyectos nuevos
 
-TypeORM (SOLO si ya existe en el proyecto):
-  ❌ Bugs conocidos sin fix por años
-  ❌ Type-safety parcial
-  ❌ Migraciones frágiles
-  → No usar en proyectos nuevos
-```
-
----
-
-## Prisma — Setup y Patterns
+## 2. Prisma — Setup y Patterns
 
 ```prisma
 // prisma/schema.prisma
@@ -157,9 +153,7 @@ export class UsersService {
 }
 ```
 
----
-
-## Drizzle — Setup y Patterns
+## 3. Drizzle — Setup y Patterns
 
 ```typescript
 // db/schema.ts
@@ -201,31 +195,20 @@ const activeUsers = await db
   .offset(0);
 ```
 
----
+## 4. Migraciones
 
-## Migrations
+1. Una migración por cambio lógico — no agrupar cambios no relacionados.
+2. Migraciones son solo forward — no editar migraciones ya aplicadas.
+3. Nombre descriptivo: `20240101_add_users_role_column`.
+4. Probar migración en staging antes de producción.
+5. Backward-compatible: agregar columna nullable → deploy → backfill → hacer NOT NULL.
+6. Nunca ejecutar migraciones destructivas sin backup.
 
-```
-REGLAS:
-  1. Una migración por cambio lógico (no agrupar cambios no relacionados)
-  2. Migraciones son SOLO forward (no editar migraciones ya aplicadas)
-  3. Nombre descriptivo: 20240101_add_users_role_column
-  4. Probar migración en staging antes de producción
-  5. Backward-compatible: agregar columna nullable → deploy → backfill → hacer NOT NULL
-  6. NUNCA ejecutar migraciones destructivas sin backup
+**Prisma:** `npx prisma migrate dev --name add_role_column` (genera + aplica), `npx prisma migrate deploy` (solo aplica, producción).
 
-PRISMA:
-  npx prisma migrate dev --name add_role_column   ← genera + aplica
-  npx prisma migrate deploy                       ← solo aplica (producción)
+**Drizzle:** `npx drizzle-kit generate` (genera SQL), `npx drizzle-kit migrate` (aplica).
 
-DRIZZLE:
-  npx drizzle-kit generate                        ← genera SQL
-  npx drizzle-kit migrate                         ← aplica
-```
-
----
-
-## Seeders
+## 5. Seeders
 
 ```typescript
 // prisma/seed.ts
@@ -253,9 +236,7 @@ async function seed() {
 //   ❌ Seed que depende de orden → usar upsert
 ```
 
----
-
-## Transacciones
+## 6. Transacciones
 
 ```typescript
 // Prisma — transacción interactiva
@@ -302,95 +283,78 @@ await db.transaction(async (tx) => {
 });
 ```
 
----
+## 7. N+1 Problem
 
-## N+1 Problem
+1 query para users + N queries para orders (una por user) — esto es el anti-pattern:
 
+```typescript
+const users = await prisma.user.findMany();
+for (const user of users) {
+  user.orders = await prisma.order.findMany({ where: { userId: user.id } });
+}
 ```
-PROBLEMA:
-  // ❌ 1 query para users + N queries para orders (una por user)
-  const users = await prisma.user.findMany();
-  for (const user of users) {
-    user.orders = await prisma.order.findMany({ where: { userId: user.id } });
+
+**Solución Prisma** — include / select con relaciones (2 queries: 1 users + 1 orders):
+
+```typescript
+const users = await prisma.user.findMany({
+  include: { orders: true },
+});
+```
+
+**Solución Drizzle** — join o subquery:
+
+```typescript
+const result = await db.query.users.findMany({
+  with: { orders: true },
+});
+```
+
+Siempre revisar los logs de queries en desarrollo. Activar query logging: `prisma.$on('query', (e) => logger.debug(e))`.
+
+## 8. Connection Pooling
+
+1. Configurar pool size según concurrencia esperada — Prisma default: `connection_limit = num_cpus * 2 + 1`.
+2. En serverless (Lambda): usar Prisma Accelerate o PgBouncer — Lambdas abren muchas conexiones y agotan el pool de la DB.
+3. Timeout de conexión: 5 s — no esperar indefinidamente.
+4. Monitorear conexiones activas en producción.
+
+Ejemplo Prisma en `DATABASE_URL`: `postgresql://user:pass@host:5432/db?connection_limit=10&pool_timeout=5`
+
+## 9. Soft Deletes
+
+Columna `deletedAt: DateTime?` (null = activo). Todas las queries de lectura filtran `deletedAt = null`. DELETE se convierte en `UPDATE SET deletedAt = now()`.
+
+- Recuperar datos borrados
+- Audit trail
+- Foreign keys no se rompen
+- Complica queries (siempre agregar `WHERE deletedAt IS NULL`)
+- Los datos crecen — estrategia de archivado periódico
+
+Prisma middleware (automático):
+
+```typescript
+prisma.$use(async (params, next) => {
+  if (params.action === 'delete') {
+    params.action = 'update';
+    params.args.data = { deletedAt: new Date() };
   }
-
-SOLUCIÓN PRISMA → include / select con relaciones:
-  // ✅ 2 queries: 1 para users + 1 para orders
-  const users = await prisma.user.findMany({
-    include: { orders: true },
-  });
-
-SOLUCIÓN DRIZZLE → join o subquery:
-  const result = await db.query.users.findMany({
-    with: { orders: true },
-  });
-
-REGLA:
-  Siempre revisar los logs de queries en desarrollo.
-  Activar query logging: prisma.$on('query', (e) => logger.debug(e))
+  if (params.action === 'findMany' || params.action === 'findFirst') {
+    params.args.where = { ...params.args.where, deletedAt: null };
+  }
+  return next(params);
+});
 ```
 
----
+## 10. Gotchas
 
-## Connection Pooling
-
-```
-REGLAS:
-  1. Configurar pool size según concurrencia esperada
-     Default Prisma: connection_limit = num_cpus * 2 + 1
-  2. En serverless (Lambda): usar Prisma Accelerate o PgBouncer
-     → Lambdas abren muchas conexiones → agotan el pool de la DB
-  3. Timeout de conexión: 5s (no esperar indefinidamente)
-  4. Monitorear conexiones activas en producción
-
-  // Prisma — en DATABASE_URL
-  postgresql://user:pass@host:5432/db?connection_limit=10&pool_timeout=5
-```
-
----
-
-## Soft Deletes
-
-```
-PATRÓN:
-  Columna deletedAt: DateTime? (null = activo)
-  
-  TODAS las queries de lectura filtran deletedAt = null
-  DELETE → UPDATE SET deletedAt = now()
-  
-  ✅ Recuperar datos borrados
-  ✅ Audit trail
-  ✅ Foreign keys no se rompen
-  
-  ❌ Complica queries (siempre agregar WHERE deletedAt IS NULL)
-  ❌ Los datos crecen → estrategia de archivado periódico
-
-PRISMA MIDDLEWARE (automático):
-  prisma.$use(async (params, next) => {
-    if (params.action === 'delete') {
-      params.action = 'update';
-      params.args.data = { deletedAt: new Date() };
-    }
-    if (params.action === 'findMany' || params.action === 'findFirst') {
-      params.args.where = { ...params.args.where, deletedAt: null };
-    }
-    return next(params);
-  });
-```
-
----
-
-## Anti-patrones
-
-```
-❌ SELECT * → siempre select/include explícito
-❌ Queries en loops → usar include/join/batch
-❌ Migraciones destructivas sin backup → DROP COLUMN, DROP TABLE
-❌ Seeders que insertan duplicados → siempre upsert
-❌ Transacción de larga duración (> 5s) → bloquea rows
-❌ String concatenation en queries → SQL injection → usar parameterized
-❌ Abrir conexión por request → usar pool compartido
-❌ No indexar columnas de filtrado/ordenamiento frecuente
-❌ Prisma sin logging en development → no ves las queries generadas
-❌ TypeORM en proyecto nuevo → usar Prisma o Drizzle
-```
+- `SELECT *` — siempre select/include explícito.
+- Queries en loops — usar include/join/batch.
+- Migraciones destructivas sin backup — DROP COLUMN, DROP TABLE.
+- Seeders que insertan duplicados — siempre upsert.
+- Transacción de larga duración (> 5 s) — bloquea rows.
+- String concatenation en queries — SQL injection — usar parameterized.
+- Abrir conexión por request — usar pool compartido.
+- No indexar columnas de filtrado/ordenamiento frecuente.
+- Prisma sin logging en development — no ves las queries generadas.
+- TypeORM en proyecto nuevo — usar Prisma o Drizzle.
