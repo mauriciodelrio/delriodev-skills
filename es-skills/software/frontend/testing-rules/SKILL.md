@@ -1,19 +1,23 @@
 ---
 name: testing-rules
 description: >
-  Reglas de testing para proyectos React/Next.js. Cubre Vitest/Jest configuración,
-  React Testing Library (queries, userEvent), Playwright E2E, mocking strategies,
-  testing de hooks y Server Components, coverage targets, y patrones de test.
+  Usa esta skill cuando escribas tests en React/Next.js: Vitest configuración,
+  React Testing Library (queries, userEvent), Playwright E2E, mocking con MSW,
+  testing de hooks, coverage targets, y patrones de test.
 ---
 
-# 🧪 Testing — Reglas
+# Testing — Reglas
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Testear comportamiento, no implementación.**
-> Si un refactor rompe tests sin cambiar funcionalidad, los tests están mal escritos.
-
----
+1. Elegir nivel según pirámide: unitario (~30%), integración RTL (~60%), E2E Playwright (~10%).
+2. Configurar Vitest con `jsdom`, setup file, y coverage 80% (sección 1).
+3. Queries RTL por accesibilidad: `getByRole` > `getByLabelText` > `getByText` > `getByTestId` (sección 2).
+4. Siempre `userEvent.setup()`, nunca `fireEvent` (sección 3).
+5. Hooks con `renderHook` + `act`. Providers via `wrapper` (sección 4).
+6. Mocking: `vi.mock` para módulos, MSW para fetch realista (sección 5).
+7. E2E con Playwright para flujos críticos de negocio (sección 6).
+8. Patrón AAA, test data builders, custom render con providers (sección 7).
 
 ## Pirámide de Tests
 
@@ -23,12 +27,9 @@ description: >
       ╱    Unitarios (Vitest)    ╲     ~30% — utils, hooks, lógica pura
 ```
 
----
-
 ## 1. Vitest — Configuración
 
 ```typescript
-// vitest.config.ts
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
@@ -63,7 +64,6 @@ export default defineConfig({
 ```
 
 ```typescript
-// vitest.setup.ts
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
@@ -94,28 +94,19 @@ vi.mock('next/navigation', () => ({
 }));
 ```
 
----
-
 ## 2. React Testing Library — Queries
 
-```tsx
-// ✅ Prioridad de queries (accesibilidad primero)
-// 1. getByRole          — SIEMPRE preferir
-// 2. getByLabelText     — formularios
-// 3. getByPlaceholderText — solo si no hay label
-// 4. getByText          — contenido visible
-// 5. getByDisplayValue  — inputs con valor
-// 6. getByTestId        — ÚLTIMO recurso
+Prioridad de queries (accesibilidad primero): `getByRole` > `getByLabelText` > `getByPlaceholderText` > `getByText` > `getByDisplayValue` > `getByTestId` (último recurso).
 
-// ✅ Ejemplo correcto
+```tsx
 test('muestra productos y permite filtrar', async () => {
   const user = userEvent.setup();
   render(<ProductList />);
 
-  // Buscar por rol (accesible)
+  // Buscar por rol
   expect(screen.getByRole('heading', { name: /productos/i })).toBeInTheDocument();
 
-  // Buscar por label (accesible)
+  // Buscar por label
   const searchInput = screen.getByRole('searchbox', { name: /buscar/i });
   await user.type(searchInput, 'zapatos');
 
@@ -123,7 +114,7 @@ test('muestra productos y permite filtrar', async () => {
   const items = await screen.findAllByRole('listitem');
   expect(items).toHaveLength(3);
 
-  // Verificar que NO está presente
+  // Verificar ausencia
   expect(screen.queryByText(/sin resultados/i)).not.toBeInTheDocument();
 });
 ```
@@ -131,30 +122,21 @@ test('muestra productos y permite filtrar', async () => {
 ### Variantes de Query
 
 ```tsx
-// getBy*    — Lanza error si no encuentra o encuentra múltiples → asserts síncronos
-// queryBy*  — Retorna null si no encuentra → verificar ausencia
-// findBy*   — Retorna Promise → esperar elementos async (combinado con waitFor)
+// getBy*    — Lanza error si no encuentra → asserts síncronos
+// queryBy*  — Retorna null → verificar ausencia
+// findBy*   — Retorna Promise → esperar elementos async
 
-// ✅ Verificar que algo NO existe
+// Verificar ausencia
 expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-// ✅ Esperar que algo aparezca (async)
+// Esperar aparición async (usar findBy, no waitFor + getBy)
 const alert = await screen.findByRole('alert');
 expect(alert).toHaveTextContent(/error/i);
-
-// ❌ NUNCA: usar waitFor + getBy — usar findBy
-await waitFor(() => {
-  expect(screen.getByText('Cargado')).toBeInTheDocument(); // ❌
-});
-const loaded = await screen.findByText('Cargado'); // ✅
 ```
-
----
 
 ## 3. userEvent (No fireEvent)
 
 ```tsx
-// ✅ SIEMPRE userEvent sobre fireEvent
 import userEvent from '@testing-library/user-event';
 
 test('formulario de login', async () => {
@@ -163,7 +145,7 @@ test('formulario de login', async () => {
 
   render(<LoginForm onSubmit={handleSubmit} />);
 
-  // user.type simula tecleo real (keyboard events + input events)
+  // user.type simula tecleo real (keyboard + input events)
   await user.type(screen.getByLabelText(/email/i), 'user@example.com');
   await user.type(screen.getByLabelText(/contraseña/i), 'P@ssw0rd!');
 
@@ -174,13 +156,7 @@ test('formulario de login', async () => {
     password: 'P@ssw0rd!',
   });
 });
-
-// ❌ NUNCA: fireEvent (no simula comportamiento real)
-fireEvent.change(input, { target: { value: 'test' } });  // ❌
-await user.type(input, 'test');                            // ✅
 ```
-
----
 
 ## 4. Testing de Hooks
 
@@ -212,12 +188,9 @@ test('useAuth retorna usuario', () => {
 });
 ```
 
----
-
 ## 5. Mocking
 
 ```tsx
-// ✅ Mock de módulos
 vi.mock('@/services/api', () => ({
   fetchProducts: vi.fn(),
 }));
@@ -231,8 +204,7 @@ beforeEach(() => {
   ]);
 });
 
-// ✅ Mock de fetch (MSW preferido para más realismo)
-// msw/handlers.ts
+// MSW para mock de fetch (más realista)
 import { http, HttpResponse } from 'msw';
 
 export const handlers = [
@@ -249,12 +221,9 @@ export const handlers = [
 ];
 ```
 
----
-
 ## 6. Playwright — E2E
 
 ```typescript
-// playwright.config.ts
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -301,12 +270,10 @@ test.describe('Productos', () => {
 });
 ```
 
----
-
 ## 7. Patrones de Test
 
 ```tsx
-// ✅ Patrón AAA (Arrange, Act, Assert)
+// Patrón AAA (Arrange, Act, Assert)
 test('agrega producto al carrito', async () => {
   // Arrange
   const user = userEvent.setup();
@@ -319,7 +286,7 @@ test('agrega producto al carrito', async () => {
   expect(screen.getByRole('status')).toHaveTextContent('Producto agregado');
 });
 
-// ✅ Test data builders
+// Test data builders
 function buildProduct(overrides: Partial<Product> = {}): Product {
   return {
     id: crypto.randomUUID(),
@@ -331,7 +298,7 @@ function buildProduct(overrides: Partial<Product> = {}): Product {
   };
 }
 
-// ✅ Custom render con providers
+// Custom render con providers
 function renderWithProviders(
   ui: ReactElement,
   options?: RenderOptions & { initialRoute?: string },
@@ -347,38 +314,19 @@ function renderWithProviders(
 }
 ```
 
----
+## Gotchas
 
-## Anti-patrones
-
-```tsx
-// ❌ Testear detalles de implementación
-expect(component.state.counter).toBe(1);           // ❌ Acceder a state directamente
-expect(screen.getByText('1')).toBeInTheDocument();  // ✅ Verificar output visible
-
-// ❌ snapshot tests masivos
-expect(component).toMatchSnapshot(); // ❌ Se rompe con cualquier cambio de markup
-
-// ❌ test-ids como primera opción
-screen.getByTestId('submit-btn');                            // ❌
-screen.getByRole('button', { name: /enviar/i });             // ✅
-
-// ❌ Tests que dependen del orden de ejecución
-// ❌ Tests con sleeps/delays hardcodeados
-// ❌ Tests que no limpian side effects
-// ❌ Tests que mockean todo (test sin sentido)
-// ❌ Un único test gigante por feature (difícil de debuggear)
-```
-
----
+- No testear detalles de implementación (acceder a `state` directo). Verificar output visible.
+- No usar snapshot tests masivos — se rompen con cualquier cambio de markup.
+- Preferir queries por role/label antes que `getByTestId`.
+- No crear tests dependientes del orden de ejecución.
+- No usar sleeps/delays hardcodeados — usar `findBy` o `waitFor`.
+- No mockear todo — un test que mockea todo no testea nada.
+- No crear un único test gigante por feature — dividir en tests atómicos.
 
 ## Skills Relacionadas
 
-> **Consultar el índice maestro [`frontend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para la cadena completa de validación.
+Consultar [`frontend/SKILL.md`](../SKILL.md) para la cadena completa.
 
-| Skill | Por qué |
-|-------|--------|
-| `a11y-rules` | Los tests deben verificar accesibilidad (queries por role, label) |
-| `clean-code-principles` | Test data builders, naming expresivo, funciones atómicas |
-| `component-patterns` | Entender la API del componente para testearlo correctamente |
-| `backend/testing` | Mismos principios para lógica compartida o APIs |
+- `a11y-rules` — queries por role verifican accesibilidad
+- `component-patterns` — entender la API del componente para testearlo

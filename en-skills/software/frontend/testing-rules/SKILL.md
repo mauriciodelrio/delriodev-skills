@@ -1,19 +1,23 @@
 ---
 name: testing-rules
 description: >
-  Testing rules for React/Next.js projects. Covers Vitest/Jest configuration,
-  React Testing Library (queries, userEvent), Playwright E2E, mocking strategies,
-  hook and Server Component testing, coverage targets, and test patterns.
+  Use this skill when writing tests in React/Next.js: Vitest configuration,
+  React Testing Library (queries, userEvent), Playwright E2E, mocking with MSW,
+  hook testing, coverage targets, and test patterns.
 ---
 
-# 🧪 Testing — Rules
+# Testing — Rules
 
-## Guiding Principle
+## Agent workflow
 
-> **Test behavior, not implementation.**
-> If a refactor breaks tests without changing functionality, the tests are poorly written.
-
----
+1. Choose level per pyramid: unit (~30%), integration RTL (~60%), E2E Playwright (~10%).
+2. Configure Vitest with `jsdom`, setup file, and 80% coverage (section 1).
+3. RTL queries by accessibility: `getByRole` > `getByLabelText` > `getByText` > `getByTestId` (section 2).
+4. Always `userEvent.setup()`, never `fireEvent` (section 3).
+5. Hooks with `renderHook` + `act`. Providers via `wrapper` (section 4).
+6. Mocking: `vi.mock` for modules, MSW for realistic fetch (section 5).
+7. E2E with Playwright for critical business flows (section 6).
+8. AAA pattern, test data builders, custom render with providers (section 7).
 
 ## Test Pyramid
 
@@ -23,12 +27,9 @@ description: >
       ╱    Unit (Vitest)         ╲     ~30% — utils, hooks, pure logic
 ```
 
----
-
 ## 1. Vitest — Configuration
 
 ```typescript
-// vitest.config.ts
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import tsconfigPaths from 'vite-tsconfig-paths';
@@ -63,7 +64,6 @@ export default defineConfig({
 ```
 
 ```typescript
-// vitest.setup.ts
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
@@ -94,28 +94,19 @@ vi.mock('next/navigation', () => ({
 }));
 ```
 
----
-
 ## 2. React Testing Library — Queries
 
-```tsx
-// ✅ Query priority (accessibility first)
-// 1. getByRole          — ALWAYS prefer
-// 2. getByLabelText     — forms
-// 3. getByPlaceholderText — only if no label
-// 4. getByText          — visible content
-// 5. getByDisplayValue  — inputs with value
-// 6. getByTestId        — LAST resort
+Query priority (accessibility first): `getByRole` > `getByLabelText` > `getByPlaceholderText` > `getByText` > `getByDisplayValue` > `getByTestId` (last resort).
 
-// ✅ Correct example
+```tsx
 test('displays products and allows filtering', async () => {
   const user = userEvent.setup();
   render(<ProductList />);
 
-  // Search by role (accessible)
+  // Search by role
   expect(screen.getByRole('heading', { name: /products/i })).toBeInTheDocument();
 
-  // Search by label (accessible)
+  // Search by label
   const searchInput = screen.getByRole('searchbox', { name: /search/i });
   await user.type(searchInput, 'shoes');
 
@@ -123,7 +114,7 @@ test('displays products and allows filtering', async () => {
   const items = await screen.findAllByRole('listitem');
   expect(items).toHaveLength(3);
 
-  // Verify it's NOT present
+  // Verify absence
   expect(screen.queryByText(/no results/i)).not.toBeInTheDocument();
 });
 ```
@@ -131,30 +122,21 @@ test('displays products and allows filtering', async () => {
 ### Query Variants
 
 ```tsx
-// getBy*    — Throws if not found or multiple found → synchronous asserts
-// queryBy*  — Returns null if not found → verify absence
-// findBy*   — Returns Promise → wait for async elements (combined with waitFor)
+// getBy*    — Throws if not found → synchronous asserts
+// queryBy*  — Returns null → verify absence
+// findBy*   — Returns Promise → wait for async elements
 
-// ✅ Verify something does NOT exist
+// Verify absence
 expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 
-// ✅ Wait for something to appear (async)
+// Wait for appearance (use findBy, not waitFor + getBy)
 const alert = await screen.findByRole('alert');
 expect(alert).toHaveTextContent(/error/i);
-
-// ❌ NEVER: use waitFor + getBy — use findBy
-await waitFor(() => {
-  expect(screen.getByText('Loaded')).toBeInTheDocument(); // ❌
-});
-const loaded = await screen.findByText('Loaded'); // ✅
 ```
-
----
 
 ## 3. userEvent (Not fireEvent)
 
 ```tsx
-// ✅ ALWAYS userEvent over fireEvent
 import userEvent from '@testing-library/user-event';
 
 test('login form', async () => {
@@ -163,7 +145,7 @@ test('login form', async () => {
 
   render(<LoginForm onSubmit={handleSubmit} />);
 
-  // user.type simulates real typing (keyboard events + input events)
+  // user.type simulates real typing (keyboard + input events)
   await user.type(screen.getByLabelText(/email/i), 'user@example.com');
   await user.type(screen.getByLabelText(/password/i), 'P@ssw0rd!');
 
@@ -174,13 +156,7 @@ test('login form', async () => {
     password: 'P@ssw0rd!',
   });
 });
-
-// ❌ NEVER: fireEvent (doesn't simulate real behavior)
-fireEvent.change(input, { target: { value: 'test' } });  // ❌
-await user.type(input, 'test');                            // ✅
 ```
-
----
 
 ## 4. Testing Hooks
 
@@ -212,12 +188,9 @@ test('useAuth returns user', () => {
 });
 ```
 
----
-
 ## 5. Mocking
 
 ```tsx
-// ✅ Module mocking
 vi.mock('@/services/api', () => ({
   fetchProducts: vi.fn(),
 }));
@@ -231,8 +204,7 @@ beforeEach(() => {
   ]);
 });
 
-// ✅ Fetch mocking (MSW preferred for more realism)
-// msw/handlers.ts
+// MSW for fetch mocking (more realistic)
 import { http, HttpResponse } from 'msw';
 
 export const handlers = [
@@ -249,12 +221,9 @@ export const handlers = [
 ];
 ```
 
----
-
 ## 6. Playwright — E2E
 
 ```typescript
-// playwright.config.ts
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
@@ -301,12 +270,10 @@ test.describe('Products', () => {
 });
 ```
 
----
-
 ## 7. Test Patterns
 
 ```tsx
-// ✅ AAA pattern (Arrange, Act, Assert)
+// AAA pattern (Arrange, Act, Assert)
 test('adds product to cart', async () => {
   // Arrange
   const user = userEvent.setup();
@@ -319,7 +286,7 @@ test('adds product to cart', async () => {
   expect(screen.getByRole('status')).toHaveTextContent('Product added');
 });
 
-// ✅ Test data builders
+// Test data builders
 function buildProduct(overrides: Partial<Product> = {}): Product {
   return {
     id: crypto.randomUUID(),
@@ -331,7 +298,7 @@ function buildProduct(overrides: Partial<Product> = {}): Product {
   };
 }
 
-// ✅ Custom render with providers
+// Custom render with providers
 function renderWithProviders(
   ui: ReactElement,
   options?: RenderOptions & { initialRoute?: string },
@@ -347,38 +314,19 @@ function renderWithProviders(
 }
 ```
 
----
+## Gotchas
 
-## Anti-patterns
-
-```tsx
-// ❌ Testing implementation details
-expect(component.state.counter).toBe(1);           // ❌ Accessing state directly
-expect(screen.getByText('1')).toBeInTheDocument();  // ✅ Verify visible output
-
-// ❌ Massive snapshot tests
-expect(component).toMatchSnapshot(); // ❌ Breaks with any markup change
-
-// ❌ test-ids as first choice
-screen.getByTestId('submit-btn');                            // ❌
-screen.getByRole('button', { name: /submit/i });             // ✅
-
-// ❌ Tests that depend on execution order
-// ❌ Tests with hardcoded sleeps/delays
-// ❌ Tests that don't clean up side effects
-// ❌ Tests that mock everything (meaningless test)
-// ❌ A single giant test per feature (hard to debug)
-```
-
----
+- Do not test implementation details (accessing `state` directly). Verify visible output.
+- Do not use massive snapshot tests — they break with any markup change.
+- Prefer queries by role/label over `getByTestId`.
+- Do not create tests dependent on execution order.
+- Do not use hardcoded sleeps/delays — use `findBy` or `waitFor`.
+- Do not mock everything — a test that mocks everything tests nothing.
+- Do not create a single giant test per feature — split into atomic tests.
 
 ## Related Skills
 
-> **Consult the master index [`frontend/SKILL.md`](../SKILL.md) → "Mandatory Skills by Action"** for the full validation chain.
+Consult [`frontend/SKILL.md`](../SKILL.md) for the full chain.
 
-| Skill | Why |
-|-------|-----|
-| `a11y-rules` | Tests should verify accessibility (queries by role, axe-core) |
-| `clean-code-principles` | Test data builders, expressive naming, atomic functions |
-| `component-patterns` | Understand the component API to test it correctly |
-| `backend/testing` | Same principles for shared logic or APIs |
+- `a11y-rules` — queries by role verify accessibility
+- `component-patterns` — understand the component API to test it correctly
