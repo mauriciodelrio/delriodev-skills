@@ -1,44 +1,33 @@
 ---
 name: api-consumption
 description: >
-  Consumo de APIs y servicios externos desde el backend. Cubre
-  abstracción de clientes HTTP, SDKs, retry con backoff exponencial,
-  circuit breaker, timeouts, rate limiting, manejo de webhooks,
-  idempotencia, y patrones de resiliencia. Complementa api-design
-  (construir APIs) con el CÓMO consumir APIs de terceros.
+  Usa esta skill cuando consumas APIs y servicios externos desde
+  el backend. Cubre abstracción de clientes HTTP, SDKs, retry con
+  backoff exponencial, circuit breaker, timeouts, rate limiting,
+  manejo de webhooks, idempotencia, y patrones de resiliencia.
+  Complementa api-design (construir APIs) con el CÓMO consumir
+  APIs de terceros.
 ---
 
-# 🔌 API Consumption — Consumo de APIs Externas
+# API Consumption — Consumo de APIs Externas
 
-## Principio
+## Flujo de trabajo del agente
 
-> **Toda dependencia externa es un punto de fallo.**
-> APIs de terceros fallan, se ralentizan, y cambian sin aviso.
-> Tu código debe ser resiliente ante todas estas situaciones.
+**1.** Crear cliente HTTP base con timeout y retry (secciones 1–2).
+**2.** Implementar circuit breaker para servicios críticos (sección 3).
+**3.** Encapsular cada proveedor en un Service tipado (sección 4).
+**4.** Configurar timeouts por tipo de operación (sección 5).
+**5.** Implementar webhooks con verificación de firma (sección 6).
+**6.** Agregar idempotencia y rate limiting (secciones 7–8).
+**7.** Verificar contra la lista de gotchas (sección 9).
 
 ---
 
 ## Scope
 
-```
-✅ Esta skill cubre:
-  - Clientes HTTP tipados
-  - SDKs y wrappers de servicios
-  - Retry con backoff exponencial
-  - Circuit breaker
-  - Timeouts y abort
-  - Manejo de webhooks entrantes
-  - Idempotencia en llamadas
+Esta skill cubre: clientes HTTP tipados, SDKs y wrappers de servicios, retry con backoff exponencial, circuit breaker, timeouts y abort, manejo de webhooks entrantes, idempotencia en llamadas. No cubre: diseñar tu propia API → `backend/api-design`, elegir servicios externos → `architecture/*`, autenticación → `backend/auth`.
 
-❌ NO cubre:
-  - Diseñar tu propia API → backend/api-design
-  - Elegir servicios externos → architecture/*
-  - Autenticación → backend/auth
-```
-
----
-
-## Cliente HTTP Base
+## 1. Cliente HTTP Base
 
 ```typescript
 // src/lib/http-client.ts
@@ -100,9 +89,7 @@ class HttpClient {
 }
 ```
 
----
-
-## Retry con Backoff Exponencial
+## 2. Retry con Backoff Exponencial
 
 ```typescript
 interface RetryConfig {
@@ -156,21 +143,9 @@ function sleep(ms: number): Promise<void> {
 }
 ```
 
-```
-REGLAS DE RETRY:
-  1. SOLO retry en errores transitorios (5xx, timeout, network)
-  2. NUNCA retry en 4xx (excepto 408 Request Timeout, 429 Too Many Requests)
-  3. Backoff exponencial: 1s → 2s → 4s → 8s
-  4. SIEMPRE añadir jitter (random) para evitar thundering herd
-  5. Máximo 3-5 retries — más no tiene sentido
-  6. Respetar Retry-After header del servidor
-  7. Retry solo si la operación es idempotente (GET, PUT, DELETE)
-     ❌ NUNCA retry en POST sin idempotency key
-```
+**Reglas de retry:** solo retry en errores transitorios (5xx, timeout, network). Nunca retry en 4xx (excepto 408, 429). Backoff exponencial: 1s → 2s → 4s → 8s. Siempre añadir jitter (random) para evitar thundering herd. Máximo 3–5 retries. Respetar `Retry-After` header del servidor. Retry solo si la operación es idempotente (GET, PUT, DELETE) — nunca retry en POST sin idempotency key.
 
----
-
-## Circuit Breaker
+## 3. Circuit Breaker
 
 ```typescript
 // Patrón: Si un servicio falla mucho, dejar de llamarlo temporalmente
@@ -234,25 +209,9 @@ async function chargeCustomer(amount: number) {
 }
 ```
 
-```
-CUÁNDO USAR CIRCUIT BREAKER:
-  ✅ Servicios de pago (Stripe, PayPal)
-  ✅ APIs de terceros no críticas (analytics, email)
-  ✅ Microservicios internos
+**Cuándo usar circuit breaker:** servicios de pago (Stripe, PayPal), APIs de terceros no críticas (analytics, email), microservicios internos. Parámetros típicos: threshold 5 fallos consecutivos → abrir circuito, resetTimeout 30 segundos → probar de nuevo. Fallback cuando circuito abierto: retornar respuesta default/cache, encolar para procesamiento posterior, notificar al usuario que el servicio está temporalmente no disponible.
 
-PARÁMETROS TÍPICOS:
-  threshold: 5 fallos consecutivos → abrir circuito
-  resetTimeout: 30 segundos → probar de nuevo
-  
-FALLBACK cuando circuito abierto:
-  - Retornar respuesta default/cache
-  - Encolar para procesamiento posterior
-  - Notificar al usuario que el servicio está temporalmente no disponible
-```
-
----
-
-## Abstracción de SDK / Service Client
+## 4. Abstracción de SDK / Service Client
 
 ```typescript
 // Cada servicio externo tiene su propio client encapsulado
@@ -312,28 +271,9 @@ class StripeService {
 }
 ```
 
-```
-REGLAS DE ABSTRACCIÓN:
-  1. NUNCA usar SDK directo en controllers/resolvers
-     → Siempre encapsular en un Service
-  
-  2. Tipos propios para input/output
-     → No exponer tipos de Stripe/AWS/etc al resto de la app
-     → Mapear a tipos internos
-  
-  3. Un servicio por proveedor externo
-     → StripeService, SendGridService, S3Service
-  
-  4. Fijar versión del API
-     → apiVersion: '2024-04-10' — no confiar en default
-  
-  5. Inyectar config (no importar de env directamente)
-     → Constructor recibe apiKey, facilita testing
-```
+**Reglas de abstracción:** nunca usar SDK directo en controllers/resolvers — siempre encapsular en un Service. Tipos propios para input/output — no exponer tipos de Stripe/AWS/etc al resto de la app, mapear a tipos internos. Un servicio por proveedor externo (StripeService, SendGridService, S3Service). Fijar versión del API (`apiVersion: '2024-04-10'`) — no confiar en default. Inyectar config (no importar de env directamente) — constructor recibe apiKey, facilita testing.
 
----
-
-## Timeouts
+## 5. Timeouts
 
 ```typescript
 // REGLA: Todo request externo DEBE tener timeout
@@ -362,9 +302,7 @@ async function fetchWithTimeout(url: string, timeout: number): Promise<Response>
 }
 ```
 
----
-
-## Webhooks — Recibir Eventos de Terceros
+## 6. Webhooks — Recibir Eventos de Terceros
 
 ```typescript
 // POST /webhooks/stripe
@@ -396,38 +334,9 @@ async function handleStripeWebhook(req: Request, res: Response) {
 }
 ```
 
-```
-REGLAS DE WEBHOOKS:
-  1. VERIFICAR FIRMA — SIEMPRE
-     Cada proveedor tiene su método: HMAC, asymmetric, etc.
-     Stripe: stripe-signature header
-     GitHub: x-hub-signature-256 header
-     ❌ NUNCA confiar en el payload sin verificar
+**Reglas de webhooks:** verificar firma siempre — cada proveedor tiene su método (Stripe: `stripe-signature`, GitHub: `x-hub-signature-256`), nunca confiar en el payload sin verificar. Responder 200 inmediatamente — no procesar en el handler, encolar y procesar en background, si tardas mucho el proveedor reintenta y genera duplicados. Idempotencia — guardar event_id procesados, verificar antes de procesar, webhooks se reenvían. Raw body para verificación — Express: `express.raw()`, NestJS: `@RawBody()`. Endpoint dedicado — `/webhooks/stripe`, `/webhooks/github`, no mezclar con API routes, middleware separado.
 
-  2. RESPONDER 200 INMEDIATAMENTE
-     No procesar en el handler
-     Encolar y procesar en background
-     Si tardas mucho, el proveedor reintenta → duplicados
-
-  3. IDEMPOTENCIA
-     Guardar event_id procesados
-     Antes de procesar: verificar si ya se procesó
-     Webhooks SE REENVÍAN — tu código debe ser idempotente
-
-  4. RAW BODY PARA VERIFICACIÓN
-     Configurar endpoint para recibir raw body
-     Express: app.use('/webhooks/stripe', express.raw({ type: 'application/json' }))
-     NestJS: @RawBody() en el controller
-
-  5. ENDPOINT DEDICADO
-     /webhooks/stripe, /webhooks/github
-     NO mezclar con tus API routes
-     Middleware separado (sin auth de tu app, con verificación de firma)
-```
-
----
-
-## Idempotencia en Llamadas Salientes
+## 7. Idempotencia en Llamadas Salientes
 
 ```typescript
 // Problema: Si haces retry de un POST, podrías crear duplicados
@@ -466,9 +375,7 @@ await db.externalCalls.update({
 });
 ```
 
----
-
-## Rate Limiting de Llamadas Salientes
+## 8. Rate Limiting de Llamadas Salientes
 
 ```typescript
 // Respetar rate limits del proveedor
@@ -515,20 +422,16 @@ async function callStripe() {
 }
 ```
 
----
+## 9. Gotchas
 
-## Anti-patrones
-
-```
-❌ Llamar APIs externas sin timeout → un servicio lento congela tu app
-❌ Retry en POST sin idempotency key → duplicados en cobros, emails
-❌ Retry en errores 4xx → el request está mal, repetirlo no lo arregla
-❌ Usar SDK directo en controllers → difícil de testear y reemplazar
-❌ Exponer tipos del SDK al resto de la app → acoplamiento a proveedor
-❌ Webhooks sin verificación de firma → cualquiera puede falsificar eventos
-❌ Procesar webhook en el handler → timeout, reintentos del proveedor
-❌ Ignorar rate limits del proveedor → te banean temporalmente
-❌ Circuit breaker en servicios críticos sin fallback → error sin gracia
-❌ No loggear llamadas externas → imposible debuggear en producción
-❌ Hardcodear API keys → usar env vars o secrets manager
-```
+- Llamar APIs externas sin timeout — un servicio lento congela tu app.
+- Retry en POST sin idempotency key — duplicados en cobros, emails.
+- Retry en errores 4xx — el request está mal, repetirlo no lo arregla.
+- Usar SDK directo en controllers — difícil de testear y reemplazar.
+- Exponer tipos del SDK al resto de la app — acoplamiento a proveedor.
+- Webhooks sin verificación de firma — cualquiera puede falsificar eventos.
+- Procesar webhook en el handler — timeout, reintentos del proveedor.
+- Ignorar rate limits del proveedor — te banean temporalmente.
+- Circuit breaker en servicios críticos sin fallback — error sin gracia.
+- No loguear llamadas externas — imposible debuggear en producción.
+- Hardcodear API keys — usar env vars o secrets manager.
