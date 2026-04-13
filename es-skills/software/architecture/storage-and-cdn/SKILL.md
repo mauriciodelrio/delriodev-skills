@@ -1,15 +1,22 @@
 ---
 name: storage-and-cdn
 description: >
-  Árbol de decisiones para almacenamiento de archivos, media, y distribución
-  de contenido estático. Cubre S3, CloudFront, procesamiento de imágenes/video,
-  estrategias de upload, y gestión de assets. Incluye criterios por tipo de
-  contenido, volumen, rendimiento y costo.
+  Usa esta skill cuando necesites decidir sobre almacenamiento de archivos,
+  media y distribución de contenido estático. Cubre S3, CloudFront,
+  procesamiento de imágenes/video, estrategias de upload y gestión de assets.
 ---
 
-# 📦 Storage & CDN — Archivos, Media y Assets
+# Storage & CDN — Archivos, Media y Assets
 
-## Árbol de Decisión
+## Flujo de trabajo del agente
+
+1. Identificar qué tipo de contenido necesita almacenarse.
+2. Recorrer el árbol de decisión (sección 1) con el usuario.
+3. Configurar S3 + CDN según la opción elegida (secciones 2-3).
+4. Evaluar si se necesita procesamiento de imágenes (sección 4).
+5. Validar contra presupuesto disponible (sección 6).
+
+## 1. Árbol de decisión
 
 ```
 ¿Qué necesitas almacenar?
@@ -37,11 +44,9 @@ description: >
     └── S3 con lifecycle policy (auto-delete en X días)
 ```
 
----
+## 2. Amazon S3
 
-## Amazon S3
-
-### Configuración Base
+### Configuración base
 
 ```hcl
 # Terraform — S3 bucket para uploads de usuarios
@@ -105,32 +110,28 @@ resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
 }
 ```
 
-### Clases de Storage
+### Clases de storage
 
-```
-S3 Standard:          $0.023/GB/mes — acceso frecuente
-S3 Intelligent-Tier:  $0.023/GB/mes — auto-mueve a IA si no se accede
-S3 Standard-IA:       $0.0125/GB/mes — acceso infrecuente (min 30 días)
-S3 Glacier Instant:   $0.004/GB/mes — archivos, acceso en ms
-S3 Glacier Flexible:  $0.0036/GB/mes — archivos, acceso en min-horas
-S3 Glacier Deep:      $0.00099/GB/mes — archivos, acceso en horas
+| Clase | Costo/GB/mes | Uso |
+|-------|-------------|-----|
+| S3 Standard | $0.023 | acceso frecuente |
+| S3 Intelligent-Tier | $0.023 | auto-mueve a IA si no se accede |
+| S3 Standard-IA | $0.0125 | acceso infrecuente (min 30 días) |
+| S3 Glacier Instant | $0.004 | archivos, acceso en ms |
+| S3 Glacier Flexible | $0.0036 | archivos, acceso en min-horas |
+| S3 Glacier Deep | $0.00099 | archivos, acceso en horas |
 
-Regla: usar lifecycle policies para mover automáticamente
-entre clases según edad del archivo.
-```
+Usar lifecycle policies para mover automáticamente entre clases según edad del archivo.
 
-### Patrón de Upload Seguro
+### Patrón de upload seguro
 
-```
-El frontend NUNCA sube archivos directamente al backend.
-Usar presigned URLs para upload directo a S3:
+El frontend NUNCA sube archivos directamente al backend. Usar presigned URLs para upload directo a S3:
 
-  1. Frontend pide al backend una URL de upload (presigned PUT)
-  2. Backend genera presigned URL con SDK (expira en 5–15 min)
-  3. Frontend sube directamente a S3 con esa URL
-  4. S3 event trigger notifica al backend cuando el archivo llega
-  5. Backend procesa (validar tipo, tamaño, virus scan si aplica)
-```
+1. Frontend pide al backend una URL de upload (presigned PUT)
+2. Backend genera presigned URL con SDK (expira en 5–15 min)
+3. Frontend sube directamente a S3 con esa URL
+4. S3 event trigger notifica al backend cuando el archivo llega
+5. Backend procesa (validar tipo, tamaño, virus scan si aplica)
 
 ```typescript
 // Backend — generar presigned URL
@@ -152,25 +153,19 @@ async function getUploadUrl(userId: string, filename: string) {
 }
 ```
 
----
+## 3. Amazon CloudFront (CDN)
 
-## Amazon CloudFront (CDN)
+**Cuándo usarlo:**
+- Imágenes/media servidas a usuarios (reduce latencia global)
+- Assets estáticos (JS, CSS) si no usas Vercel
+- Descargas de archivos frecuentes
+- APIs con respuestas cacheables (GET requests)
+- Protección DDoS (CloudFront incluye AWS Shield Standard gratis)
 
-### Cuándo Usar CDN
-
-```
-Cuándo SÍ:
-  ✅ Imágenes/media servidas a usuarios (reduce latencia global)
-  ✅ Assets estáticos (JS, CSS) si no usas Vercel
-  ✅ Descargas de archivos frecuentes
-  ✅ APIs con respuestas cacheables (GET requests)
-  ✅ Protección DDoS (CloudFront incluye AWS Shield Standard gratis)
-
-Cuándo NO:
-  ❌ Archivos que solo accede el backend (procesamiento interno)
-  ❌ Deploy en Vercel (ya tiene CDN)
-  ❌ Muy pocos archivos y pocos usuarios (overhead innecesario)
-```
+**Cuándo NO usarlo:**
+- Archivos que solo accede el backend (procesamiento interno)
+- Deploy en Vercel (ya tiene CDN)
+- Muy pocos archivos y pocos usuarios (overhead innecesario)
 
 ```hcl
 # Terraform — CloudFront distribution para S3
@@ -213,9 +208,7 @@ resource "aws_cloudfront_distribution" "media" {
 # Free tier: 1 TB de transferencia/mes (12 meses)
 ```
 
----
-
-## Procesamiento de Imágenes
+## 4. Procesamiento de imágenes
 
 ### Decisión
 
@@ -271,9 +264,7 @@ export async function handler(event: S3Event) {
 }
 ```
 
----
-
-## Estrategia de Organización de Archivos en S3
+## 5. Organización de archivos en S3
 
 ```
 Estructura de keys recomendada:
@@ -301,41 +292,32 @@ backups/
       dump.sql.gz              ← Backups de DB
 ```
 
----
+## 6. Reglas por presupuesto
 
-## Reglas por Presupuesto
+**$0–$50/mes:**
+- S3 Standard (5 GB free tier)
+- CloudFront (1 TB free tier)
+- Sharp en Lambda para resize
+- Vercel para assets de frontend
 
-```
-$0–$50/mes:
-  → S3 Standard (5 GB free tier)
-  → CloudFront (1 TB free tier)
-  → Sharp en Lambda para resize
-  → Vercel para assets de frontend
+**$50–$300/mes:**
+- S3 con lifecycle policies
+- CloudFront PriceClass_100
+- Cloudinary free tier (25 credits/mes)
 
-$50–$300/mes:
-  → S3 con lifecycle policies
-  → CloudFront PriceClass_100
-  → Cloudinary free tier (25 credits/mes)
+**$300+/mes:**
+- S3 + CloudFront completo
+- Cloudinary/Imgix para media pesado
+- S3 Intelligent-Tiering automático
 
-$300+/mes:
-  → S3 + CloudFront completo
-  → Cloudinary/Imgix para media pesado
-  → S3 Intelligent-Tiering automático
-```
+## 7. Gotchas
 
----
-
-## Anti-patrones
-
-```
-❌ Bucket S3 público — SIEMPRE bloquear acceso público
-❌ Subir archivos a través del backend (memory/CPU innecesario) — usar presigned URLs
-❌ Guardar archivos en la DB (BLOB) — usar S3
-❌ No usar CDN para assets estáticos servidos a usuarios globales
-❌ Un solo bucket para todo (uploads, backups, temp, exports)
-❌ No configurar lifecycle policies (storage crece sin control)
-❌ Servir imágenes originales sin optimizar (5 MB por imagen)
-❌ URLs de S3 predecibles sin autenticación (path traversal risk)
-❌ No habilitar encryption at rest
-❌ No habilitar versioning en buckets con datos de usuario
-```
+- Bucket S3 público — SIEMPRE bloquear acceso público, usar presigned URLs o CloudFront.
+- Subir archivos a través del backend consume memory/CPU innecesario — usar presigned URLs.
+- Guardar archivos en la DB (BLOB) — usar S3.
+- No usar CDN para assets estáticos servidos a usuarios globales.
+- Un solo bucket para todo (uploads, backups, temp, exports) dificulta políticas granulares.
+- No configurar lifecycle policies — el storage crece sin control.
+- Servir imágenes originales sin optimizar (5 MB por imagen).
+- URLs de S3 predecibles sin autenticación — riesgo de path traversal.
+- No habilitar encryption at rest ni versioning en buckets con datos de usuario.
