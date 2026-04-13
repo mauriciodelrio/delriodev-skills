@@ -991,31 +991,19 @@ export async function verifyBackupIntegrity(resource: string): Promise<{
 
 ---
 
-## ISO 27001 Best Practices
+## Agent workflow
 
-### ✅ DO
+1. Define the system's information classification (public, internal, confidential, restricted) and apply controls per level (A.5.12, A.5.13).
+2. Implement ABAC access control with declarative policies combining role, department, context, and MFA (A.5.15—A.5.18, A.8.2—A.8.5).
+3. Configure automated vulnerability scanning in CI/CD with a no-deploy policy for critical/high findings (A.8.8).
+4. Apply per-environment security configuration (dev/staging/prod) with TLS, CORS, rate limiting, helmet, and CSP (A.8.25—A.8.28, A.8.31).
+5. Implement incident management service with severity-based escalation and forensic evidence collection (A.5.24—A.5.28).
+6. Configure backup policies with defined RTO/RPO and periodic integrity verification (A.5.29, A.5.30, A.8.13, A.8.14).
+7. Validate against the compliance checklist (organizational + technological controls) before deploying.
 
-1. **Maintain an information asset inventory** (A.5.9) — know what you're protecting
-2. **Classify all information** by sensitivity (A.5.12)
-3. **Apply the principle of least privilege** to all access (A.5.15)
-4. **Encrypt sensitive data** at rest and in transit (A.8.24)
-5. **Implement centralized and immutable logging** (A.8.15)
-6. **Automate vulnerability scans** in CI/CD (A.8.8)
-7. **Keep documentation updated** for policies and procedures
-8. **Perform periodic risk assessments** (Clause 6.1.2)
-9. **Test backup restoration** monthly (A.8.13)
-10. **Separate environments** for development, staging, and production (A.8.31)
+## Gotchas
 
-### ❌ DO NOT
-
-1. **DO NOT** grant access without justified business need
-2. **DO NOT** use shared credentials
-3. **DO NOT** deploy without prior security scanning
-4. **DO NOT** ignore security alerts in dependencies
-5. **DO NOT** store secrets in source code
-6. **DO NOT** omit HTTP security headers
-7. **DO NOT** disable TLS/HTTPS in any environment
-8. **DO NOT** proceed without an incident response plan
+The deny-by-default principle (A.5.15) means that if no explicit policy exists for a resource, access is denied. Do not grant access without justified business need. Do not use shared credentials — each user must have a unique ID. Do not deploy without prior security scanning; ISO 27001 policy prohibits critical or high vulnerabilities in production. Do not store secrets in source code. Never disable TLS/HTTPS in any environment. In production: TLS 1.3, no source maps, no error details, no debug mode. Real data must never be used in development — use anonymized or synthetic data. Backups must be encrypted, off-site, and tested monthly. P1 (critical) incidents require response in under 15 minutes. Policy and procedure documentation must be kept up to date as an audit requirement. Risk assessments must be performed periodically (Clause 6.1.2).
 
 ---
 

@@ -1,64 +1,21 @@
 ---
 name: iso-27001
 description: >
-  Skill de cumplimiento ISO/IEC 27001:2022 — Sistema de Gestión de Seguridad de la Información (SGSI).
-  Activa esta skill cuando diseñes arquitectura de seguridad, implementes controles de acceso,
-  gestión de riesgos, políticas de seguridad, continuidad del negocio o cualquier control
-  del Anexo A. Fundamental para organizaciones que buscan certificación ISO 27001.
+  Usa este skill cuando diseñes arquitectura de seguridad, implementes controles
+  de acceso, gestión de riesgos, políticas de seguridad, continuidad del negocio
+  o cualquier control de seguridad de la información. Aunque ISO 27001 es un
+  estándar de certificación, este skill se aplica como marco de referencia de
+  seguridad para cualquier software independientemente de si la organización
+  busca certificarse. Cubre clasificación de información, control de acceso ABAC,
+  gestión de vulnerabilidades, desarrollo seguro, gestión de incidentes,
+  continuidad del negocio, y checklist de cumplimiento.
 ---
 
-# 🔒 ISO/IEC 27001:2022 — Sistema de Gestión de Seguridad de la Información
+# ISO/IEC 27001:2022 — Sistema de Gestión de Seguridad de la Información
 
-## Descripción General
+ISO 27001:2022 define el marco de seguridad de la información más reconocido globalmente y debe aplicarse como base de seguridad para cualquier software, independientemente de si se busca certificación. Se estructura en cláusulas del SGSI (4-10: contexto, liderazgo, planificación, soporte, operación, evaluación, mejora) y 93 controles del Anexo A en 4 categorías: organizacionales (A.5, 37 controles), de personas (A.6, 8), físicos (A.7, 14) y tecnológicos (A.8, 34).
 
-**ISO/IEC 27001:2022** es el estándar internacional para establecer, implementar, mantener y mejorar continuamente un **Sistema de Gestión de Seguridad de la Información (SGSI)**. Es el estándar de seguridad más reconocido globalmente y la base para la mayoría de los programas de seguridad empresarial.
-
-La versión 2022 reorganizó los controles del Anexo A en 4 categorías (antes eran 14) con 93 controles (antes 114).
-
----
-
-## Cuándo Activar esta Skill
-
-Activa esta skill **siempre** que:
-
-- Diseñes la **arquitectura de seguridad** de una aplicación o servicio
-- Implementes **controles de acceso** (autenticación, autorización, RBAC)
-- Configures **infraestructura** (servidores, contenedores, CI/CD)
-- Trabajes en **gestión de riesgos** y evaluación de amenazas
-- Implementes **logging, monitoreo y detección de incidentes**
-- Diseñes políticas de **continuidad del negocio y recuperación ante desastres**
-- Configures **gestión de vulnerabilidades** y parches
-- Prepares una auditoría de certificación ISO 27001
-- Implementes **gestión de proveedores** y cadena de suministro
-
----
-
-## Estructura del Estándar
-
-### Cláusulas del SGSI (4-10)
-
-| Cláusula | Tema | Relevancia para Desarrollo |
-|----------|------|---------------------------|
-| 4 | Contexto de la organización | Entender qué proteger |
-| 5 | Liderazgo | Políticas de seguridad |
-| 6 | Planificación | Evaluación y tratamiento de riesgos |
-| 7 | Soporte | Competencias, comunicación, documentación |
-| 8 | Operación | Implementación de controles |
-| 9 | Evaluación del desempeño | Monitoreo, auditoría, revisión |
-| 10 | Mejora | Acciones correctivas, mejora continua |
-
-### Controles del Anexo A (ISO 27001:2022)
-
-| Categoría | Controles | Ejemplos |
-|-----------|-----------|----------|
-| **Organizacionales** (A.5) | 37 controles | Políticas, roles, clasificación de información |
-| **De Personas** (A.6) | 8 controles | Verificación de empleados, formación |
-| **Físicos** (A.7) | 14 controles | Perímetros, equipos, medios |
-| **Tecnológicos** (A.8) | 34 controles | Autenticación, criptografía, desarrollo seguro |
-
----
-
-## Requisitos Técnicos de Implementación
+## Implementación
 
 ### 1. Clasificación y Manejo de Información (A.5.12, A.5.13)
 
@@ -991,31 +948,19 @@ export async function verifyBackupIntegrity(resource: string): Promise<{
 
 ---
 
-## Buenas Prácticas ISO 27001
+## Flujo de trabajo del agente
 
-### ✅ HACER
+1. Definir la clasificación de información del sistema (public, internal, confidential, restricted) y aplicar controles según nivel (A.5.12, A.5.13).
+2. Implementar control de acceso ABAC con políticas declarativas que combinen rol, departamento, contexto y MFA (A.5.15—A.5.18, A.8.2—A.8.5).
+3. Configurar escaneo automatizado de vulnerabilidades en CI/CD con política de no-deploy si hay críticas/altas (A.8.8).
+4. Aplicar configuración de seguridad por entorno (dev/staging/prod) con TLS, CORS, rate limiting, helmet y CSP (A.8.25—A.8.28, A.8.31).
+5. Implementar servicio de gestión de incidentes con escalamiento por severidad y recopilación de evidencia forense (A.5.24—A.5.28).
+6. Configurar políticas de backup con RTO/RPO definidos y verificación de integridad periódica (A.5.29, A.5.30, A.8.13, A.8.14).
+7. Validar contra el checklist de cumplimiento (controles organizacionales + tecnológicos) antes de desplegar.
 
-1. **Mantener inventario de activos** de información (A.5.9) — saber qué proteges
-2. **Clasificar toda la información** según sensibilidad (A.5.12)
-3. **Aplicar principio de mínimo privilegio** en todos los accesos (A.5.15)
-4. **Encriptar datos sensibles** en reposo y en tránsito (A.8.24)
-5. **Implementar logging centralizado** e inmutable (A.8.15)
-6. **Automatizar escaneos de vulnerabilidades** en CI/CD (A.8.8)
-7. **Mantener documentación actualizada** de políticas y procedimientos
-8. **Realizar evaluaciones de riesgo** periódicas (Cláusula 6.1.2)
-9. **Testing de restauración de backups** mensual (A.8.13)
-10. **Separar entornos** de desarrollo, staging y producción (A.8.31)
+## Gotchas
 
-### ❌ NO HACER
-
-1. **NO** dar acceso sin necesidad de negocio justificada
-2. **NO** usar credenciales compartidas
-3. **NO** desplegar sin escaneo de seguridad previo
-4. **NO** ignorar alertas de seguridad en dependencias
-5. **NO** almacenar secretos en código fuente
-6. **NO** omitir headers de seguridad HTTP
-7. **NO** desactivar TLS/HTTPS en ningún entorno
-8. **NO** proceder sin plan de respuesta a incidentes
+El principio de deny-by-default (A.5.15) significa que si no existe política explícita para un recurso, el acceso se deniega. No dar acceso sin necesidad de negocio justificada. No usar credenciales compartidas — cada usuario debe tener ID único. No desplegar sin escaneo de seguridad previo; la política ISO 27001 prohíbe vulnerabilidades críticas o altas en producción. No almacenar secretos en código fuente. Nunca desactivar TLS/HTTPS en ningún entorno. En producción: TLS 1.3, sin source maps, sin detalles de error, sin debug mode. Los datos reales nunca deben usarse en desarrollo — usar datos anonimizados o sintéticos. Los backups deben ser encriptados, off-site, y probados mensualmente. Los incidentes P1 (críticos) requieren respuesta en menos de 15 minutos. La documentación de políticas y procedimientos debe mantenerse actualizada como requisito de auditoría. Las evaluaciones de riesgo deben realizarse periódicamente (Cláusula 6.1.2).
 
 ---
 
