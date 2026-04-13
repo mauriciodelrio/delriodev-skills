@@ -1,25 +1,26 @@
 ---
 name: error-handling-rules
 description: >
-  Reglas para manejo de errores en aplicaciones React/Next.js. Cubre Error
-  Boundaries, error.tsx en App Router, integración con Sentry, fallback UI,
-  reintentos, notificaciones toast, y patrones de error tipados.
+  Usa esta skill cuando implementes manejo de errores en React/Next.js:
+  Error Boundaries, error.tsx/global-error.tsx en App Router, errores
+  tipados (Result pattern), integración con Sentry, reintentos con
+  backoff exponencial, y notificaciones toast.
 ---
 
-# 🚨 Manejo de Errores — Reglas
+# Manejo de Errores
 
-## Principio Rector
+## Flujo de trabajo del agente
 
-> **Toda operación que puede fallar, fallará.** Planificar el camino de error
-> es tan importante como el camino feliz. Los errores deben ser informativos
-> para el usuario y diagnósticos para el desarrollador.
-
----
+1. Crear `error.tsx` y `global-error.tsx` en App Router (sección 1).
+2. Crear `not-found.tsx` y usar `notFound()` en Server Components (sección 2).
+3. Wrappear secciones de riesgo con ErrorBoundary customizable (sección 3).
+4. Implementar Result pattern + AppError tipado para funciones que fallan (sección 4).
+5. Configurar Sentry con filtros y context (sección 5).
+6. Elegir mecanismo: toast para recuperables, boundary para render, página para rutas (sección 6).
 
 ## 1. Error Boundaries (Next.js App Router)
 
 ```tsx
-// app/error.tsx — Error boundary de nivel de ruta
 'use client';
 
 import { useEffect } from 'react';
@@ -32,7 +33,6 @@ export default function ErrorPage({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Reportar a servicio de monitoreo
     console.error('Route error:', error);
   }, [error]);
 
@@ -52,7 +52,7 @@ export default function ErrorPage({
   );
 }
 
-// app/global-error.tsx — Error boundary del root layout
+// app/global-error.tsx
 'use client';
 
 export default function GlobalError({
@@ -82,12 +82,9 @@ export default function GlobalError({
 }
 ```
 
----
-
 ## 2. Not Found
 
 ```tsx
-// app/not-found.tsx
 export default function NotFound() {
   return (
     <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
@@ -106,24 +103,20 @@ export default function NotFound() {
   );
 }
 
-// Trigger manual en Server Components
 import { notFound } from 'next/navigation';
 
 async function ProductPage({ params }: { params: { id: string } }) {
   const product = await db.product.findUnique({ where: { id: params.id } });
 
-  if (!product) notFound(); // Renderiza app/not-found.tsx
+  if (!product) notFound();
 
   return <ProductDetail product={product} />;
 }
 ```
 
----
-
-## 3. Error Boundary Customizable (Client Components)
+## 3. Error Boundary Customizable
 
 ```tsx
-// shared/components/ErrorBoundary.tsx
 'use client';
 
 import { Component, type ErrorInfo, type ReactNode } from 'react';
@@ -165,7 +158,6 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-// Uso
 <ErrorBoundary
   fallback={(error, reset) => (
     <Alert variant="error">
@@ -179,17 +171,13 @@ export class ErrorBoundary extends Component<Props, State> {
 </ErrorBoundary>
 ```
 
----
-
 ## 4. Errores Tipados (Result Pattern)
 
 ```typescript
-// shared/lib/result.ts
 type Result<T, E = Error> =
   | { success: true; data: T }
   | { success: false; error: E };
 
-// ✅ Funciones que pueden fallar retornan Result
 async function fetchProduct(id: string): Promise<Result<Product, AppError>> {
   try {
     const response = await fetch(`/api/products/${id}`);
@@ -214,20 +202,16 @@ async function fetchProduct(id: string): Promise<Result<Product, AppError>> {
   }
 }
 
-// Uso
 const result = await fetchProduct(id);
 if (!result.success) {
-  // TypeScript sabe que result.error existe
   showToast({ type: 'error', message: result.error.message });
   return;
 }
-// TypeScript sabe que result.data es Product
 ```
 
 ### Clases de Error Tipadas
 
 ```typescript
-// shared/lib/errors.ts
 export type ErrorCode =
   | 'NOT_FOUND'
   | 'VALIDATION_ERROR'
@@ -266,51 +250,40 @@ export class AppError extends Error {
 }
 ```
 
----
-
-## 5. Sentry — Integración
+## 5. Sentry
 
 ```typescript
-// sentry.client.config.ts
 import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
   environment: process.env.NODE_ENV,
-  tracesSampleRate: 0.1,      // 10% de transacciones
-  replaysSessionSampleRate: 0, // Replay solo en errores
-  replaysOnErrorSampleRate: 1, // 100% replay cuando hay error
+  tracesSampleRate: 0.1,
+  replaysSessionSampleRate: 0,
+  replaysOnErrorSampleRate: 1,
 
   beforeSend(event) {
-    // No enviar errores de desarrollo
     if (process.env.NODE_ENV === 'development') return null;
-    // Filtrar errores irrelevantes
     if (event.exception?.values?.[0]?.value?.includes('ResizeObserver')) return null;
     return event;
   },
 });
 
-// Contexto de usuario
 export function setSentryUser(user: { id: string; email: string }) {
   Sentry.setUser({ id: user.id, email: user.email });
 }
 
-// Error manual con contexto
 Sentry.captureException(error, {
   tags: { feature: 'checkout', step: 'payment' },
   extra: { orderId, cartTotal },
 });
 ```
 
----
-
 ## 6. Toast / Notificaciones
 
 ```tsx
-// ✅ Toast para feedback de operaciones (no para errores críticos)
 import { toast } from 'sonner';
 
-// Server Action con feedback
 async function handleDelete(id: string) {
   const result = await deleteProduct(id);
 
@@ -325,31 +298,25 @@ async function handleDelete(id: string) {
   }
 }
 
-// ✅ Reglas de notificaciones:
-// - toast.success → operaciones exitosas (desaparece en 3s)
-// - toast.error → errores recuperables (persiste hasta dismiss)
-// - Error Boundary → errores que rompen el render
-// - Página de error → errores de ruta (404, 500)
+// toast.success → operaciones exitosas (3s auto-dismiss)
+// toast.error → errores recuperables (persiste hasta dismiss)
+// Error Boundary → errores que rompen el render
+// error.tsx → errores de ruta (404, 500)
 ```
-
----
 
 ## 7. Retry Strategies
 
 ```tsx
-// ✅ TanStack Query retry automático
 useQuery({
   queryKey: productKeys.detail(id),
   queryFn: () => fetchProduct(id),
   retry: (failureCount, error) => {
-    // No retry en errores de cliente (4xx)
     if (error instanceof AppError && !error.isRetryable) return false;
     return failureCount < 3;
   },
-  retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000), // Exponential backoff
+  retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000),
 });
 
-// ✅ Retry manual con backoff
 async function fetchWithRetry<T>(
   fn: () => Promise<T>,
   maxRetries = 3,
@@ -366,30 +333,17 @@ async function fetchWithRetry<T>(
 }
 ```
 
----
+## Gotchas
 
-## Anti-patrones
-
-```tsx
-// ❌ catch vacío — silenciar errores
-try { await save(); } catch {} // ❌ El error desaparece
-
-// ❌ Mostrar error técnico al usuario
-toast.error(error.stack);       // ❌
-toast.error(error.userMessage); // ✅
-
-// ❌ throw new Error('algo') sin tipado ni código
-// ❌ Error boundaries sin botón de retry
-// ❌ Console.error como único mecanismo de monitoreo en producción
-// ❌ Alertas de JavaScript nativas (alert(), confirm())
-// ❌ Ignorar errores de fetch (network failures silenciosas)
-```
-
----
+- `catch {}` vacío silencia errores completamente — siempre loguear o propagar.
+- Mostrar `error.stack` al usuario expone internals — usar `error.userMessage` del AppError.
+- `throw new Error('algo')` sin código tipado impide distinguir errores — usar AppError con ErrorCode.
+- Error boundary sin botón de retry deja al usuario atrapado — siempre incluir `reset()`.
+- `console.error` como único monitoreo en producción no escala — integrar Sentry o equivalente.
+- `alert()`/`confirm()` nativos bloquean el thread y no son estilizables — usar toast o modales.
+- Ignorar errores de `fetch` produce failures silenciosos — siempre manejar el caso de red.
 
 ## Skills Relacionadas
-
-> **Consultar el índice maestro [`frontend/SKILL.md`](../SKILL.md) → "Skills Obligatorias por Acción"** para error handling.
 
 | Skill | Por qué |
 |-------|--------|
