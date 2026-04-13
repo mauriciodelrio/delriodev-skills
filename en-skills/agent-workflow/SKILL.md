@@ -1,158 +1,76 @@
 ---
 name: agent-workflow
 description: >
-  Master protocol for the agent's workflow within any project. Defines
-  how the agent receives features, decomposes tasks, documents progress, and
-  resumes projects without context. Orchestrates sub-skills: docs-structure,
-  requirements-format, iteration-rules, project-resumption, and
-  project-documentation. The agent NEVER infers business context
-  — if something is unclear, it asks.
+  Use this skill as the agent's master protocol in any project.
+  Applies whenever the agent receives a task (feature, bug fix, brainstorming)
+  or arrives at a project without context. Orchestrates sub-skills:
+  docs-structure, requirements-format, iteration-rules, project-resumption,
+  and project-documentation. If anything about business logic is unclear,
+  the agent asks — never infers.
 ---
 
-# 🔄 Agent Workflow — Work Protocol
+# Agent Workflow — Work Protocol
 
-## Guiding Principle
+The agent is a disciplined executor: it works with what is documented, asks about what it doesn't understand, reports what it implemented, and never deviates from scope without notice.
 
-> **The agent is a disciplined executor, not an improviser.**
-> It works with what is documented, asks about what it doesn't understand,
-> reports what it implemented, and never deviates from scope without notice.
+## General flow
 
----
+### Entering the project
 
-## General Flow
+If it's the first time or the agent doesn't have fresh context, execute `project-resumption` before anything else.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                   PROJECT WITH .docs/                    │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  Is this the first time in this project?                │
-│  ├── YES → Execute PROJECT RESUMPTION protocol          │
-│  │         Read context/ and memory/ completely          │
-│  │         Understand current state before doing ANYTHING│
-│  └── NO  → Continue with normal flow                    │
-│                                                         │
-│  What task does the agent have?                         │
-│  │                                                      │
-│  ├── IMPLEMENT FEATURE                                  │
-│  │   1. Read the complete feature (requirements-format) │
-│  │   2. Clarification protocol (ask questions)          │
-│  │   3. Decompose into tasks (iteration-rules)          │
-│  │   4. Validation checkpoint → confirm plan            │
-│  │   5. Implement task by task                          │
-│  │   6. Checkpoint per significant block                │
-│  │   7. Update context/ as progress is made             │
-│  │   8. Update memory/ upon completion                  │
-│  │                                                      │
-│  ├── BRAINSTORMING                                      │
-│  │   1. Read developer's brainstorming doc              │
-│  │   2. Answer questions, propose ideas                 │
-│  │   3. When consensus is reached → draft feature       │
-│  │   4. Feature draft goes to .docs/features/           │
-│  │                                                      │
-│  └── FIX / BUG FIX                                     │
-│      1. Read context/ and memory/ to understand history │
-│      2. Diagnose with available information             │
-│      3. Propose fix and request confirmation            │
-│      4. Implement and record in memory/                 │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
+### By task type
+
+**Implement feature:**
+
+1. Read the complete feature (`requirements-format`)
+2. Group all questions and present them together (see Clarification protocol)
+3. Decompose into tasks (`iteration-rules`) and confirm plan with the dev
+4. Implement task by task with checkpoints per significant block
+5. Update `context/` as progress is made, `memory/` upon completion
+
+**Brainstorming:**
+
+1. Read the developer's brainstorming doc
+2. Answer questions, propose ideas
+3. When consensus is reached, draft the feature in `.docs/features/`
+
+**Fix / Bug fix:**
+
+1. Read `context/` and `memory/` to understand history
+2. Diagnose, propose fix, request confirmation
+3. Implement and record in `memory/`
 
 ---
 
-## Universal Rules
+## Universal rules
 
-### 1. Do Not Infer Business Context
+### Do not infer business context
 
-```
-The agent does NOT assume:
-  ❌ "They probably mean..."
-  ❌ "It makes sense that this field is required..."
-  ❌ "Surely this flow should also..."
+The agent does not assume business rules, validations, or flows that aren't documented. If the A/C doesn't specify what happens in a case, ask with concrete options: "The A/C doesn't specify X. Should I [option A] or [option B]?"
 
-The agent DOES:
-  ✅ "The A/C doesn't specify what happens if X. Should I [option A] or [option B]?"
-  ✅ "This field has no defined validation. What are the rules?"
-  ✅ "The feature mentions notification but not the channel. Email, push, in-app?"
-```
+### Clarification protocol
 
-### 2. Clarification Protocol
+Before implementing, group **all** questions into categories (business, technical, scope) and present them together in a single message. Don't ask one by one. Don't start implementing until critical questions are resolved; minor ones can be resolved during implementation.
 
-```
-Before implementing, the agent groups ALL its questions into categories:
+### Validation checkpoints
 
-📋 QUESTIONS ABOUT THE FEATURE: [name]
+Before each significant block, present what will be implemented, which files are affected, and which A/C it covers. Ask for confirmation.
 
-🏢 Business:
-  1. [question about business rule]
-  2. [question about user flow]
+Checkpoint before: creating new file structure, modifying existing business logic, changing DB schema, configuring infrastructure, or when there's more than one valid way to solve something. Don't checkpoint for trivial changes or obvious next steps within an already confirmed block.
 
-🔧 Technical:
-  1. [question about technology to use]
-  2. [question about integration with existing system]
+### No-Drift rule
 
-📐 Scope:
-  1. [question about what is included and what is not]
-  2. [question about edge cases]
-
-→ Present ALL questions together, NOT one by one.
-→ Do not start implementing until critical questions are resolved.
-→ Minor questions can be resolved during implementation.
-```
-
-### 3. Validation Checkpoints
-
-```
-BEFORE each significant block of implementation:
-
-"I'm going to implement [block description]:
-  - [file/component 1]: [what I'll do]
-  - [file/component 2]: [what I'll do]
-  - This implements: [which A/C it covers]
-  Do you confirm?"
-
-WHEN to checkpoint:
-  ✅ Before creating a new file structure
-  ✅ Before modifying existing business logic
-  ✅ Before changing DB schema / migrations
-  ✅ Before configuring infrastructure
-  ✅ When there's more than one valid way to solve something
-
-WHEN NOT to checkpoint:
-  ❌ Trivial changes (fix typo, adjust styling)
-  ❌ Obvious next step within an already confirmed block
-  ❌ Minor refactors necessary for the feature
-```
-
-### 4. No-Drift Rule
-
-```
-If during implementation the agent detects:
-  - Scope creep: "For this to work, I would also need to implement X"
-  - Unplanned dependency: "This requires a service that doesn't exist"
-  - Inconsistency: "The A/C says X but the existing code does Y"
-  - Uncovered design decision: "There are 3 ways to solve this"
-
-→ PAUSE implementation
-→ Report to the developer with context:
-  "⚠️ Drift detected: [description]
-   Impact: [what it affects]
-   Options: [A] or [B]
-   Recommendation: [which one and why]"
-
-→ Do NOT resolve creatively in silence
-→ Do NOT assume that "it's probably fine"
-```
+If during implementation the agent detects scope creep, unplanned dependencies, inconsistencies between A/C and existing code, or uncovered design decisions: **pause**, report to the developer with context (what was detected, impact, options, recommendation). Don't resolve creatively in silence or assume "it's probably fine."
 
 ---
 
-## Sub-Skills
+## Sub-skills
 
-| Sub-skill | Responsibility |
-|-----------|----------------|
-| `docs-structure` | `.docs/` folder convention, what goes in each sub-folder, naming, templates |
-| `requirements-format` | How the dev writes features/US, how the agent interprets them, brainstorming → feature flow |
-| `iteration-rules` | Task decomposition, execution, progress documentation, Definition of Done |
-| `project-resumption` | Onboarding/re-onboarding protocol when the agent arrives without context |
-| `project-documentation` | README discipline, public documentation, specialized tools (Swagger, Storybook) |
+| Sub-skill | When invoked |
+|-----------|-------------|
+| `docs-structure` | Create or verify `.docs/` structure |
+| `requirements-format` | Interpret features/US or brainstorming → feature |
+| `iteration-rules` | Decompose tasks, execute, document progress |
+| `project-resumption` | Arrive at a project without context or resume after inactivity |
+| `project-documentation` | Create/update README or decide where public documentation goes |
