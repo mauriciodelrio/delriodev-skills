@@ -67,7 +67,7 @@ export function resolveTarget(target: string, customPath?: string): string {
     case 'vscode':
       return path.join(cwd, '.vscode', 'skills');
     case 'user':
-      return getUserPromptsDir();
+      return getUserSkillsDir();
     case 'custom':
       return path.resolve(cwd, customPath!);
     default:
@@ -75,34 +75,9 @@ export function resolveTarget(target: string, customPath?: string): string {
   }
 }
 
-export function getUserPromptsDir(): string {
+export function getUserSkillsDir(): string {
   const home = process.env.HOME || process.env.USERPROFILE || '';
-
-  switch (process.platform) {
-    case 'darwin':
-      return path.join(
-        home,
-        'Library',
-        'Application Support',
-        'Code',
-        'User',
-        'prompts',
-      );
-    case 'win32':
-      return path.join(
-        process.env.APPDATA || path.join(home, 'AppData', 'Roaming'),
-        'Code',
-        'User',
-        'prompts',
-      );
-    default:
-      return path.join(
-        process.env.XDG_CONFIG_HOME || path.join(home, '.config'),
-        'Code',
-        'User',
-        'prompts',
-      );
-  }
+  return path.join(home, '.copilot', 'skills');
 }
 
 // ---------------------------------------------------------------------------
