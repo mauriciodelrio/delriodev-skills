@@ -11,11 +11,12 @@ description: >
 
 ## Cross-references obligatorias
 
-| Skill GRC | Cuándo activar |
-|-----------|---------------|
+| Skill | Cuándo activar |
+|-------|---------------|
 | [`owasp-top-10`](../../../governance-risk-and-compliance/owasp-top-10/SKILL.md) | **Siempre** en cualquier desarrollo frontend que maneje input de usuario o autenticación. |
 | [`gdpr`](../../../governance-risk-and-compliance/gdpr/SKILL.md) | Cuando el frontend capture datos personales, implemente cookies de tracking, o consentimiento. |
 | [`ccpa-cpra`](../../../governance-risk-and-compliance/ccpa-cpra/SKILL.md) | Cuando se implemente opt-out de venta/compartición de datos o detección de señal GPC del navegador. |
+| [`fetching-rules`](../fetching-rules/SKILL.md) | **Cuando el frontend realice llamadas HTTP** — contiene la implementación del `apiClient` (inyección de token, auto-clear 401, `ApiError` tipado). Es la **única fuente de verdad** para el API client. |
 
 ## Flujo de trabajo del agente
 
@@ -29,7 +30,6 @@ description: >
 8. CORS explícito con whitelist de orígenes (sección 6).
 9. Consultar `governance-risk-and-compliance` → `owasp-top-10` para checklist de vulnerabilidades.
 10. Env vars validadas con Zod al inicio. Secrets nunca en `NEXT_PUBLIC_*` ni `VITE_*` (sección 7).
-7. Env vars validadas con Zod al inicio. Secrets nunca en `NEXT_PUBLIC_*` (sección 7).
 
 ## 1. Prevención de XSS
 
