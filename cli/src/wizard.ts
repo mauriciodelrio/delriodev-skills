@@ -9,6 +9,7 @@ import {
   readManifest,
   updateSkills,
   cleanSkills,
+  countCategoryFiles,
 } from './installer.js';
 
 // ---------------------------------------------------------------------------
@@ -61,7 +62,7 @@ async function selectTargetDir(l: Lang): Promise<string | typeof BACK | null> {
     const customPath = await p.text({
       message: t(l, 'enterPath'),
       placeholder: './my-skills/',
-      validate: (v) => (!v.trim() ? t(l, 'pathRequired') : undefined),
+      validate: (v) => (!v?.trim() ? t(l, 'pathRequired') : undefined),
     });
     if (p.isCancel(customPath)) return BACK;
     return resolveTarget('custom', customPath as string);
@@ -85,6 +86,8 @@ export async function runWizard(): Promise<void> {
   let mode = 'all';
   let selectedCategoryIds: string[] = [];
   let targetDir = '';
+  let categoryCounts = new Map<string, number>();
+  let totalFiles = 0;
 
   while (step < 100) {
     switch (step) {
@@ -100,6 +103,17 @@ export async function runWizard(): Promise<void> {
 
         if (p.isCancel(lang)) return cancel();
         l = lang as Lang;
+
+        // Compute file counts dynamically from the skill source
+        const source = resolveSkillsSource(l);
+        categoryCounts = new Map<string, number>();
+        totalFiles = 0;
+        for (const cat of CATEGORIES) {
+          const count = await countCategoryFiles(source, cat.paths);
+          categoryCounts.set(cat.id, count);
+          totalFiles += count;
+        }
+
         step = 1;
         break;
       }
@@ -135,7 +149,7 @@ export async function runWizard(): Promise<void> {
         const result = await p.select({
           message: t(l, 'selectMode'),
           options: [
-            { value: 'all', label: t(l, 'allSkills'), hint: '71 files' },
+            { value: 'all', label: t(l, 'allSkills'), hint: `${totalFiles} files` },
             { value: 'category', label: t(l, 'byCategory'), hint: t(l, 'byCategoryHint') },
             { value: 'group', label: t(l, 'presetGroup'), hint: t(l, 'presetGroupHint') },
             backOption(l),
@@ -164,7 +178,7 @@ export async function runWizard(): Promise<void> {
               ...CATEGORIES.map((c) => ({
                 value: c.id,
                 label: c.label[l],
-                hint: `${c.fileCount} files`,
+                hint: `${categoryCounts.get(c.id) ?? 0} files`,
               })),
               backOption(l),
             ],
@@ -217,7 +231,7 @@ export async function runWizard(): Promise<void> {
           const customPath = await p.text({
             message: t(l, 'enterPath'),
             placeholder: './my-skills/',
-            validate: (v) => (!v.trim() ? t(l, 'pathRequired') : undefined),
+            validate: (v) => (!v?.trim() ? t(l, 'pathRequired') : undefined),
           });
           if (p.isCancel(customPath)) break; // re-show target
           targetDir = resolveTarget('custom', customPath as string);
@@ -234,19 +248,19 @@ export async function runWizard(): Promise<void> {
         const selectedCategories = CATEGORIES.filter((c) =>
           selectedCategoryIds.includes(c.id),
         );
-        const totalFiles = selectedCategories.reduce(
-          (sum, c) => sum + c.fileCount,
+        const summaryTotal = selectedCategories.reduce(
+          (sum, c) => sum + (categoryCounts.get(c.id) ?? 0),
           0,
         );
         const summaryLines = selectedCategories.map(
           (c) =>
-            `  ${pc.cyan('•')} ${c.label[l]} ${pc.dim(`(${c.fileCount} files)`)}`,
+            `  ${pc.cyan('•')} ${c.label[l]} ${pc.dim(`(${categoryCounts.get(c.id) ?? 0} files)`)}`,
         );
 
         p.note(
           summaryLines.join('\n') +
             '\n' +
-            `\n  ${pc.bold(t(l, 'total'))}: ${totalFiles} files` +
+            `\n  ${pc.bold(t(l, 'total'))}: ${summaryTotal} files` +
             `\n  ${pc.bold(t(l, 'destination'))}: ${targetDir}`,
           t(l, 'summary'),
         );

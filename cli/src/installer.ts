@@ -298,8 +298,22 @@ async function removeIfEmpty(dir: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Count SKILL.md files in a directory tree
+// Count SKILL.md files — per directory tree or per category paths
 // ---------------------------------------------------------------------------
+
+export async function countCategoryFiles(
+  sourceDir: string,
+  paths: string[],
+): Promise<number> {
+  let total = 0;
+  for (const p of paths) {
+    const dir = path.join(sourceDir, p);
+    if (fs.existsSync(dir)) {
+      total += await countSkillFiles(dir);
+    }
+  }
+  return total;
+}
 
 async function countSkillFiles(dir: string): Promise<number> {
   const stat = await fsp.stat(dir);
