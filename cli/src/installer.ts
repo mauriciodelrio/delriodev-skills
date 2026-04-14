@@ -174,6 +174,26 @@ export async function installSkills(
 ): Promise<number> {
   const existing = await readManifest(targetDir);
 
+  // Clean previous installation to handle nested→flat migration
+  if (existing) {
+    for (const skill of existing.skills) {
+      const fullPath = path.join(targetDir, skill);
+      if (fs.existsSync(fullPath)) {
+        await fsp.rm(fullPath, { recursive: true });
+      }
+    }
+    // Remove empty legacy parent dirs from nested installs
+    const legacyParents = existing.skills
+      .filter((s) => s.includes('/'))
+      .map((s) => path.dirname(s))
+      .filter((p) => p !== '.');
+    for (const parent of [...new Set(legacyParents)].sort(
+      (a, b) => b.split(path.sep).length - a.split(path.sep).length,
+    )) {
+      await removeIfEmpty(path.join(targetDir, parent));
+    }
+  }
+
   const installedNames = new Set<string>();
 
   for (const skillPath of skillPaths) {
