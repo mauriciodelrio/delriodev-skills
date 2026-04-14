@@ -89,6 +89,6 @@ Si durante la implementación aparecen necesidades fuera del scope del feature, 
 - El agente tiende a asumir respuestas a preguntas de negocio — siempre preguntar con opciones concretas
 - El agente no debe implementar sin leer `rules/` primero
 - Preguntar dudas de una en una alarga el ciclo — agrupar y presentar juntas
-- El agente no edita el `feature.md` del desarrollador
+- El agente no edita el `feature.md` del desarrollador, excepto si el desarrollador lo solicita explícitamente
 - Brainstorming que salta directo a código sin graduar a feature genera scope indefinido
 - Tech Notes que contradicen `rules/` → alertar al desarrollador, no resolver en silencio

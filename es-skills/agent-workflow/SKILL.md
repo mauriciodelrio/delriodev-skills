@@ -65,6 +65,16 @@ Si durante la implementación el agente detecta scope creep, dependencias no con
 
 ---
 
+## Conexión con skills de implementación
+
+Al pasar de planificación a ejecución, el agente **debe** consultar [`software`](../software/SKILL.md) para activar las skills correctas según el tipo de tarea (frontend, backend, architecture). `software` es el orquestador que enruta a las sub-skills técnicas y activa automáticamente las transversales obligatorias (`clean-code-principles`, `typescript-patterns`, `git-usage`).
+
+Flujo completo: `agent-workflow` (protocolo) → `software` (enrutamiento técnico) → sub-skills específicas (implementación).
+
+Si el feature involucra datos personales, tokens, cookies o normativas → consultar también [`governance-risk-and-compliance`](../governance-risk-and-compliance/SKILL.md).
+
+---
+
 ## Sub-skills
 
 | Sub-skill | Cuándo se invoca |

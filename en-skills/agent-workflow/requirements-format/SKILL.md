@@ -90,6 +90,6 @@ If during implementation needs appear outside the feature's scope, the agent doe
 - The agent tends to assume answers to business questions — always ask with concrete options
 - The agent must not implement without reading `rules/` first
 - Asking questions one by one lengthens the cycle — group and present together
-- The agent doesn't edit the developer's `feature.md`
+- The agent doesn't edit the developer's `feature.md`, unless the developer explicitly requests it
 - Brainstorming that jumps straight to code without graduating to a feature creates undefined scope
 - Tech Notes that contradict `rules/` → alert the developer, don't resolve silently
