@@ -17,15 +17,15 @@ The agent is a disciplined executor: it works with what is documented, asks abou
 
 ### Entering the project
 
-If it's the first time or the agent doesn't have fresh context, execute `project-resumption` before anything else.
+If it's the first time or the agent doesn't have fresh context, execute [`project-resumption`](../project-resumption/SKILL.md) before anything else.
 
 ### By task type
 
 **Implement feature:**
 
-1. Read the complete feature (`requirements-format`)
+1. Read the complete feature ([`requirements-format`](../requirements-format/SKILL.md))
 2. Group all questions and present them together (see Clarification protocol)
-3. Decompose into tasks (`iteration-rules`) and confirm plan with the dev
+3. Decompose into tasks ([`iteration-rules`](../iteration-rules/SKILL.md)) and confirm plan with the dev
 4. Implement task by task with checkpoints per significant block
 5. Update `context/` as progress is made, `memory/` upon completion
 
@@ -67,7 +67,7 @@ If during implementation the agent detects scope creep, unplanned dependencies, 
 
 ## Connection with implementation skills
 
-When moving from planning to execution, the agent **must** consult [`software`](../software/SKILL.md) to activate the correct skills based on the task type (frontend, backend, architecture). `software` is the orchestrator that routes to technical sub-skills and automatically activates mandatory cross-cutting ones (`clean-code-principles`, `typescript-patterns`, `git-usage`).
+When moving from planning to execution, the agent **must** consult [`software`](../software/SKILL.md) to activate the correct skills based on the task type (frontend, backend, architecture). `software` is the orchestrator that routes to technical sub-skills and automatically activates mandatory cross-cutting ones ([`clean-code-principles`](../clean-code-principles/SKILL.md), [`typescript-patterns`](../typescript-patterns/SKILL.md), [`git-usage`](../git-usage/SKILL.md)).
 
 Full flow: `agent-workflow` (protocol) → `software` (technical routing) → specific sub-skills (implementation).
 
@@ -79,8 +79,8 @@ If the feature involves personal data, tokens, cookies, or regulations → also 
 
 | Sub-skill | When invoked |
 |-----------|-------------|
-| `docs-structure` | Create or verify `.docs/` structure |
-| `requirements-format` | Interpret features/US or brainstorming → feature |
-| `iteration-rules` | Decompose tasks, execute, document progress |
-| `project-resumption` | Arrive at a project without context or resume after inactivity |
-| `project-documentation` | Create/update README or decide where public documentation goes |
+| [`docs-structure`](../docs-structure/SKILL.md) | Create or verify `.docs/` structure |
+| [`requirements-format`](../requirements-format/SKILL.md) | Interpret features/US or brainstorming → feature |
+| [`iteration-rules`](../iteration-rules/SKILL.md) | Decompose tasks, execute, document progress |
+| [`project-resumption`](../project-resumption/SKILL.md) | Arrive at a project without context or resume after inactivity |
+| [`project-documentation`](../project-documentation/SKILL.md) | Create/update README or decide where public documentation goes |

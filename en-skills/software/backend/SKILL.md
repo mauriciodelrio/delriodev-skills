@@ -22,7 +22,7 @@ description: >
 
 ## Scope
 
-This skill covers backend code implementation: how to structure the project, design REST endpoints, implement auth/middleware/validation, use ORM/cache/queues in code, test/log/secure. Does not cover: which DB to use → `architecture/databases`, which cache service to choose → `architecture/databases`, which queue service to use → `architecture/messaging-and-events`, where to deploy → `architecture/compute`, IAM/VPC/WAF → `architecture/networking-and-security`, general principles (SOLID, DRY) → `clean-code-principles`.
+This skill covers backend code implementation: how to structure the project, design REST endpoints, implement auth/middleware/validation, use ORM/cache/queues in code, test/log/secure. Does not cover: which DB to use → [`databases`](../databases/SKILL.md), which cache service to choose → [`databases`](../databases/SKILL.md), which queue service to use → [`messaging-and-events`](../messaging-and-events/SKILL.md), where to deploy → [`compute`](../compute/SKILL.md), IAM/VPC/WAF → [`networking-and-security`](../networking-and-security/SKILL.md), general principles (SOLID, DRY) → [`clean-code-principles`](../clean-code-principles/SKILL.md).
 
 ## 1. Stack covered
 
@@ -42,22 +42,22 @@ This skill covers backend code implementation: how to structure the project, des
 
 | Sub-skill | Scope |
 |-----------|-------|
-| `project-structure` | Folder organization, NestJS modules, Express layers, DI |
-| `api-design` | REST conventions, HTTP methods, status codes, pagination, OpenAPI |
-| `auth` | JWT access+refresh, OAuth2, password hashing, RBAC, guards |
-| `request-pipeline` | Middleware, guards, interceptors, pipes, CORS, correlation IDs |
-| `data-validation` | DTOs, Zod/class-validator, input sanitization, transformation |
-| `error-handling` | Error classes, global handler, operational vs programmer errors |
-| `database-patterns` | ORM, migrations, seeders, repository, transactions, N+1 |
-| `caching` | Redis patterns, invalidation, TTL, HTTP cache, decorator caching |
-| `background-jobs` | BullMQ, workers, scheduling, retries, dead letter queues |
-| `testing` | Unit, integration, mocking, DB testing, fixtures |
-| `security` | Helmet, rate limiting, sanitization, CSRF, audit |
-| `logging` | Structured logging (pino), levels, masking, request logging |
-| `real-time` | WebSocket, SSE, rooms, scaling with Redis adapter |
-| `file-handling` | Multipart uploads, streaming, validation, presigned URL integration |
-| `database-design` | Schema modeling, relationships, normalization, indexes, naming |
-| `api-consumption` | External API consumption, retry, circuit breaker, webhooks, SDKs |
+| [`project-structure`](../project-structure/SKILL.md) | Folder organization, NestJS modules, Express layers, DI |
+| [`api-design`](../api-design/SKILL.md) | REST conventions, HTTP methods, status codes, pagination, OpenAPI |
+| [`auth`](../auth/SKILL.md) | JWT access+refresh, OAuth2, password hashing, RBAC, guards |
+| [`request-pipeline`](../request-pipeline/SKILL.md) | Middleware, guards, interceptors, pipes, CORS, correlation IDs |
+| [`data-validation`](../data-validation/SKILL.md) | DTOs, Zod/class-validator, input sanitization, transformation |
+| [`error-handling`](../error-handling/SKILL.md) | Error classes, global handler, operational vs programmer errors |
+| [`database-patterns`](../database-patterns/SKILL.md) | ORM, migrations, seeders, repository, transactions, N+1 |
+| [`caching`](../caching/SKILL.md) | Redis patterns, invalidation, TTL, HTTP cache, decorator caching |
+| [`background-jobs`](../background-jobs/SKILL.md) | BullMQ, workers, scheduling, retries, dead letter queues |
+| [`testing`](../testing/SKILL.md) | Unit, integration, mocking, DB testing, fixtures |
+| [`security`](../security/SKILL.md) | Helmet, rate limiting, sanitization, CSRF, audit |
+| [`logging`](../logging/SKILL.md) | Structured logging (pino), levels, masking, request logging |
+| [`real-time`](../real-time/SKILL.md) | WebSocket, SSE, rooms, scaling with Redis adapter |
+| [`file-handling`](../file-handling/SKILL.md) | Multipart uploads, streaming, validation, presigned URL integration |
+| [`database-design`](../database-design/SKILL.md) | Schema modeling, relationships, normalization, indexes, naming |
+| [`api-consumption`](../api-consumption/SKILL.md) | External API consumption, retry, circuit breaker, webhooks, SDKs |
 
 ## 3. Decision: NestJS or Express?
 
@@ -71,15 +71,15 @@ This skill covers backend code implementation: how to structure the project, des
 
 These rules apply always when creating or modifying backend code. Each individual sub-skill must consult this section to know which other skills are mandatory in parallel.
 
-**When creating/modifying an endpoint:** testing (unit tests for services/utils + integration tests for endpoints, coverage ≥ 80%), data-validation (DTOs, Zod/class-validator, HTML sanitization), error-handling (typed error classes, global handler), security (Helmet, rate limiting, sanitization), logging (structured logging, correlation IDs), api-design (REST conventions, status codes, OpenAPI), clean-code-principles (JSDoc, SRP, guard clauses, naming).
+**When creating/modifying an endpoint:** [`testing`](../testing/SKILL.md) (unit tests for services/utils + integration tests for endpoints, coverage ≥ 80%), [`data-validation`](../data-validation/SKILL.md) (DTOs, Zod/class-validator, HTML sanitization), [`error-handling`](../error-handling/SKILL.md) (typed error classes, global handler), [`security`](../security/SKILL.md) (Helmet, rate limiting, sanitization), [`logging`](../logging/SKILL.md) (structured logging, correlation IDs), [`api-design`](../api-design/SKILL.md) (REST conventions, status codes, OpenAPI), [`clean-code-principles`](../clean-code-principles/SKILL.md) (JSDoc, SRP, guard clauses, naming).
 
-**When creating/modifying auth:** all of the above + auth (JWT, hashing, RBAC, guards), governance/owasp-top-10 (A07 Auth Failures, rate limiting).
+**When creating/modifying auth:** all of the above + [`auth`](../auth/SKILL.md) (JWT, hashing, RBAC, guards), [`owasp-top-10`](../owasp-top-10/SKILL.md) (A07 Auth Failures, rate limiting).
 
-**When creating/modifying DB logic:** testing (Testcontainers or mocks), database-patterns (repository, transactions, N+1), database-design (indexes, naming, migrations), clean-code-principles (separation of concerns, DI).
+**When creating/modifying DB logic:** [`testing`](../testing/SKILL.md) (Testcontainers or mocks), [`database-patterns`](../database-patterns/SKILL.md) (repository, transactions, N+1), [`database-design`](../database-design/SKILL.md) (indexes, naming, migrations), [`clean-code-principles`](../clean-code-principles/SKILL.md) (separation of concerns, DI).
 
-**When creating/modifying background jobs:** testing (workers and scheduling), background-jobs (BullMQ, retries, dead letter queues), error-handling (retry strategies, failure logging), logging (job lifecycle logging).
+**When creating/modifying background jobs:** [`testing`](../testing/SKILL.md) (workers and scheduling), [`background-jobs`](../background-jobs/SKILL.md) (BullMQ, retries, dead letter queues), [`error-handling`](../error-handling/SKILL.md) (retry strategies, failure logging), [`logging`](../logging/SKILL.md) (job lifecycle logging).
 
-**When consuming external APIs:** api-consumption (retry, circuit breaker, timeouts), error-handling (error mapping, fallback responses), logging (request/response logging, no PII), security (don't expose secrets, token rotation).
+**When consuming external APIs:** [`api-consumption`](../api-consumption/SKILL.md) (retry, circuit breaker, timeouts), [`error-handling`](../error-handling/SKILL.md) (error mapping, fallback responses), [`logging`](../logging/SKILL.md) (request/response logging, no PII), [`security`](../security/SKILL.md) (don't expose secrets, token rotation).
 
 ### Consultation chain
 
