@@ -1,7 +1,7 @@
 ---
 name: frontend
 description: >
-  Use this skill when working on frontend. Orchestrates 24 specialized
+  Use this skill when working on frontend. Orchestrates specialized
   sub-skills covering architecture, components, rendering, styles,
   data fetching, testing, performance, and security.
   Stack: React 19+, Next.js 15+, Vite 6+, TypeScript strict, Tailwind CSS, pnpm.
@@ -90,7 +90,8 @@ If it's a **new project**, ask the developer what type of project it is before p
 | [css-rules](./css-rules/SKILL.md) | Tailwind, CSS Modules, custom properties, responsive, theming | Styles and layout |
 | [a11y-rules](./a11y-rules/SKILL.md) | WCAG 2.2 AA, ARIA, focus management, screen readers | Accessibility |
 | [animations-and-transitions](./animations-and-transitions/SKILL.md) | Framer Motion, CSS transitions, View Transitions, skeletons | Animations and micro-interactions |
-| [i18n-rules](./i18n-rules/SKILL.md) | next-intl, ICU formatting, plurals, RTL, locale detection | Internationalization |
+| [i18n-react-rules](./i18n-react-rules/SKILL.md) | react-i18next, i18next, Intl API, plurals, RTL, locale detection | i18n Vite SPA |
+| [i18n-nextjs-rules](./i18n-nextjs-rules/SKILL.md) | next-intl, useTranslations, useFormatter, ICU, middleware locale | i18n Next.js |
 | [seo-rules](./seo-rules/SKILL.md) | Metadata API, structured data, OG tags, sitemap, robots | Technical SEO |
 
 ### Data and Forms
@@ -137,7 +138,8 @@ If it's a **new project**, ask the developer what type of project it is before p
 - `tailwind`, `css module`, `responsive`, `dark mode`, `theme`, `custom property`, `material ui` → `css-rules`
 - `accessibility`, `a11y`, `WCAG`, `ARIA`, `screen reader`, `focus`, `tab`, `landmark` → `a11y-rules`
 - `animation`, `transition`, `framer motion`, `skeleton`, `loading`, `view transition` → `animations-and-transitions`
-- `i18n`, `internationalization`, `translation`, `locale`, `pluralization`, `RTL`, `next-intl` → `i18n-rules`
+- `i18n`, `internationalization`, `translation`, `locale`, `pluralization`, `RTL`, `react-i18next` → `i18n-react-rules` (Vite SPA)
+- `i18n`, `next-intl`, `translation`, `locale`, `pluralization`, `RTL`, `getTranslations` → `i18n-nextjs-rules` (Next.js)
 - `SEO`, `metadata`, `og tag`, `structured data`, `sitemap`, `robots`, `canonical` → `seo-rules`
 
 **Data and forms:**
@@ -157,39 +159,47 @@ If it's a **new project**, ask the developer what type of project it is before p
 ## 4. Mandatory Skills by Action
 
 When creating/modifying a **component**:
-- `testing-rules` — Vitest + RTL tests (coverage ≥ 80%)
-- `a11y-rules` — WCAG 2.2 AA, roles, aria-labels, focus
-- `clean-code-principles` — JSDoc on props/interfaces, named exports
-- `i18n-rules` — strings not hardcoded (if the project uses i18n)
-- `error-handling-rules` — error boundaries, fallback UI
+- [`testing-rules`](./testing-rules/SKILL.md) — Vitest + RTL tests (coverage ≥ 80%)
+- [`a11y-rules`](./a11y-rules/SKILL.md) — WCAG 2.2 AA, roles, aria-labels, focus
+- [`clean-code-principles`](../clean-code-principles/SKILL.md) — JSDoc on props/interfaces, named exports
+- [`code-quality-rules`](./code-quality-rules/SKILL.md) — ESLint, naming conventions, organized imports
+- [`i18n-react-rules`](./i18n-react-rules/SKILL.md) / [`i18n-nextjs-rules`](./i18n-nextjs-rules/SKILL.md) — strings not hardcoded (based on project type)
+- [`error-handling-rules`](./error-handling-rules/SKILL.md) — error boundaries, fallback UI
 
 When creating/modifying a **form** (all of the above plus):
-- `forms-and-validation-rules` — React Hook Form + Zod
-- `security-rules` — input sanitization, XSS prevention
-- `a11y-rules` — associated labels, accessible error messages
-- `governance-risk-and-compliance` → `gdpr` if capturing personal data, `owasp-top-10` for XSS
+- [`forms-and-validation-rules`](./forms-and-validation-rules/SKILL.md) — React Hook Form + Zod
+- [`security-rules`](./security-rules/SKILL.md) — input sanitization, XSS prevention
+- [`a11y-rules`](./a11y-rules/SKILL.md) — associated labels, accessible error messages
+- [`governance-risk-and-compliance`](../../governance-risk-and-compliance/SKILL.md) → [`gdpr`](../../governance-risk-and-compliance/gdpr/SKILL.md) if capturing personal data, [`owasp-top-10`](../../governance-risk-and-compliance/owasp-top-10/SKILL.md) for XSS
 
 When creating/modifying a **hook or store**:
-- `testing-rules` — unit tests for the hook/store
-- `state-management-rules` — selectors, avoid re-renders
+- [`testing-rules`](./testing-rules/SKILL.md) — unit tests for the hook/store
+- [`state-management-rules`](./state-management-rules/SKILL.md) — selectors, avoid re-renders
+- [`code-quality-rules`](./code-quality-rules/SKILL.md) — naming, imports
 
 When creating/modifying **styles**:
-- `css-rules` — Tailwind, responsive, dark mode
-- `a11y-rules` — contrast, focus visible, reduced motion
+- [`css-rules`](./css-rules/SKILL.md) — Tailwind, responsive, dark mode
+- [`a11y-rules`](./a11y-rules/SKILL.md) — contrast, focus visible, reduced motion
 
 When creating/modifying **data fetching**:
-- `fetching-rules` — TanStack Query, cache, error states
-- `error-handling-rules` — loading/error/empty states
-- `security-rules` — don't expose tokens, sanitize responses
+- [`fetching-rules`](./fetching-rules/SKILL.md) — TanStack Query, cache, error states
+- [`error-handling-rules`](./error-handling-rules/SKILL.md) — loading/error/empty states
+- [`security-rules`](./security-rules/SKILL.md) — don't expose tokens, sanitize responses
+- [`code-quality-rules`](./code-quality-rules/SKILL.md) — query key naming, hook organization
 
 When implementing **authentication or token handling**:
-- `security-rules` — secure token storage based on project type
-- `governance-risk-and-compliance` → `owasp-top-10` (A07: Authentication Failures)
-- `governance-risk-and-compliance` → `gdpr` if login involves personal data
+- [`security-rules`](./security-rules/SKILL.md) — secure token storage based on project type
+- [`governance-risk-and-compliance`](../../governance-risk-and-compliance/SKILL.md) → [`owasp-top-10`](../../governance-risk-and-compliance/owasp-top-10/SKILL.md) (A07: Authentication Failures)
+- [`governance-risk-and-compliance`](../../governance-risk-and-compliance/SKILL.md) → [`gdpr`](../../governance-risk-and-compliance/gdpr/SKILL.md) if login involves personal data
 
 When implementing **cookies or consent**:
-- `governance-risk-and-compliance` → `gdpr` (cookie banner, granular consent)
-- `governance-risk-and-compliance` → `ccpa-cpra` (Do Not Sell, GPC signal detection)
+- [`governance-risk-and-compliance`](../../governance-risk-and-compliance/SKILL.md) → [`gdpr`](../../governance-risk-and-compliance/gdpr/SKILL.md) (cookie banner, granular consent)
+- [`governance-risk-and-compliance`](../../governance-risk-and-compliance/SKILL.md) → [`ccpa-cpra`](../../governance-risk-and-compliance/ccpa-cpra/SKILL.md) (Do Not Sell, GPC signal detection)
+
+When creating/modifying **layouts or navigation**:
+- [`a11y-rules`](./a11y-rules/SKILL.md) — landmarks (`<nav>`, `<main>`, `<aside>`), `aria-current="page"`, skip links
+- [`css-rules`](./css-rules/SKILL.md) — responsive sidebar/header, Tailwind breakpoints
+- [`error-handling-rules`](./error-handling-rules/SKILL.md) — Not Found page, catch-all routes
 
 ## 5. Universal Code Rules
 

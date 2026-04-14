@@ -287,8 +287,8 @@ test('tab navigates between modal buttons', async () => {
 
 | Skill | Why |
 |-------|-----|
-| `testing-rules` | Accessibility tests (queries by role, axe-core) |
-| `component-patterns` | Compound components with semantic roles |
-| `css-rules` | Contrast, focus indicators, prefers-reduced-motion |
-| `forms-and-validation-rules` | Labels, accessible error messages, fieldset/legend |
-| `i18n-rules` | `lang` attribute, translations of aria-labels |
+| [`testing-rules`](../testing-rules/SKILL.md) | Accessibility tests (queries by role, axe-core) |
+| [`component-patterns`](../component-patterns/SKILL.md) | Compound components with semantic roles |
+| [`css-rules`](../css-rules/SKILL.md) | Contrast, focus indicators, prefers-reduced-motion |
+| [`forms-and-validation-rules`](../forms-and-validation-rules/SKILL.md) | Labels, accessible error messages, fieldset/legend |
+| [`i18n-react-rules`](../i18n-react-rules/SKILL.md) / [`i18n-nextjs-rules`](../i18n-nextjs-rules/SKILL.md) | `lang` attribute, translations of aria-labels |
