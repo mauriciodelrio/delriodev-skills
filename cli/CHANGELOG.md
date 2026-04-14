@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.2](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.4.1...v0.4.2) (2026-04-14)
+
+In version 0.4.2 of "delriodev-skills," we've enhanced the user experience by unifying the `apiClient` as a single source of truth and adding cross-references for improved navigation between security and fetching rules. This release introduces support for single-page applications (SPAs) using Vite and React Router v6, expanding our skills to include in-memory token patterns, advanced state management, and refined error handling. Additionally, we've addressed CORS issues with Vite's dev-server and provided comprehensive updates to ensure a smoother development process.
+
+### Pull Requests
+
+- [#13](https://github.com/mauriciodelrio/delriodev-skills/pull/13) feat(frontend): SPA support + split routing & project-structure by framework
+- [#14](https://github.com/mauriciodelrio/delriodev-skills/pull/14) refactor(frontend): unify apiClient source of truth + add cross-references
+
 ## [0.4.1](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.4.0...v0.4.1) (2026-04-13)
 
 In version 0.4.1 of "delriodev-skills," we've enhanced the testing skill by clarifying the coverage configuration process and introducing new steps to improve user understanding. Additionally, we've strengthened the cross-references between testing, data validation, and security in the backend skills, addressing gaps identified during real project implementation. These updates aim to ensure better quality control and security practices in your development workflow.
