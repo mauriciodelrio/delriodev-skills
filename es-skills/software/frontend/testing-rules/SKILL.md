@@ -370,7 +370,7 @@ function renderWithProviders(
 
 ## Skills Relacionadas
 
-Consultar [`frontend/SKILL.md`](../SKILL.md) para la cadena completa.
+Consultar [`frontend/SKILL.md`](../frontend/SKILL.md) para la cadena completa.
 
 - [`a11y-rules`](../a11y-rules/SKILL.md) — queries por role verifican accesibilidad
 - [`component-patterns`](../component-patterns/SKILL.md) — entender la API del componente para testearlo

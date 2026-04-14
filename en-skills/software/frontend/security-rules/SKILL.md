@@ -13,9 +13,9 @@ description: >
 
 | Skill | When to activate |
 |-------|------------------|
-| [`owasp-top-10`](../../../governance-risk-and-compliance/owasp-top-10/SKILL.md) | **Always** in any frontend development handling user input or authentication. |
-| [`gdpr`](../../../governance-risk-and-compliance/gdpr/SKILL.md) | When the frontend captures personal data, implements tracking cookies, or consent. |
-| [`ccpa-cpra`](../../../governance-risk-and-compliance/ccpa-cpra/SKILL.md) | When implementing data sale/sharing opt-out or detecting the browser GPC signal. |
+| [`owasp-top-10`](../owasp-top-10/SKILL.md) | **Always** in any frontend development handling user input or authentication. |
+| [`gdpr`](../gdpr/SKILL.md) | When the frontend captures personal data, implements tracking cookies, or consent. |
+| [`ccpa-cpra`](../ccpa-cpra/SKILL.md) | When implementing data sale/sharing opt-out or detecting the browser GPC signal. |
 | [`fetching-rules`](../fetching-rules/SKILL.md) | **When the frontend makes HTTP calls** — contains the `apiClient` implementation (token injection, auto-clear 401, typed `ApiError`). It is the **single source of truth** for the API client. |
 
 ## Agent workflow

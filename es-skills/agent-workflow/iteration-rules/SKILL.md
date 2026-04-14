@@ -130,15 +130,15 @@ Recomendación: [cuál y por qué]
 
 Después de implementar cada bloque significativo de código, recorrer esta checklist. Para cada ítem que aplique, consultar la skill correspondiente y aplicar sus reglas al código recién creado. Solo marcar la tarea como completada cuando todos los ítems aplicables se cumplan.
 
-- [ ] **Tests** — consultar [`frontend/testing-rules`](../../software/frontend/testing-rules/SKILL.md) o [`backend/testing`](../../software/backend/testing/SKILL.md). Coverage mínimo: 80%
-- [ ] **Clean code** — consultar [`clean-code-principles`](../../software/clean-code-principles/SKILL.md). JSDoc en interfaces públicas, named exports, funciones atómicas
-- [ ] **Code quality** — consultar [`frontend/code-quality-rules`](../../software/frontend/code-quality-rules/SKILL.md). ESLint, naming conventions, imports
+- [ ] **Tests** — consultar [`frontend/testing-rules`](../testing-rules/SKILL.md) o [`backend/testing`](../testing/SKILL.md). Coverage mínimo: 80%
+- [ ] **Clean code** — consultar [`clean-code-principles`](../clean-code-principles/SKILL.md). JSDoc en interfaces públicas, named exports, funciones atómicas
+- [ ] **Code quality** — consultar [`frontend/code-quality-rules`](../code-quality-rules/SKILL.md). ESLint, naming conventions, imports
 - [ ] **Documentación** — consultar [`agent-workflow/project-documentation`](../project-documentation/SKILL.md). README se actualiza si: nuevo script, nueva env var, cambio de estructura
-- [ ] **Accesibilidad** (frontend) — consultar [`frontend/a11y-rules`](../../software/frontend/a11y-rules/SKILL.md). WCAG 2.2 AA
-- [ ] **i18n** (texto visible al usuario) — **solo si el proyecto tiene i18n configurado** (dependencias i18n en `package.json` y archivos de traducción existentes). Si aplica: consultar [`frontend/i18n-react-rules`](../../software/frontend/i18n-react-rules/SKILL.md) o [`frontend/i18n-nextjs-rules`](../../software/frontend/i18n-nextjs-rules/SKILL.md) según tipo de proyecto. NO hardcodear strings de UI. Si el proyecto no tiene i18n, omitir este ítem sin reportar drift
-- [ ] **Seguridad** — consultar [`frontend/security-rules`](../../software/frontend/security-rules/SKILL.md) o [`backend/security`](../../software/backend/security/SKILL.md) + [`governance/owasp-top-10`](../../governance-risk-and-compliance/owasp-top-10/SKILL.md). Validar inputs, sanitizar outputs
-- [ ] **Error handling** — consultar [`frontend/error-handling-rules`](../../software/frontend/error-handling-rules/SKILL.md) o [`backend/error-handling`](../../software/backend/error-handling/SKILL.md). No catch vacíos, errores tipados
-- [ ] **Logging** (backend) — consultar [`backend/logging`](../../software/backend/logging/SKILL.md). Structured logging, no PII, correlation IDs
+- [ ] **Accesibilidad** (frontend) — consultar [`frontend/a11y-rules`](../a11y-rules/SKILL.md). WCAG 2.2 AA
+- [ ] **i18n** (texto visible al usuario) — **solo si el proyecto tiene i18n configurado** (dependencias i18n en `package.json` y archivos de traducción existentes). Si aplica: consultar [`frontend/i18n-react-rules`](../i18n-react-rules/SKILL.md) o [`frontend/i18n-nextjs-rules`](../i18n-nextjs-rules/SKILL.md) según tipo de proyecto. NO hardcodear strings de UI. Si el proyecto no tiene i18n, omitir este ítem sin reportar drift
+- [ ] **Seguridad** — consultar [`frontend/security-rules`](../security-rules/SKILL.md) o [`backend/security`](../security/SKILL.md) + [`governance/owasp-top-10`](../owasp-top-10/SKILL.md). Validar inputs, sanitizar outputs
+- [ ] **Error handling** — consultar [`frontend/error-handling-rules`](../error-handling-rules/SKILL.md) o [`backend/error-handling`](../error-handling/SKILL.md). No catch vacíos, errores tipados
+- [ ] **Logging** (backend) — consultar [`backend/logging`](../logging/SKILL.md). Structured logging, no PII, correlation IDs
 
 ### Definition of Done
 
@@ -146,7 +146,7 @@ Un feature está DONE cuando:
 
 1. Todos los A/C se cumplen
 2. Tests pasan (coverage ≥ 80%)
-3. Código sigue [`clean-code-principles`](../../software/clean-code-principles/SKILL.md) y `.docs/rules/`
+3. Código sigue [`clean-code-principles`](../clean-code-principles/SKILL.md) y `.docs/rules/`
 4. Checklist de concerns transversales cumplido
 5. No hay desvíos no reportados del plan
 6. Context actualizado con estado final

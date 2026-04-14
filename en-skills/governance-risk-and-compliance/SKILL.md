@@ -59,30 +59,30 @@ Use the following table to determine **which sub-skill to invoke** based on the 
 
 | Skill | Regulation | When to Use |
 |-------|-----------|-------------|
-| [gdpr](./gdpr/SKILL.md) | General Data Protection Regulation | Personal data, consent, data subject rights |
-| [ccpa-cpra](./ccpa-cpra/SKILL.md) | California Consumer Privacy Act / CPRA | Opt-out of data sale/sharing, GPC signals |
-| [lgpd](./lgpd/SKILL.md) | Lei Geral de Proteção de Dados | Granular consent by purpose, data subject rights |
+| [gdpr](../gdpr/SKILL.md) | General Data Protection Regulation | Personal data, consent, data subject rights |
+| [ccpa-cpra](../ccpa-cpra/SKILL.md) | California Consumer Privacy Act / CPRA | Opt-out of data sale/sharing, GPC signals |
+| [lgpd](../lgpd/SKILL.md) | Lei Geral de Proteção de Dados | Granular consent by purpose, data subject rights |
 
 ### Information Security
 
 | Skill | Standard | When to Use |
 |-------|----------|-------------|
-| [iso-27001](./iso-27001/SKILL.md) | ISO/IEC 27001:2022 | ISMS, Annex A controls, information classification |
-| [nist-cybersec-framework](./nist-cybersec-framework/SKILL.md) | NIST CSF 2.0 | Identify-Protect-Detect-Respond-Recover framework |
-| [soc2](./soc2/SKILL.md) | SOC 2 Type II | Trust Service Criteria for SaaS and cloud services |
+| [iso-27001](../iso-27001/SKILL.md) | ISO/IEC 27001:2022 | ISMS, Annex A controls, information classification |
+| [nist-cybersec-framework](../nist-cybersec-framework/SKILL.md) | NIST CSF 2.0 | Identify-Protect-Detect-Respond-Recover framework |
+| [soc2](../soc2/SKILL.md) | SOC 2 Type II | Trust Service Criteria for SaaS and cloud services |
 
 ### Application Security
 
 | Skill | Standard | When to Use |
 |-------|----------|-------------|
-| [owasp-top-10](./owasp-top-10/SKILL.md) | OWASP Top 10:2021 | Web vulnerabilities: injection, XSS, CSRF, broken auth |
+| [owasp-top-10](../owasp-top-10/SKILL.md) | OWASP Top 10:2021 | Web vulnerabilities: injection, XSS, CSRF, broken auth |
 
 ### Industry-Specific
 
 | Skill | Regulation | When to Use |
 |-------|-----------|-------------|
-| [hipaa](./hipaa/SKILL.md) | HIPAA | Protected Health Information (PHI), medical records |
-| [pci-compliance](./pci-compliance/SKILL.md) | PCI DSS v4.0 | Payment card data, tokenization, payment processing |
+| [hipaa](../hipaa/SKILL.md) | HIPAA | Protected Health Information (PHI), medical records |
+| [pci-compliance](../pci-compliance/SKILL.md) | PCI DSS v4.0 | Payment card data, tokenization, payment processing |
 
 ---
 

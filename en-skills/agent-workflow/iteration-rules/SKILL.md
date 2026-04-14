@@ -130,15 +130,15 @@ Recommendation: [which and why]
 
 After implementing each significant block of code, walk through this checklist. For each applicable item, consult the corresponding skill and apply its rules to the newly created code. Only mark the task as completed when all applicable items are met.
 
-- [ ] **Tests** — consult [`frontend/testing-rules`](../../software/frontend/testing-rules/SKILL.md) or [`backend/testing`](../../software/backend/testing/SKILL.md). Minimum coverage: 80%
-- [ ] **Clean code** — consult [`clean-code-principles`](../../software/clean-code-principles/SKILL.md). JSDoc on public interfaces, named exports, atomic functions
-- [ ] **Code quality** — consult [`frontend/code-quality-rules`](../../software/frontend/code-quality-rules/SKILL.md). ESLint, naming conventions, imports
+- [ ] **Tests** — consult [`frontend/testing-rules`](../testing-rules/SKILL.md) or [`backend/testing`](../testing/SKILL.md). Minimum coverage: 80%
+- [ ] **Clean code** — consult [`clean-code-principles`](../clean-code-principles/SKILL.md). JSDoc on public interfaces, named exports, atomic functions
+- [ ] **Code quality** — consult [`frontend/code-quality-rules`](../code-quality-rules/SKILL.md). ESLint, naming conventions, imports
 - [ ] **Documentation** — consult [`agent-workflow/project-documentation`](../project-documentation/SKILL.md). README updated if: new script, new env var, structure change
-- [ ] **Accessibility** (frontend) — consult [`frontend/a11y-rules`](../../software/frontend/a11y-rules/SKILL.md). WCAG 2.2 AA
-- [ ] **i18n** (user-visible text) — **only if the project has i18n configured** (i18n dependencies in `package.json` and existing translation files). If applicable: consult [`frontend/i18n-react-rules`](../../software/frontend/i18n-react-rules/SKILL.md) or [`frontend/i18n-nextjs-rules`](../../software/frontend/i18n-nextjs-rules/SKILL.md) based on project type. Do NOT hardcode UI strings. If the project has no i18n, skip this item without reporting drift
-- [ ] **Security** — consult [`frontend/security-rules`](../../software/frontend/security-rules/SKILL.md) or [`backend/security`](../../software/backend/security/SKILL.md) + [`governance/owasp-top-10`](../../governance-risk-and-compliance/owasp-top-10/SKILL.md). Validate inputs, sanitize outputs
-- [ ] **Error handling** — consult [`frontend/error-handling-rules`](../../software/frontend/error-handling-rules/SKILL.md) or [`backend/error-handling`](../../software/backend/error-handling/SKILL.md). No empty catches, typed errors
-- [ ] **Logging** (backend) — consult [`backend/logging`](../../software/backend/logging/SKILL.md). Structured logging, no PII, correlation IDs
+- [ ] **Accessibility** (frontend) — consult [`frontend/a11y-rules`](../a11y-rules/SKILL.md). WCAG 2.2 AA
+- [ ] **i18n** (user-visible text) — **only if the project has i18n configured** (i18n dependencies in `package.json` and existing translation files). If applicable: consult [`frontend/i18n-react-rules`](../i18n-react-rules/SKILL.md) or [`frontend/i18n-nextjs-rules`](../i18n-nextjs-rules/SKILL.md) based on project type. Do NOT hardcode UI strings. If the project has no i18n, skip this item without reporting drift
+- [ ] **Security** — consult [`frontend/security-rules`](../security-rules/SKILL.md) or [`backend/security`](../security/SKILL.md) + [`governance/owasp-top-10`](../owasp-top-10/SKILL.md). Validate inputs, sanitize outputs
+- [ ] **Error handling** — consult [`frontend/error-handling-rules`](../error-handling-rules/SKILL.md) or [`backend/error-handling`](../error-handling/SKILL.md). No empty catches, typed errors
+- [ ] **Logging** (backend) — consult [`backend/logging`](../logging/SKILL.md). Structured logging, no PII, correlation IDs
 
 ### Definition of Done
 
@@ -146,7 +146,7 @@ A feature is DONE when:
 
 1. All A/C are met
 2. Tests pass (coverage ≥ 80%)
-3. Code follows [`clean-code-principles`](../../software/clean-code-principles/SKILL.md) and `.docs/rules/`
+3. Code follows [`clean-code-principles`](../clean-code-principles/SKILL.md) and `.docs/rules/`
 4. Cross-cutting concerns checklist fulfilled
 5. No unreported deviations from the plan
 6. Context updated with final state
