@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.4](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.4.3...v0.4.4) (2026-04-14)
+
+In version 0.4.4 of "delriodev-skills," we've introduced significant improvements to the CLI installer, enhancing user experience and accuracy. The dynamic file counting feature now ensures that SKILL.md counts are updated in real-time after language selection, eliminating outdated information when skills are added or removed. Additionally, we've corrected the personal skills path, ensuring a more reliable installation process across different platforms.
+
+### Pull Requests
+
+- [#16](https://github.com/mauriciodelrio/delriodev-skills/pull/16) fix(cli): dynamic file counts + correct personal skills path
+
 ## [0.4.3](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.4.2...v0.4.3) (2026-04-14)
 
 In version 0.4.3 of "delriodev-skills," we've enhanced the user experience by addressing inconsistencies in the agent-workflow and frontend skills through a comprehensive audit. This update includes the addition of missing cross-reference links, improved formatting for requirements, and updates to the SKILL.md files to better support internationalization. These changes ensure a more cohesive and user-friendly experience when utilizing our GitHub Copilot custom skills for software development, security, and compliance.
