@@ -167,7 +167,11 @@ export function RootError() {
 
 ## 2. Not Found
 
+### 2A. Next.js — `not-found.tsx`
+
 ```tsx
+import Link from 'next/link';
+
 export default function NotFound() {
   return (
     <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
@@ -185,7 +189,11 @@ export default function NotFound() {
     </div>
   );
 }
+```
 
+Activar `notFound()` desde un Server Component:
+
+```tsx
 import { notFound } from 'next/navigation';
 
 async function ProductPage({ params }: { params: { id: string } }) {
@@ -195,6 +203,37 @@ async function ProductPage({ params }: { params: { id: string } }) {
 
   return <ProductDetail product={product} />;
 }
+```
+
+### 2B. Vite SPA (React Router) — Catch-all route
+
+```tsx
+import { Link } from 'react-router-dom';
+
+export default function NotFoundPage() {
+  return (
+    <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+      <h1 className="text-6xl font-bold text-gray-300">404</h1>
+      <h2 className="text-xl font-semibold">Página no encontrada</h2>
+      <p className="text-gray-600">
+        La página que buscas no existe o fue movida.
+      </p>
+      <Link
+        to="/"
+        className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+      >
+        Ir al inicio
+      </Link>
+    </div>
+  );
+}
+```
+
+Registrar como catch-all en el router:
+
+```tsx
+// router.tsx
+{ path: '*', element: <NotFoundPage /> }
 ```
 
 ## 3. Error Boundary Customizable
@@ -462,8 +501,8 @@ async function fetchWithRetry<T>(
 
 | Skill | Por qué |
 |-------|--------|
-| `testing-rules` | Tests de error boundaries, estados de error |
-| `a11y-rules` | `role="alert"`, aria-live para errores |
-| `i18n-rules` | Mensajes de error y toasts traducidos |
-| `fetching-rules` | Error states en TanStack Query, retry logic |
-| `backend/error-handling` | Formato de errores del servidor que el frontend consume |
+| [`testing-rules`](../testing-rules/SKILL.md) | Tests de error boundaries, estados de error |
+| [`a11y-rules`](../a11y-rules/SKILL.md) | `role="alert"`, aria-live para errores |
+| [`i18n-react-rules`](../i18n-react-rules/SKILL.md) / [`i18n-nextjs-rules`](../i18n-nextjs-rules/SKILL.md) | Mensajes de error y toasts traducidos |
+| [`fetching-rules`](../fetching-rules/SKILL.md) | Error states en TanStack Query, retry logic |
+| [`backend/error-handling`](../../backend/error-handling/SKILL.md) | Formato de errores del servidor que el frontend consume |

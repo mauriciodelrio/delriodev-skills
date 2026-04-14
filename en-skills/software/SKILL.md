@@ -37,19 +37,19 @@ These skills apply in **every** interaction that generates or modifies code, wit
 ### Frontend
 
 - **Keywords**: component, React, Next.js, hook, state, CSS, Tailwind, form, fetching, SSR, accessibility, SEO, animation, i18n, Playwright, Storybook
-- **Activate**: [frontend](./frontend/SKILL.md) (orchestrator with 22 sub-skills)
+- **Activate**: [frontend](./frontend/SKILL.md) (orchestrator of frontend sub-skills)
 - **Always co-activate**: clean-code-principles, typescript-patterns
 
 ### Backend
 
 - **Keywords**: endpoint, API, REST, NestJS, Express, middleware, auth, JWT, validation, Zod, Prisma, database, cache, Redis, queue, BullMQ, WebSocket, logging, Sentry
-- **Activate**: [backend](./backend/SKILL.md) (orchestrator with 16 sub-skills)
+- **Activate**: [backend](./backend/SKILL.md) (orchestrator of backend sub-skills)
 - **Always co-activate**: clean-code-principles, typescript-patterns
 
 ### Architecture
 
 - **Keywords**: architecture, infrastructure, which service to use, AWS, Vercel, which database, scale, budget, monolith vs microservices, IaC, Terraform, CDN, observability
-- **Activate**: [architecture](./architecture/SKILL.md) (orchestrator with 7 sub-skills)
+- **Activate**: [architecture](./architecture/SKILL.md) (orchestrator of architecture sub-skills)
 - **Co-activate**: backend and/or frontend depending on the implementation phase
 
 ### CI/CD and Workflows
@@ -86,11 +86,11 @@ These skills apply in **every** interaction that generates or modifies code, wit
 
 ### Orchestrators with Sub-skills
 
-| Orchestrator | Sub-skills | Scope |
-|-------------|-----------|-------|
-| [frontend](./frontend/SKILL.md) | 22 sub-skills | React, Next.js, styles, state, fetching, forms, testing, a11y, SEO, i18n |
-| [backend](./backend/SKILL.md) | 16 sub-skills | API design, auth, DB, cache, queues, testing, security, logging, real-time |
-| [architecture](./architecture/SKILL.md) | 7 sub-skills | Compute, databases, storage, networking, messaging, observability, costs |
+| Orchestrator | Scope |
+|-------------|-------|
+| [frontend](./frontend/SKILL.md) | React, Next.js, styles, state, fetching, forms, testing, a11y, SEO, i18n |
+| [backend](./backend/SKILL.md) | API design, auth, DB, cache, queues, testing, security, logging, real-time |
+| [architecture](./architecture/SKILL.md) | Compute, databases, storage, networking, messaging, observability, costs |
 
 ---
 

@@ -65,6 +65,16 @@ If during implementation the agent detects scope creep, unplanned dependencies, 
 
 ---
 
+## Connection with implementation skills
+
+When moving from planning to execution, the agent **must** consult [`software`](../software/SKILL.md) to activate the correct skills based on the task type (frontend, backend, architecture). `software` is the orchestrator that routes to technical sub-skills and automatically activates mandatory cross-cutting ones (`clean-code-principles`, `typescript-patterns`, `git-usage`).
+
+Full flow: `agent-workflow` (protocol) → `software` (technical routing) → specific sub-skills (implementation).
+
+If the feature involves personal data, tokens, cookies, or regulations → also consult [`governance-risk-and-compliance`](../governance-risk-and-compliance/SKILL.md).
+
+---
+
 ## Sub-skills
 
 | Sub-skill | When invoked |

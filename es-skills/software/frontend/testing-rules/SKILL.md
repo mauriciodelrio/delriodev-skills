@@ -1,9 +1,9 @@
 ---
 name: testing-rules
 description: >
-  Usa esta skill cuando escribas tests en React/Next.js: Vitest configuración,
-  React Testing Library (queries, userEvent), Playwright E2E, mocking con MSW,
-  testing de hooks, coverage targets, y patrones de test.
+  Usa esta skill cuando escribas tests en React (Next.js o Vite SPA): Vitest
+  configuración, React Testing Library (queries, userEvent), Playwright E2E,
+  mocking con MSW, testing de hooks, coverage targets, y patrones de test.
 ---
 
 # Testing — Reglas
@@ -64,6 +64,7 @@ export default defineConfig({
 ```
 
 ```typescript
+// vitest.setup.ts — Setup base (compartido)
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
@@ -80,8 +81,12 @@ mockIntersectionObserver.mockReturnValue({
   disconnect: vi.fn(),
 });
 window.IntersectionObserver = mockIntersectionObserver;
+```
 
-// Mock Next.js router
+### Setup adicional — Next.js
+
+```typescript
+// vitest.setup.ts — agregar al setup base
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -92,6 +97,45 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/',
   useSearchParams: () => new URLSearchParams(),
 }));
+```
+
+### Setup adicional — Vite SPA (React Router)
+
+Elegir **una** de las dos estrategias (son mutuamente excluyentes):
+
+#### Opción A — `MemoryRouter` en test utils (recomendado)
+
+Envolver cada render con `MemoryRouter` en un helper `renderWithProviders`. Permite testear navegación real y `useNavigate`/`useLocation` sin mocks.
+
+```typescript
+// test-utils.tsx
+import { MemoryRouter } from 'react-router-dom';
+
+export function renderWithProviders(ui: React.ReactElement, { route = '/' } = {}) {
+  return render(ui, {
+    wrapper: ({ children }) => (
+      <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+    ),
+  });
+}
+```
+
+#### Opción B — Mock global en `vitest.setup.ts`
+
+Mockear hooks de router globalmente. Útil cuando los componentes usan hooks de router pero no se necesita testear navegación real.
+
+```typescript
+// vitest.setup.ts — agregar al setup base
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => vi.fn(),
+    useLocation: () => ({ pathname: '/', search: '', hash: '', state: null, key: 'default' }),
+    useParams: () => ({}),
+    useSearchParams: () => [new URLSearchParams(), vi.fn()],
+  };
+});
 ```
 
 ## 2. React Testing Library — Queries
@@ -328,5 +372,5 @@ function renderWithProviders(
 
 Consultar [`frontend/SKILL.md`](../SKILL.md) para la cadena completa.
 
-- `a11y-rules` — queries por role verifican accesibilidad
-- `component-patterns` — entender la API del componente para testearlo
+- [`a11y-rules`](../a11y-rules/SKILL.md) — queries por role verifican accesibilidad
+- [`component-patterns`](../component-patterns/SKILL.md) — entender la API del componente para testearlo

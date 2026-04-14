@@ -410,7 +410,7 @@ function focusFirstError(errors: FieldErrors) {
 
 ## Related skills
 
-- `testing-rules` — tests with userEvent + queries by label
-- `a11y-rules` — labels, accessible error messages, fieldset
-- `i18n-rules` — translated validation messages
-- `security-rules` — input sanitization, XSS prevention
+- [`testing-rules`](../testing-rules/SKILL.md) — tests with userEvent + queries by label
+- [`a11y-rules`](../a11y-rules/SKILL.md) — labels, accessible error messages, fieldset
+- [`i18n-react-rules`](../i18n-react-rules/SKILL.md) / [`i18n-nextjs-rules`](../i18n-nextjs-rules/SKILL.md) — translated validation messages
+- [`security-rules`](../security-rules/SKILL.md) — input sanitization, XSS prevention

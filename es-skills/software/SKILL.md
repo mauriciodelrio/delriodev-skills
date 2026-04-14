@@ -37,19 +37,19 @@ Estas skills se aplican en **toda** interacción que genere o modifique código,
 ### Frontend
 
 - **Keywords**: componente, React, Next.js, hook, estado, CSS, Tailwind, formulario, fetching, SSR, accesibilidad, SEO, animación, i18n, Playwright, Storybook
-- **Activar**: [frontend](./frontend/SKILL.md) (orquestador con 22 sub-skills)
+- **Activar**: [frontend](./frontend/SKILL.md) (orquestador de sub-skills frontend)
 - **Co-activar siempre**: clean-code-principles, typescript-patterns
 
 ### Backend
 
 - **Keywords**: endpoint, API, REST, NestJS, Express, middleware, auth, JWT, validación, Zod, Prisma, base de datos, cache, Redis, queue, BullMQ, WebSocket, logging, Sentry
-- **Activar**: [backend](./backend/SKILL.md) (orquestador con 16 sub-skills)
+- **Activar**: [backend](./backend/SKILL.md) (orquestador de sub-skills backend)
 - **Co-activar siempre**: clean-code-principles, typescript-patterns
 
 ### Architecture
 
 - **Keywords**: arquitectura, infraestructura, qué servicio usar, AWS, Vercel, base de datos cuál, escala, presupuesto, monolito vs microservicios, IaC, Terraform, CDN, observabilidad
-- **Activar**: [architecture](./architecture/SKILL.md) (orquestador con 7 sub-skills)
+- **Activar**: [architecture](./architecture/SKILL.md) (orquestador de sub-skills de arquitectura)
 - **Co-activar**: backend y/o frontend según la fase de implementación
 
 ### CI/CD y Workflows
@@ -86,11 +86,11 @@ Estas skills se aplican en **toda** interacción que genere o modifique código,
 
 ### Orquestadores con Sub-skills
 
-| Orquestador | Sub-skills | Alcance |
-|-------------|-----------|---------|
-| [frontend](./frontend/SKILL.md) | 22 sub-skills | React, Next.js, estilos, estado, fetching, forms, testing, a11y, SEO, i18n |
-| [backend](./backend/SKILL.md) | 16 sub-skills | API design, auth, DB, cache, queues, testing, security, logging, real-time |
-| [architecture](./architecture/SKILL.md) | 7 sub-skills | Compute, databases, storage, networking, messaging, observability, costos |
+| Orquestador | Alcance |
+|-------------|---------|
+| [frontend](./frontend/SKILL.md) | React, Next.js, estilos, estado, fetching, forms, testing, a11y, SEO, i18n |
+| [backend](./backend/SKILL.md) | API design, auth, DB, cache, queues, testing, security, logging, real-time |
+| [architecture](./architecture/SKILL.md) | Compute, databases, storage, networking, messaging, observability, costos |
 
 ---
 
