@@ -8,7 +8,6 @@ export interface Category {
   id: string;
   label: Record<Lang, string>;
   paths: string[]; // relative to skills root (en-skills/ or es-skills/)
-  fileCount: number; // SKILL.md files in this category
 }
 
 export const CATEGORIES: Category[] = [
@@ -16,19 +15,16 @@ export const CATEGORIES: Category[] = [
     id: 'frontend',
     label: { en: 'Frontend', es: 'Frontend' },
     paths: ['software/frontend'],
-    fileCount: 25,
   },
   {
     id: 'backend',
     label: { en: 'Backend', es: 'Backend' },
     paths: ['software/backend'],
-    fileCount: 17,
   },
   {
     id: 'architecture',
     label: { en: 'Architecture', es: 'Arquitectura' },
     paths: ['software/architecture'],
-    fileCount: 8,
   },
   {
     id: 'general',
@@ -42,19 +38,16 @@ export const CATEGORIES: Category[] = [
       'software/typescript-patterns',
       'software/deploy-pipelines',
     ],
-    fileCount: 7,
   },
   {
     id: 'agent-workflow',
     label: { en: 'Agent Workflow', es: 'Flujo del Agente' },
     paths: ['agent-workflow'],
-    fileCount: 6,
   },
   {
     id: 'grc',
     label: { en: 'GRC (Compliance)', es: 'GRC (Cumplimiento)' },
     paths: ['governance-risk-and-compliance'],
-    fileCount: 10,
   },
 ];
 
@@ -176,7 +169,7 @@ const TRANSLATIONS: Record<Lang, Record<TranslationKey, string>> = {
     selectTarget: 'Where should skills be installed?',
     targetGithubHint: 'Recommended for GitHub Copilot',
     targetVSCodeHint: 'VS Code workspace skills',
-    targetUser: 'VS Code global (user level)',
+    targetUser: 'Personal skills (~/.copilot/skills/)',
     targetUserHint: 'Available in all your projects',
     targetCustom: 'Custom path',
     enterPath: 'Enter the installation path',
@@ -221,7 +214,7 @@ const TRANSLATIONS: Record<Lang, Record<TranslationKey, string>> = {
     selectTarget: '¿Dónde instalar las skills?',
     targetGithubHint: 'Recomendado para GitHub Copilot',
     targetVSCodeHint: 'Skills del workspace VS Code',
-    targetUser: 'VS Code global (nivel usuario)',
+    targetUser: 'Skills personales (~/.copilot/skills/)',
     targetUserHint: 'Disponible en todos tus proyectos',
     targetCustom: 'Ruta personalizada',
     enterPath: 'Ingresa la ruta de instalación',

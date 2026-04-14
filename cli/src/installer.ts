@@ -67,7 +67,7 @@ export function resolveTarget(target: string, customPath?: string): string {
     case 'vscode':
       return path.join(cwd, '.vscode', 'skills');
     case 'user':
-      return getUserPromptsDir();
+      return getUserSkillsDir();
     case 'custom':
       return path.resolve(cwd, customPath!);
     default:
@@ -75,34 +75,9 @@ export function resolveTarget(target: string, customPath?: string): string {
   }
 }
 
-export function getUserPromptsDir(): string {
+export function getUserSkillsDir(): string {
   const home = process.env.HOME || process.env.USERPROFILE || '';
-
-  switch (process.platform) {
-    case 'darwin':
-      return path.join(
-        home,
-        'Library',
-        'Application Support',
-        'Code',
-        'User',
-        'prompts',
-      );
-    case 'win32':
-      return path.join(
-        process.env.APPDATA || path.join(home, 'AppData', 'Roaming'),
-        'Code',
-        'User',
-        'prompts',
-      );
-    default:
-      return path.join(
-        process.env.XDG_CONFIG_HOME || path.join(home, '.config'),
-        'Code',
-        'User',
-        'prompts',
-      );
-  }
+  return path.join(home, '.copilot', 'skills');
 }
 
 // ---------------------------------------------------------------------------
@@ -298,8 +273,22 @@ async function removeIfEmpty(dir: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Count SKILL.md files in a directory tree
+// Count SKILL.md files — per directory tree or per category paths
 // ---------------------------------------------------------------------------
+
+export async function countCategoryFiles(
+  sourceDir: string,
+  paths: string[],
+): Promise<number> {
+  let total = 0;
+  for (const p of paths) {
+    const dir = path.join(sourceDir, p);
+    if (fs.existsSync(dir)) {
+      total += await countSkillFiles(dir);
+    }
+  }
+  return total;
+}
 
 async function countSkillFiles(dir: string): Promise<number> {
   const stat = await fsp.stat(dir);
