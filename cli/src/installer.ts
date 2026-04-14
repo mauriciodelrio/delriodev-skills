@@ -185,9 +185,44 @@ export async function updateSkills(targetDir: string): Promise<number> {
   if (!manifest) throw new Error('No manifest found');
 
   const sourceDir = resolveSkillsSource(manifest.lang);
-  let fileCount = 0;
-  const allSkillDirs: string[] = [];
 
+  // 1. Determine what skills exist in current source
+  const sourceSkillDirs: string[] = [];
+  for (const skillPath of manifest.categoryPaths) {
+    const src = path.join(sourceDir, skillPath);
+    if (!fs.existsSync(src)) continue;
+    sourceSkillDirs.push(
+      ...(await collectSkillDirs(src, sourceDir)),
+    );
+  }
+
+  // 2. Remove orphaned skills (in old manifest but absent from source)
+  const sourceSkillSet = new Set(sourceSkillDirs);
+  for (const oldSkill of manifest.skills) {
+    if (!sourceSkillSet.has(oldSkill)) {
+      const orphanPath = path.join(targetDir, oldSkill);
+      if (fs.existsSync(orphanPath)) {
+        await fsp.rm(orphanPath, { recursive: true });
+      }
+    }
+  }
+
+  // Clean up empty parent directories left by orphan removal (deepest first)
+  const orphanParents = manifest.skills
+    .filter((s) => !sourceSkillSet.has(s))
+    .map((s) => path.dirname(s))
+    .filter((p) => p !== '.');
+
+  const uniqueParents = [...new Set(orphanParents)].sort(
+    (a, b) => b.split(path.sep).length - a.split(path.sep).length,
+  );
+
+  for (const parent of uniqueParents) {
+    await removeIfEmpty(path.join(targetDir, parent));
+  }
+
+  // 3. Copy updated skills from source
+  let fileCount = 0;
   for (const skillPath of manifest.categoryPaths) {
     const src = path.join(sourceDir, skillPath);
     const dest = path.join(targetDir, skillPath);
@@ -198,13 +233,13 @@ export async function updateSkills(targetDir: string): Promise<number> {
     await fsp.cp(src, dest, { recursive: true });
 
     fileCount += await countSkillFiles(dest);
-    allSkillDirs.push(...(await collectSkillDirs(dest, targetDir)));
   }
 
+  // 4. Write updated manifest with current source skills
   await writeManifest(targetDir, {
     ...manifest,
     updatedAt: new Date().toISOString(),
-    skills: allSkillDirs.sort(),
+    skills: sourceSkillDirs.sort(),
   });
 
   return fileCount;

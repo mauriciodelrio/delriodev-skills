@@ -1,21 +1,34 @@
 ---
 name: security-rules
 description: >
-  Usa esta skill cuando implementes seguridad en aplicaciones React/Next.js:
-  prevención de XSS, Content Security Policy, sanitización de input,
-  CORS, almacenamiento seguro de tokens, headers de seguridad, y env vars.
+  Usa esta skill cuando implementes seguridad en aplicaciones frontend:
+  prevención de XSS, CSP, sanitización de input, CORS, almacenamiento
+  seguro de tokens (httpOnly cookies en Next.js, memoria en SPA),
+  headers de seguridad, env vars, y cross-reference con GRC skills.
 ---
 
 # Seguridad Frontend — Reglas
 
+## Cross-references obligatorias
+
+| Skill GRC | Cuándo activar |
+|-----------|---------------|
+| [`owasp-top-10`](../../../governance-risk-and-compliance/owasp-top-10/SKILL.md) | **Siempre** en cualquier desarrollo frontend que maneje input de usuario o autenticación. |
+| [`gdpr`](../../../governance-risk-and-compliance/gdpr/SKILL.md) | Cuando el frontend capture datos personales, implemente cookies de tracking, o consentimiento. |
+| [`ccpa-cpra`](../../../governance-risk-and-compliance/ccpa-cpra/SKILL.md) | Cuando se implemente opt-out de venta/compartición de datos o detección de señal GPC del navegador. |
+
 ## Flujo de trabajo del agente
 
-1. Validar TODO input del usuario con Zod en server. Client-side validation es solo UX (sección 5).
-2. Tokens de auth en httpOnly cookies, nunca localStorage (sección 4).
-3. CSP con nonce para scripts inline vía middleware (sección 2).
-4. Headers de seguridad en `next.config` (sección 3).
-5. `dangerouslySetInnerHTML` solo con DOMPurify. Validar `href` contra `javascript:` (sección 1).
-6. CORS explícito con whitelist de orígenes (sección 6).
+1. Detectar tipo de proyecto: Next.js → secciones 2-4 + 4A. Vite SPA → sección 4B.
+2. Validar TODO input del usuario con Zod en server. Client-side validation es solo UX (sección 5).
+3. **Next.js**: Tokens de auth en httpOnly cookies, nunca localStorage (sección 4A).
+4. **Vite SPA**: Tokens en memoria (variable/signal), nunca localStorage (sección 4B).
+5. **Next.js**: CSP con nonce para scripts inline vía middleware (sección 2).
+6. **Next.js**: Headers de seguridad en `next.config` (sección 3).
+7. `dangerouslySetInnerHTML` solo con DOMPurify. Validar `href` contra `javascript:` (sección 1).
+8. CORS explícito con whitelist de orígenes (sección 6).
+9. Consultar `governance-risk-and-compliance` → `owasp-top-10` para checklist de vulnerabilidades.
+10. Env vars validadas con Zod al inicio. Secrets nunca en `NEXT_PUBLIC_*` ni `VITE_*` (sección 7).
 7. Env vars validadas con Zod al inicio. Secrets nunca en `NEXT_PUBLIC_*` (sección 7).
 
 ## 1. Prevención de XSS
@@ -142,7 +155,7 @@ export default {
 };
 ```
 
-## 4. Almacenamiento Seguro de Tokens
+## 4A. Almacenamiento Seguro de Tokens — Next.js (httpOnly Cookies)
 
 ```typescript
 // Auth tokens en httpOnly cookies (NO localStorage)
@@ -166,6 +179,78 @@ export async function loginAction(formData: FormData) {
 ```
 
 Nunca almacenar tokens en localStorage, sessionStorage, cookies sin httpOnly, ni URL query params. Implementar refresh token rotation: si un refresh token se usa dos veces, invalidar todos los tokens del usuario.
+
+## 4B. Almacenamiento Seguro de Tokens — Vite SPA (En Memoria)
+
+En un SPA puro donde no controlas el server (no puedes setear httpOnly cookies), el token se almacena **en memoria** (variable JavaScript, signal, o store de estado). Esto es más seguro que localStorage porque:
+- No es accesible desde XSS vía `document.cookie` o `localStorage.getItem()`
+- Se pierde al cerrar la pestaña (el usuario debe re-autenticarse)
+
+```typescript
+// features/auth/services/auth.service.ts
+import { signal } from '@preact/signals-react';
+
+interface AuthState {
+  token: string | null;
+  user: { id: string; email: string; name: string } | null;
+}
+
+// El token vive SOLO en memoria — se pierde al cerrar/refrescar
+const authState = signal<AuthState>({ token: null, user: null });
+
+export function setAuth(token: string, user: AuthState['user']) {
+  authState.value = { token, user };
+}
+
+export function clearAuth() {
+  authState.value = { token: null, user: null };
+}
+
+export function getToken(): string | null {
+  return authState.value.token;
+}
+```
+
+```typescript
+// shared/lib/api-client.ts — Inyectar token automáticamente
+import { getToken, clearAuth } from '@features/auth';
+import { env } from '@config/env';
+
+export async function apiClient<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const token = getToken();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
+  if (token) {
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${env.VITE_API_URL}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (response.status === 401) {
+    clearAuth(); // Token expirado → limpiar estado
+    window.location.href = '/login';
+    throw new Error('Session expired');
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Request failed' }));
+    throw new Error(error.message ?? `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+```
+
+**Regla clave SPA:** El token en memoria se pierde al refrescar la página. Si la API soporta refresh tokens, implementar un endpoint que devuelva un nuevo access token vía httpOnly cookie (set desde el backend). Si no hay refresh token, el usuario debe re-autenticarse.
 
 ## 5. Validación de Input
 

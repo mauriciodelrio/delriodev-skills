@@ -1,24 +1,25 @@
 ---
-name: project-structure
+name: nextjs-project-structure
 description: >
-  Usa esta skill cuando estructures proyectos frontend con React/Next.js:
-  organización feature-based, barrel files, path aliases, separación de
-  capas y convenciones de nombrado.
+  Usa esta skill cuando estructures proyectos frontend con Next.js App Router:
+  organización feature-based, carpeta app/ con route groups, barrel files,
+  path aliases, separación de capas y convenciones de nombrado.
 ---
 
-# Estructura de Proyecto Frontend
+# Estructura de Proyecto — Next.js App Router
 
 ## Flujo de trabajo del agente
 
 1. Organizar por dominio de negocio (feature-first), nunca por tipo de archivo.
-2. Cada feature en `features/<nombre>/` con barrel file `index.ts` que expone solo la API pública.
-3. Código compartido en `shared/` (componentes UI, hooks genéricos, utils, tipos globales).
-4. Path aliases (`@features/*`, `@shared/*`, `@config/*`) para imports limpios.
-5. Respetar la regla de dependencias: `features/` nunca importa de otro `features/` directamente — pasar por `shared/` o Context.
-6. Tests colocados junto al archivo que testean; E2E en `e2e/` raíz.
-7. Variables de entorno validadas con Zod en `config/env.ts`.
+2. Rutas en `app/` con route groups según layout compartido: `(auth)`, `(dashboard)`.
+3. Cada feature en `features/<nombre>/` con barrel file `index.ts` que expone solo la API pública.
+4. Código compartido en `shared/` (componentes UI, hooks genéricos, utils, tipos globales).
+5. Path aliases (`@features/*`, `@shared/*`, `@config/*`) para imports limpios.
+6. Respetar la regla de dependencias: `features/` nunca importa de otro `features/` directamente.
+7. Tests colocados junto al archivo que testean; E2E en `e2e/` raíz.
+8. Variables de entorno validadas con Zod en `config/env.ts`.
 
-## Estructura Base — Next.js App Router
+## Estructura Base
 
 ```
 src/
@@ -80,6 +81,26 @@ src/
     └── tokens.css
 ```
 
+## Variables de Entorno
+
+```typescript
+import { z } from 'zod';
+
+const envSchema = z.object({
+  NEXT_PUBLIC_API_URL: z.string().url(),
+  NEXT_PUBLIC_APP_ENV: z.enum(['development', 'staging', 'production']),
+  DATABASE_URL: z.string().min(1).optional(),
+});
+
+export const env = envSchema.parse({
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
+  DATABASE_URL: process.env.DATABASE_URL,
+});
+```
+
+**Nota:** En Next.js, solo las variables con prefijo `NEXT_PUBLIC_` son accesibles en el cliente. Nunca poner secrets en variables `NEXT_PUBLIC_*`.
+
 ## Reglas de Organización
 
 ### 1. Barrel Files — Exportaciones controladas
@@ -123,10 +144,6 @@ shared/ → NO puede importar de → features/, app/
 config/ → NO puede importar de → ninguna otra capa
 ```
 
-```typescript
-import { useCurrentUser } from '@shared/hooks/useCurrentUser';
-```
-
 ### 4. Convenciones de Nombrado
 
 ```
@@ -154,24 +171,6 @@ features/auth/
 e2e/
 ├── auth.spec.ts
 └── products.spec.ts
-```
-
-### 6. Variables de Entorno Validadas
-
-```typescript
-import { z } from 'zod';
-
-const envSchema = z.object({
-  NEXT_PUBLIC_API_URL: z.string().url(),
-  NEXT_PUBLIC_APP_ENV: z.enum(['development', 'staging', 'production']),
-  DATABASE_URL: z.string().min(1).optional(),
-});
-
-export const env = envSchema.parse({
-  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-  NEXT_PUBLIC_APP_ENV: process.env.NEXT_PUBLIC_APP_ENV,
-  DATABASE_URL: process.env.DATABASE_URL,
-});
 ```
 
 ## Gotchas

@@ -16,7 +16,7 @@ export const CATEGORIES: Category[] = [
     id: 'frontend',
     label: { en: 'Frontend', es: 'Frontend' },
     paths: ['software/frontend'],
-    fileCount: 23,
+    fileCount: 25,
   },
   {
     id: 'backend',

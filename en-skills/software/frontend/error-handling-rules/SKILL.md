@@ -1,9 +1,9 @@
 ---
 name: error-handling-rules
 description: >
-  Use this skill when implementing error handling in React/Next.js:
-  Error Boundaries, error.tsx/global-error.tsx in App Router, typed
-  errors (Result pattern), Sentry integration, retries with
+  Use this skill when implementing error handling in React:
+  Error Boundaries (Next.js error.tsx / React Router errorElement),
+  typed errors (Result pattern), Sentry integration, retries with
   exponential backoff, and toast notifications.
 ---
 
@@ -11,14 +11,17 @@ description: >
 
 ## Agent workflow
 
-1. Create `error.tsx` and `global-error.tsx` in App Router (section 1).
-2. Create `not-found.tsx` and use `notFound()` in Server Components (section 2).
+1. Detect project type:
+   - **Next.js** → `error.tsx` and `global-error.tsx` in App Router (section 1A).
+   - **Vite SPA** → `errorElement` in React Router (section 1B).
+2. Create Not Found pages: **Next.js** `not-found.tsx` / **Vite SPA** catch-all route (section 2).
 3. Wrap risky sections with customizable ErrorBoundary (section 3).
 4. Implement Result pattern + typed AppError for fallible functions (section 4).
 5. Configure Sentry with filters and context (section 5).
 6. Choose mechanism: toast for recoverable, boundary for render, page for routes (section 6).
+7. **Vite SPA**: Handle `useMutation` errors with toast + `setError` for 422 (section 6B).
 
-## 1. Error Boundaries (Next.js App Router)
+## 1A. Error Boundaries (Next.js App Router)
 
 ```tsx
 'use client';
@@ -78,6 +81,86 @@ export default function GlobalError({
         </div>
       </body>
     </html>
+  );
+}
+```
+
+## 1B. Error Boundaries (Vite SPA — React Router)
+
+In React Router v6, each route can define an `errorElement` that catches errors from its loader/action/component:
+
+```tsx
+// router.tsx
+import { createBrowserRouter } from 'react-router-dom';
+import { RootError } from '@shared/components/RootError';
+import { RouteError } from '@shared/components/RouteError';
+
+export const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <AppLayout />,
+    errorElement: <RootError />,   // Global error (layout crash)
+    children: [
+      {
+        path: 'persons',
+        element: <PersonsPage />,
+        errorElement: <RouteError />, // Route-level error
+      },
+    ],
+  },
+]);
+```
+
+```tsx
+// shared/components/RouteError.tsx
+import { useRouteError, isRouteErrorResponse, Link } from 'react-router-dom';
+
+export function RouteError() {
+  const error = useRouteError();
+
+  if (isRouteErrorResponse(error)) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <h2 className="text-xl font-semibold">{error.status} — {error.statusText}</h2>
+        <p className="text-gray-600">{error.data?.message ?? 'An error occurred.'}</p>
+        <Link to="/" className="rounded-md bg-blue-600 px-4 py-2 text-white">Go home</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+      <h2 className="text-xl font-semibold">Something went wrong</h2>
+      <p className="text-gray-600">
+        {error instanceof Error ? error.message : 'Unexpected error.'}
+      </p>
+      <button onClick={() => window.location.reload()} className="rounded-md bg-blue-600 px-4 py-2 text-white">
+        Reload
+      </button>
+    </div>
+  );
+}
+```
+
+```tsx
+// shared/components/RootError.tsx — for when the entire layout crashes
+import { useRouteError, Link } from 'react-router-dom';
+
+export function RootError() {
+  const error = useRouteError();
+
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold">Critical error</h1>
+        <p className="mt-2 text-gray-600">
+          {error instanceof Error ? error.message : 'The application encountered an error.'}
+        </p>
+        <Link to="/" className="mt-4 inline-block rounded-md bg-blue-600 px-4 py-2 text-white">
+          Restart
+        </Link>
+      </div>
+    </div>
   );
 }
 ```
@@ -301,8 +384,38 @@ async function handleDelete(id: string) {
 // toast.success → successful operations (3s auto-dismiss)
 // toast.error → recoverable errors (persists until dismissed)
 // Error Boundary → errors that break the render
-// error.tsx → route errors (404, 500)
+// error.tsx / errorElement → route errors (404, 500)
 ```
+
+## 6B. Mutation Errors — Vite SPA
+
+```tsx
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import type { ApiError } from '@shared/lib/api-client';
+
+export function useDeletePerson() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: personsApi.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: personKeys.lists() });
+      toast.success('Person deleted');
+    },
+    onError: (error: ApiError) => {
+      if (error.status === 404) {
+        toast.error('Person no longer exists');
+        queryClient.invalidateQueries({ queryKey: personKeys.lists() });
+        return;
+      }
+      toast.error(error.message ?? 'Error deleting person');
+    },
+  });
+}
+```
+
+**Rule:** Mutation errors do not break the render — always use toast or `setError` in forms, never let an unhandled mutation crash via the error boundary.
 
 ## 7. Retry Strategies
 
