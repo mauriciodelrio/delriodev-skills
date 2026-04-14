@@ -1,12 +1,21 @@
 ---
-name: i18n-rules
+name: i18n-nextjs-rules
 description: >
-  Use this skill when implementing internationalization in React/Next.js:
-  next-intl, ICU MessageFormat, pluralization, date/number/currency formatting,
-  locale detection, RTL support, and translation file organization.
+  Use this skill when implementing internationalization in a Next.js
+  App Router project: next-intl, useTranslations, getTranslations, ICU MessageFormat,
+  useFormatter, locale detection via middleware, RTL support with app/[locale]/layout.
 ---
 
-# Internationalization (i18n)
+# Internationalization (i18n) — Next.js App Router
+
+## Mandatory cross-references
+
+| Skill | When to activate |
+|-------|-----------------|
+| [`i18n-react-rules`](../i18n-react-rules/SKILL.md) | If the project is a Vite SPA (detect `vite.config.*` without `next.config.*`). Do not use this skill in that case. |
+| [`a11y-rules`](../a11y-rules/SKILL.md) | Always — `lang` attribute, `aria-label` translations, accessible RTL layout. |
+| [`forms-and-validation-rules`](../forms-and-validation-rules/SKILL.md) | When the form needs translated error messages and i18n labels. |
+| [`seo-rules`](../seo-rules/SKILL.md) | Always — hreflang, canonical URLs per locale. |
 
 ## Agent workflow
 
@@ -18,12 +27,12 @@ description: >
 6. Logical CSS properties (`ms-`, `ps-`, `text-start`) for RTL support (section 6).
 7. Middleware for locale detection: URL → Cookie → Accept-Language → default (section 7).
 
-## 1. Setup with next-intl (Recommended for Next.js)
+## 1. Setup with next-intl
 
 ```
 messages/
-├── es.json           # Español (default)
-├── en.json           # English
+├── en.json           # English (default)
+├── es.json           # Español
 ├── pt.json           # Português
 └── index.ts          # Typed re-export
 ```
@@ -31,26 +40,27 @@ messages/
 ```json
 {
   "common": {
-    "save": "Guardar",
-    "cancel": "Cancelar",
-    "loading": "Cargando...",
-    "error": "Ha ocurrido un error"
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "error": "An error occurred"
   },
   "auth": {
-    "login": "Iniciar sesión",
-    "logout": "Cerrar sesión",
-    "welcome": "Hola, {name}"
+    "login": "Sign in",
+    "logout": "Sign out",
+    "welcome": "Hello, {name}"
   },
   "products": {
-    "title": "Productos",
-    "count": "{count, plural, =0 {Sin productos} one {# producto} other {# productos}}",
-    "price": "Precio: {price, number, ::currency/USD}",
-    "addedDate": "Agregado {date, date, medium}"
+    "title": "Products",
+    "count": "{count, plural, =0 {No products} one {# product} other {# products}}",
+    "price": "Price: {price, number, ::currency/USD}",
+    "addedDate": "Added {date, date, medium}"
   }
 }
 ```
 
 ```tsx
+// i18n/request.ts
 import { getRequestConfig } from 'next-intl/server';
 import { routing } from './routing';
 
@@ -70,8 +80,8 @@ export default getRequestConfig(async ({ requestLocale }) => {
 import { defineRouting } from 'next-intl/routing';
 
 export const routing = defineRouting({
-  locales: ['es', 'en', 'pt'],
-  defaultLocale: 'es',
+  locales: ['en', 'es', 'pt'],
+  defaultLocale: 'en',
   localePrefix: 'as-needed',
 });
 ```
@@ -79,6 +89,7 @@ export const routing = defineRouting({
 ## 2. Usage in Components
 
 ```tsx
+// Server Component
 import { useTranslations } from 'next-intl';
 
 export default function ProductsPage() {
@@ -92,6 +103,7 @@ export default function ProductsPage() {
   );
 }
 
+// Client Component
 'use client';
 import { useTranslations } from 'next-intl';
 
@@ -100,6 +112,7 @@ export function AddToCartButton() {
   return <Button>{t('save')}</Button>;
 }
 
+// Server Action
 import { getTranslations } from 'next-intl/server';
 
 export async function createProduct(formData: FormData) {
@@ -114,7 +127,7 @@ export async function createProduct(formData: FormData) {
   "notifications": {
     "unread": "{count, plural, =0 {You have no notifications} one {You have # unread notification} other {You have # unread notifications}}",
 
-    "lastSeen": "{gender, select, male {Last seen} female {Last seen} other {Last connection}}: {date, date, medium}",
+    "lastSeen": "{gender, select, male {Last seen} female {Last seen} other {Last connected}}: {date, date, medium}",
 
     "fileSize": "Size: {size, number, ::compact-short} bytes"
   }
@@ -150,15 +163,17 @@ export function ProductPrice({ price, date }: { price: number; date: Date }) {
 
 ```
 messages/
-├── es/
+├── en/
 │   ├── common.json       # Shared texts
 │   ├── auth.json         # Login, register, password
 │   ├── products.json     # Catalog, prices
 │   ├── checkout.json     # Cart, payment
 │   └── errors.json       # Error messages
-├── en/
+├── es/
 │   └── ...
+```
 
+```tsx
 import deepmerge from 'deepmerge';
 
 const messages = deepmerge.all([
@@ -186,29 +201,34 @@ export default async function LocaleLayout({ children }: { children: ReactNode }
     </html>
   );
 }
+```
 
+```tsx
 // Tailwind RTL utilities (functional but verbose)
 <div className="ml-4 rtl:mr-4 rtl:ml-0">
 <div className="text-left rtl:text-right">
 
-// Prefer logical properties
+// Prefer logical properties — they adapt automatically to RTL
 <div className="ms-4">
 <div className="ps-4">
 <div className="text-start">
 ```
 
-## 7. Locale Detection
+## 7. Locale Detection — Middleware
 
 ```tsx
+// middleware.ts
 import createMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
 
 export default createMiddleware(routing);
 
 export const config = {
-  matcher: ['/', '/(es|en|pt)/:path*'],
+  matcher: ['/', '/(en|es|pt)/:path*'],
 };
 ```
+
+Detection order: URL path → Cookie → Accept-Language header → defaultLocale.
 
 ## Gotchas
 
@@ -218,9 +238,11 @@ export const config = {
 - `toLocaleDateString` is inconsistent across environments — use `useFormatter` from next-intl.
 - Cryptic keys (`msg_42`) are impossible to maintain — use descriptive keys (`products.emptyState`).
 - `ml-`/`mr-` don't adapt to RTL — use logical properties (`ms-`, `me-`, `ps-`, `pe-`).
+- Form without `noValidate` mixes native validation with custom — always add `noValidate`.
 
-## Related skills
+## Related Skills
 
-- `a11y-rules` — `lang` attribute, aria-label translations, RTL layout
-- `forms-and-validation-rules` — translated error messages, i18n labels
-- `seo-rules` — hreflang, canonical URLs per locale
+- [`a11y-rules`](../a11y-rules/SKILL.md) — `lang` attribute, aria-label translations, RTL layout
+- [`forms-and-validation-rules`](../forms-and-validation-rules/SKILL.md) — translated error messages, i18n labels
+- [`seo-rules`](../seo-rules/SKILL.md) — hreflang, canonical URLs per locale
+- [`i18n-react-rules`](../i18n-react-rules/SKILL.md) — Vite SPA version with react-i18next

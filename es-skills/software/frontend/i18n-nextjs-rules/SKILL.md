@@ -1,12 +1,21 @@
 ---
-name: i18n-rules
+name: i18n-nextjs-rules
 description: >
-  Usa esta skill cuando implementes internacionalización en React/Next.js:
-  next-intl, ICU MessageFormat, pluralización, formateo de fechas/números/moneda,
-  detección de locale, soporte RTL, y organización de archivos de traducción.
+  Usa esta skill cuando implementes internacionalización en un proyecto Next.js
+  App Router: next-intl, useTranslations, getTranslations, ICU MessageFormat,
+  useFormatter, detección de locale vía middleware, soporte RTL con app/[locale]/layout.
 ---
 
-# Internacionalización (i18n)
+# Internacionalización (i18n) — Next.js App Router
+
+## Cross-references obligatorias
+
+| Skill | Cuándo activar |
+|-------|---------------|
+| [`i18n-react-rules`](../i18n-react-rules/SKILL.md) | Si el proyecto es Vite SPA (detectar `vite.config.*` sin `next.config.*`). No usar esta skill en ese caso. |
+| [`a11y-rules`](../a11y-rules/SKILL.md) | Siempre — atributo `lang`, traducciones de `aria-label`, layout RTL accesible. |
+| [`forms-and-validation-rules`](../forms-and-validation-rules/SKILL.md) | Cuando el formulario necesite mensajes de error traducidos y labels i18n. |
+| [`seo-rules`](../seo-rules/SKILL.md) | Siempre — hreflang, canonical URLs por locale. |
 
 ## Flujo de trabajo del agente
 
@@ -18,7 +27,7 @@ description: >
 6. Logical CSS properties (`ms-`, `ps-`, `text-start`) para soporte RTL (sección 6).
 7. Middleware para detección de locale: URL → Cookie → Accept-Language → default (sección 7).
 
-## 1. Setup con next-intl (Recomendado para Next.js)
+## 1. Setup con next-intl
 
 ```
 messages/
@@ -51,6 +60,7 @@ messages/
 ```
 
 ```tsx
+// i18n/request.ts
 import { getRequestConfig } from 'next-intl/server';
 import { routing } from './routing';
 
@@ -79,6 +89,7 @@ export const routing = defineRouting({
 ## 2. Uso en Componentes
 
 ```tsx
+// Server Component
 import { useTranslations } from 'next-intl';
 
 export default function ProductsPage() {
@@ -92,6 +103,7 @@ export default function ProductsPage() {
   );
 }
 
+// Client Component
 'use client';
 import { useTranslations } from 'next-intl';
 
@@ -100,6 +112,7 @@ export function AddToCartButton() {
   return <Button>{t('save')}</Button>;
 }
 
+// Server Action
 import { getTranslations } from 'next-intl/server';
 
 export async function createProduct(formData: FormData) {
@@ -158,7 +171,9 @@ messages/
 │   └── errors.json       # Mensajes de error
 ├── en/
 │   └── ...
+```
 
+```tsx
 import deepmerge from 'deepmerge';
 
 const messages = deepmerge.all([
@@ -186,20 +201,23 @@ export default async function LocaleLayout({ children }: { children: ReactNode }
     </html>
   );
 }
+```
 
+```tsx
 // Tailwind RTL utilities (funcional pero verbose)
 <div className="ml-4 rtl:mr-4 rtl:ml-0">
 <div className="text-left rtl:text-right">
 
-// Preferir logical properties
+// Preferir logical properties — se adaptan automáticamente a RTL
 <div className="ms-4">
 <div className="ps-4">
 <div className="text-start">
 ```
 
-## 7. Detección de Locale
+## 7. Detección de Locale — Middleware
 
 ```tsx
+// middleware.ts
 import createMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
 
@@ -209,6 +227,8 @@ export const config = {
   matcher: ['/', '/(es|en|pt)/:path*'],
 };
 ```
+
+Orden de detección: URL path → Cookie → Accept-Language header → defaultLocale.
 
 ## Gotchas
 
@@ -220,8 +240,9 @@ export const config = {
 - `ml-`/`mr-` no se adaptan a RTL — usar logical properties (`ms-`, `me-`, `ps-`, `pe-`).
 - Form sin `noValidate` mezcla validación nativa con custom — siempre agregar `noValidate`.
 
-## Skills relacionadas
+## Skills Relacionadas
 
-- `a11y-rules` — `lang` attribute, traducciones de aria-labels, RTL layout
-- `forms-and-validation-rules` — mensajes de error traducidos, labels i18n
-- `seo-rules` — hreflang, canonical URLs por locale
+- [`a11y-rules`](../a11y-rules/SKILL.md) — `lang` attribute, traducciones de aria-labels, RTL layout
+- [`forms-and-validation-rules`](../forms-and-validation-rules/SKILL.md) — mensajes de error traducidos, labels i18n
+- [`seo-rules`](../seo-rules/SKILL.md) — hreflang, canonical URLs por locale
+- [`i18n-react-rules`](../i18n-react-rules/SKILL.md) — versión Vite SPA con react-i18next
