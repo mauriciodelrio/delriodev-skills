@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.4.4...v0.5.0) (2026-04-14)
+
+In version 0.5.0 of "delriodev-skills," we've streamlined the skill installation process for VS Code, ensuring that all custom skills are easily discoverable. By flattening the installation structure, users can now access all 75 skills directly from the top level, significantly improving the visibility and usability of the skills. Additionally, we've updated the SKILL.md files to ensure that all cross-references are correctly linked, enhancing the overall documentation experience.
+
+### Pull Requests
+
+- [#17](https://github.com/mauriciodelrio/delriodev-skills/pull/17) feat: flatten skill installation for VS Code discovery
+
 ## [0.4.4](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.4.3...v0.4.4) (2026-04-14)
 
 In version 0.4.4 of "delriodev-skills," we've introduced significant improvements to the CLI installer, enhancing user experience and accuracy. The dynamic file counting feature now ensures that SKILL.md counts are updated in real-time after language selection, eliminating outdated information when skills are added or removed. Additionally, we've corrected the personal skills path, ensuring a more reliable installation process across different platforms.
