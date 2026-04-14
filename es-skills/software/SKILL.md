@@ -26,9 +26,9 @@ Estas skills se aplican en **toda** interacción que genere o modifique código,
 
 | Skill | Motivo | Cuándo se puede omitir |
 |-------|--------|------------------------|
-| [clean-code-principles](./clean-code-principles/SKILL.md) | SOLID, DRY, KISS, naming, guard clauses, JSDoc | Nunca — aplica a todo código |
-| [typescript-patterns](./typescript-patterns/SKILL.md) | strict: true, generics, discriminated unions, Zod inference | Nunca — todo proyecto usa TypeScript |
-| [git-usage](./git-usage/SKILL.md) | Conventional Commits, commits granulares, branch naming | Solo si la tarea no involucra commits (ej: consulta teórica) |
+| [clean-code-principles](../clean-code-principles/SKILL.md) | SOLID, DRY, KISS, naming, guard clauses, JSDoc | Nunca — aplica a todo código |
+| [typescript-patterns](../typescript-patterns/SKILL.md) | strict: true, generics, discriminated unions, Zod inference | Nunca — todo proyecto usa TypeScript |
+| [git-usage](../git-usage/SKILL.md) | Conventional Commits, commits granulares, branch naming | Solo si la tarea no involucra commits (ej: consulta teórica) |
 
 ---
 
@@ -37,36 +37,36 @@ Estas skills se aplican en **toda** interacción que genere o modifique código,
 ### Frontend
 
 - **Keywords**: componente, React, Next.js, hook, estado, CSS, Tailwind, formulario, fetching, SSR, accesibilidad, SEO, animación, i18n, Playwright, Storybook
-- **Activar**: [frontend](./frontend/SKILL.md) (orquestador de sub-skills frontend)
+- **Activar**: [frontend](../frontend/SKILL.md) (orquestador de sub-skills frontend)
 - **Co-activar siempre**: clean-code-principles, typescript-patterns
 
 ### Backend
 
 - **Keywords**: endpoint, API, REST, NestJS, Express, middleware, auth, JWT, validación, Zod, Prisma, base de datos, cache, Redis, queue, BullMQ, WebSocket, logging, Sentry
-- **Activar**: [backend](./backend/SKILL.md) (orquestador de sub-skills backend)
+- **Activar**: [backend](../backend/SKILL.md) (orquestador de sub-skills backend)
 - **Co-activar siempre**: clean-code-principles, typescript-patterns
 
 ### Architecture
 
 - **Keywords**: arquitectura, infraestructura, qué servicio usar, AWS, Vercel, base de datos cuál, escala, presupuesto, monolito vs microservicios, IaC, Terraform, CDN, observabilidad
-- **Activar**: [architecture](./architecture/SKILL.md) (orquestador de sub-skills de arquitectura)
+- **Activar**: [architecture](../architecture/SKILL.md) (orquestador de sub-skills de arquitectura)
 - **Co-activar**: backend y/o frontend según la fase de implementación
 
 ### CI/CD y Workflows
 
 - **Keywords**: CI, CD, GitHub Actions, workflow, pipeline, deploy, preview, branch protection, Dependabot, CODEOWNERS
-- **Activar**: [basic-workflows](./basic-workflows/SKILL.md) para setup inicial de CI/CD
-- **Activar**: [deploy-pipelines](./deploy-pipelines/SKILL.md) para pipelines de deploy (staging, production, preview)
+- **Activar**: [basic-workflows](../basic-workflows/SKILL.md) para setup inicial de CI/CD
+- **Activar**: [deploy-pipelines](../deploy-pipelines/SKILL.md) para pipelines de deploy (staging, production, preview)
 
 ### Docker y Contenedores
 
 - **Keywords**: Docker, Dockerfile, docker-compose, contenedor, imagen, devcontainer, multi-stage
-- **Activar**: [docker](./docker/SKILL.md)
+- **Activar**: [docker](../docker/SKILL.md)
 
 ### Shell Scripting
 
 - **Keywords**: script, bash, zsh, .sh, sed, awk, grep, automatización, CLI
-- **Activar**: [scripting](./scripting/SKILL.md)
+- **Activar**: [scripting](../scripting/SKILL.md)
 
 ---
 
@@ -76,21 +76,21 @@ Estas skills se aplican en **toda** interacción que genere o modifique código,
 
 | Skill | Alcance |
 |-------|---------|
-| [clean-code-principles](./clean-code-principles/SKILL.md) | SOLID, DRY, KISS, YAGNI, naming, guard clauses, JSDoc |
-| [typescript-patterns](./typescript-patterns/SKILL.md) | Generics, utility types, discriminated unions, branded types, Zod |
-| [git-usage](./git-usage/SKILL.md) | Conventional Commits, Husky, branch naming, rebase, PR template |
-| [basic-workflows](./basic-workflows/SKILL.md) | GitHub Actions CI/CD, security audit, Dependabot, branch protection |
-| [deploy-pipelines](./deploy-pipelines/SKILL.md) | Deploy a staging/production, preview environments, secrets |
-| [docker](./docker/SKILL.md) | Dockerfile, docker-compose, dev containers, image optimization |
-| [scripting](./scripting/SKILL.md) | Bash/Zsh scripts, Unix tools, terminal styles, CLIs |
+| [clean-code-principles](../clean-code-principles/SKILL.md) | SOLID, DRY, KISS, YAGNI, naming, guard clauses, JSDoc |
+| [typescript-patterns](../typescript-patterns/SKILL.md) | Generics, utility types, discriminated unions, branded types, Zod |
+| [git-usage](../git-usage/SKILL.md) | Conventional Commits, Husky, branch naming, rebase, PR template |
+| [basic-workflows](../basic-workflows/SKILL.md) | GitHub Actions CI/CD, security audit, Dependabot, branch protection |
+| [deploy-pipelines](../deploy-pipelines/SKILL.md) | Deploy a staging/production, preview environments, secrets |
+| [docker](../docker/SKILL.md) | Dockerfile, docker-compose, dev containers, image optimization |
+| [scripting](../scripting/SKILL.md) | Bash/Zsh scripts, Unix tools, terminal styles, CLIs |
 
 ### Orquestadores con Sub-skills
 
 | Orquestador | Alcance |
 |-------------|---------|
-| [frontend](./frontend/SKILL.md) | React, Next.js, estilos, estado, fetching, forms, testing, a11y, SEO, i18n |
-| [backend](./backend/SKILL.md) | API design, auth, DB, cache, queues, testing, security, logging, real-time |
-| [architecture](./architecture/SKILL.md) | Compute, databases, storage, networking, messaging, observability, costos |
+| [frontend](../frontend/SKILL.md) | React, Next.js, estilos, estado, fetching, forms, testing, a11y, SEO, i18n |
+| [backend](../backend/SKILL.md) | API design, auth, DB, cache, queues, testing, security, logging, real-time |
+| [architecture](../architecture/SKILL.md) | Compute, databases, storage, networking, messaging, observability, costos |
 
 ---
 

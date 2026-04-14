@@ -59,30 +59,30 @@ Usa la siguiente tabla para determinar **qué sub-skill invocar** según las pal
 
 | Skill | Normativa | Cuándo Usar |
 |-------|-----------|-------------|
-| [gdpr](./gdpr/SKILL.md) | Reglamento General de Protección de Datos | Datos personales, consentimiento, derechos del titular |
-| [ccpa-cpra](./ccpa-cpra/SKILL.md) | California Consumer Privacy Act / CPRA | Opt-out de venta/compartición de datos, señales GPC |
-| [lgpd](./lgpd/SKILL.md) | Lei Geral de Proteção de Dados | Consentimiento granular por finalidad, derechos del titular |
+| [gdpr](../gdpr/SKILL.md) | Reglamento General de Protección de Datos | Datos personales, consentimiento, derechos del titular |
+| [ccpa-cpra](../ccpa-cpra/SKILL.md) | California Consumer Privacy Act / CPRA | Opt-out de venta/compartición de datos, señales GPC |
+| [lgpd](../lgpd/SKILL.md) | Lei Geral de Proteção de Dados | Consentimiento granular por finalidad, derechos del titular |
 
 ### Seguridad de la Información
 
 | Skill | Estándar | Cuándo Usar |
 |-------|----------|-------------|
-| [iso-27001](./iso-27001/SKILL.md) | ISO/IEC 27001:2022 | SGSI, controles Anexo A, clasificación de información |
-| [nist-cybersec-framework](./nist-cybersec-framework/SKILL.md) | NIST CSF 2.0 | Framework Identify-Protect-Detect-Respond-Recover |
-| [soc2](./soc2/SKILL.md) | SOC 2 Type II | Trust Service Criteria para SaaS y servicios cloud |
+| [iso-27001](../iso-27001/SKILL.md) | ISO/IEC 27001:2022 | SGSI, controles Anexo A, clasificación de información |
+| [nist-cybersec-framework](../nist-cybersec-framework/SKILL.md) | NIST CSF 2.0 | Framework Identify-Protect-Detect-Respond-Recover |
+| [soc2](../soc2/SKILL.md) | SOC 2 Type II | Trust Service Criteria para SaaS y servicios cloud |
 
 ### Seguridad en Aplicaciones
 
 | Skill | Estándar | Cuándo Usar |
 |-------|----------|-------------|
-| [owasp-top-10](./owasp-top-10/SKILL.md) | OWASP Top 10:2021 | Vulnerabilidades web: inyección, XSS, CSRF, broken auth |
+| [owasp-top-10](../owasp-top-10/SKILL.md) | OWASP Top 10:2021 | Vulnerabilidades web: inyección, XSS, CSRF, broken auth |
 
 ### Industria Específica
 
 | Skill | Normativa | Cuándo Usar |
 |-------|-----------|-------------|
-| [hipaa](./hipaa/SKILL.md) | HIPAA | Datos de salud protegidos (PHI), registros médicos |
-| [pci-compliance](./pci-compliance/SKILL.md) | PCI DSS v4.0 | Datos de tarjetas de pago, tokenización, procesamiento de pagos |
+| [hipaa](../hipaa/SKILL.md) | HIPAA | Datos de salud protegidos (PHI), registros médicos |
+| [pci-compliance](../pci-compliance/SKILL.md) | PCI DSS v4.0 | Datos de tarjetas de pago, tokenización, procesamiento de pagos |
 
 ---
 

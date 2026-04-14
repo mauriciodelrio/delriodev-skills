@@ -505,4 +505,4 @@ async function fetchWithRetry<T>(
 | [`a11y-rules`](../a11y-rules/SKILL.md) | `role="alert"`, aria-live for errors |
 | [`i18n-react-rules`](../i18n-react-rules/SKILL.md) / [`i18n-nextjs-rules`](../i18n-nextjs-rules/SKILL.md) | Translated error messages and toasts |
 | [`fetching-rules`](../fetching-rules/SKILL.md) | Error states in TanStack Query, retry logic |
-| [`backend/error-handling`](../../backend/error-handling/SKILL.md) | Server error format that the frontend consumes |
+| [`backend/error-handling`](../error-handling/SKILL.md) | Server error format that the frontend consumes |

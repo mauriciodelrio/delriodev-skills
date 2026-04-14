@@ -17,15 +17,15 @@ El agente es un ejecutor disciplinado: trabaja con lo que está documentado, pre
 
 ### Entrada al proyecto
 
-Si es la primera vez o el agente no tiene contexto fresco, ejecutar `project-resumption` antes de cualquier otra cosa.
+Si es la primera vez o el agente no tiene contexto fresco, ejecutar [`project-resumption`](../project-resumption/SKILL.md) antes de cualquier otra cosa.
 
 ### Por tipo de tarea
 
 **Implementar feature:**
 
-1. Leer el feature completo (`requirements-format`)
+1. Leer el feature completo ([`requirements-format`](../requirements-format/SKILL.md))
 2. Agrupar todas las dudas y presentarlas juntas (ver Protocolo de clarificación)
-3. Descomponer en tareas (`iteration-rules`) y confirmar plan con el dev
+3. Descomponer en tareas ([`iteration-rules`](../iteration-rules/SKILL.md)) y confirmar plan con el dev
 4. Implementar tarea por tarea con checkpoints por bloque significativo
 5. Actualizar `context/` al avanzar, `memory/` al completar
 
@@ -67,7 +67,7 @@ Si durante la implementación el agente detecta scope creep, dependencias no con
 
 ## Conexión con skills de implementación
 
-Al pasar de planificación a ejecución, el agente **debe** consultar [`software`](../software/SKILL.md) para activar las skills correctas según el tipo de tarea (frontend, backend, architecture). `software` es el orquestador que enruta a las sub-skills técnicas y activa automáticamente las transversales obligatorias (`clean-code-principles`, `typescript-patterns`, `git-usage`).
+Al pasar de planificación a ejecución, el agente **debe** consultar [`software`](../software/SKILL.md) para activar las skills correctas según el tipo de tarea (frontend, backend, architecture). `software` es el orquestador que enruta a las sub-skills técnicas y activa automáticamente las transversales obligatorias ([`clean-code-principles`](../clean-code-principles/SKILL.md), [`typescript-patterns`](../typescript-patterns/SKILL.md), [`git-usage`](../git-usage/SKILL.md)).
 
 Flujo completo: `agent-workflow` (protocolo) → `software` (enrutamiento técnico) → sub-skills específicas (implementación).
 
@@ -79,8 +79,8 @@ Si el feature involucra datos personales, tokens, cookies o normativas → consu
 
 | Sub-skill | Cuándo se invoca |
 |-----------|-----------------|
-| `docs-structure` | Crear o verificar estructura `.docs/` |
-| `requirements-format` | Interpretar features/US o hacer brainstorming → feature |
-| `iteration-rules` | Descomponer tareas, ejecutar, documentar progreso |
-| `project-resumption` | Llegar a un proyecto sin contexto o retomar después de inactividad |
-| `project-documentation` | Crear/actualizar README o decidir dónde va documentación pública |
+| [`docs-structure`](../docs-structure/SKILL.md) | Crear o verificar estructura `.docs/` |
+| [`requirements-format`](../requirements-format/SKILL.md) | Interpretar features/US o hacer brainstorming → feature |
+| [`iteration-rules`](../iteration-rules/SKILL.md) | Descomponer tareas, ejecutar, documentar progreso |
+| [`project-resumption`](../project-resumption/SKILL.md) | Llegar a un proyecto sin contexto o retomar después de inactividad |
+| [`project-documentation`](../project-documentation/SKILL.md) | Crear/actualizar README o decidir dónde va documentación pública |

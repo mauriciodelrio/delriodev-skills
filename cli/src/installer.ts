@@ -81,10 +81,13 @@ export function getUserSkillsDir(): string {
 }
 
 // ---------------------------------------------------------------------------
-// Collect skill directories (leaf dirs containing SKILL.md)
+// Flat-install helpers
 // ---------------------------------------------------------------------------
 
-async function collectSkillDirs(dir: string, base: string): Promise<string[]> {
+/**
+ * Recursively find all directories that directly contain a SKILL.md file.
+ */
+async function findSkillDirs(dir: string): Promise<string[]> {
   const results: string[] = [];
   if (!fs.existsSync(dir)) return results;
 
@@ -94,12 +97,65 @@ async function collectSkillDirs(dir: string, base: string): Promise<string[]> {
   const entries = await fsp.readdir(dir, { withFileTypes: true });
 
   if (entries.some((e) => !e.isDirectory() && e.name === 'SKILL.md')) {
-    results.push(path.relative(base, dir));
+    results.push(dir);
   }
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
-      results.push(...(await collectSkillDirs(path.join(dir, entry.name), base)));
+      results.push(...(await findSkillDirs(path.join(dir, entry.name))));
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Copy a skill directory to the target, but exclude sub-directories that
+ * contain their own SKILL.md (those are separate skills).
+ */
+async function copySkillFlat(srcDir: string, destDir: string): Promise<void> {
+  await fsp.mkdir(destDir, { recursive: true });
+
+  const entries = await fsp.readdir(srcDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(srcDir, entry.name);
+    const destPath = path.join(destDir, entry.name);
+
+    if (entry.isDirectory()) {
+      // Only copy sub-dirs that are NOT skills themselves (e.g. scripts/, assets/)
+      if (!fs.existsSync(path.join(srcPath, 'SKILL.md'))) {
+        await fsp.cp(srcPath, destPath, { recursive: true });
+      }
+    } else {
+      await fsp.copyFile(srcPath, destPath);
+    }
+  }
+}
+
+/**
+ * For a given category path (e.g. 'software/frontend'), collect all skill
+ * directories that should be installed — including ancestor orchestrators.
+ */
+async function resolveSkillsForPath(
+  sourceDir: string,
+  skillPath: string,
+): Promise<string[]> {
+  const results: string[] = [];
+
+  // 1. Check ancestor directories for orchestrator SKILL.md
+  const parts = skillPath.split('/');
+  for (let i = 0; i < parts.length; i++) {
+    const ancestorDir = path.join(sourceDir, ...parts.slice(0, i + 1));
+    if (fs.existsSync(path.join(ancestorDir, 'SKILL.md'))) {
+      results.push(ancestorDir);
+    }
+  }
+
+  // 2. Find all skill dirs within the path itself
+  const src = path.join(sourceDir, skillPath);
+  if (fs.existsSync(src)) {
+    for (const d of await findSkillDirs(src)) {
+      if (!results.includes(d)) results.push(d);
     }
   }
 
@@ -118,25 +174,25 @@ export async function installSkills(
 ): Promise<number> {
   const existing = await readManifest(targetDir);
 
-  let fileCount = 0;
-  const allSkillDirs: string[] = [];
+  const installedNames = new Set<string>();
 
   for (const skillPath of skillPaths) {
-    const src = path.join(sourceDir, skillPath);
-    const dest = path.join(targetDir, skillPath);
+    const skillDirs = await resolveSkillsForPath(sourceDir, skillPath);
 
-    if (!fs.existsSync(src)) continue;
+    for (const skillDir of skillDirs) {
+      const name = path.basename(skillDir);
+      if (installedNames.has(name)) continue;
+      installedNames.add(name);
 
-    await fsp.mkdir(path.dirname(dest), { recursive: true });
-    await fsp.cp(src, dest, { recursive: true });
-
-    fileCount += await countSkillFiles(dest);
-    allSkillDirs.push(...(await collectSkillDirs(dest, targetDir)));
+      await copySkillFlat(skillDir, path.join(targetDir, name));
+    }
   }
 
   // Merge with existing manifest so successive installs accumulate
   const mergedPaths = [...new Set([...(existing?.categoryPaths ?? []), ...skillPaths])];
-  const mergedSkills = [...new Set([...(existing?.skills ?? []), ...allSkillDirs])].sort();
+  const mergedSkills = [
+    ...new Set([...(existing?.skills ?? []), ...installedNames]),
+  ].sort();
 
   const now = new Date().toISOString();
   await writeManifest(targetDir, {
@@ -148,11 +204,8 @@ export async function installSkills(
     skills: mergedSkills,
   });
 
-  return fileCount;
+  return await countCategoryFiles(sourceDir, skillPaths);
 }
-
-// ---------------------------------------------------------------------------
-// Update skills — re-copy from source using manifest data
 // ---------------------------------------------------------------------------
 
 export async function updateSkills(targetDir: string): Promise<number> {
@@ -162,19 +215,17 @@ export async function updateSkills(targetDir: string): Promise<number> {
   const sourceDir = resolveSkillsSource(manifest.lang);
 
   // 1. Determine what skills exist in current source
-  const sourceSkillDirs: string[] = [];
+  const sourceSkillNames = new Set<string>();
   for (const skillPath of manifest.categoryPaths) {
-    const src = path.join(sourceDir, skillPath);
-    if (!fs.existsSync(src)) continue;
-    sourceSkillDirs.push(
-      ...(await collectSkillDirs(src, sourceDir)),
-    );
+    const skillDirs = await resolveSkillsForPath(sourceDir, skillPath);
+    for (const d of skillDirs) sourceSkillNames.add(path.basename(d));
   }
 
   // 2. Remove orphaned skills (in old manifest but absent from source)
-  const sourceSkillSet = new Set(sourceSkillDirs);
   for (const oldSkill of manifest.skills) {
-    if (!sourceSkillSet.has(oldSkill)) {
+    // Handle both flat names ('frontend') and legacy paths ('software/frontend')
+    const oldName = path.basename(oldSkill);
+    if (!sourceSkillNames.has(oldName)) {
       const orphanPath = path.join(targetDir, oldSkill);
       if (fs.existsSync(orphanPath)) {
         await fsp.rm(orphanPath, { recursive: true });
@@ -182,42 +233,39 @@ export async function updateSkills(targetDir: string): Promise<number> {
     }
   }
 
-  // Clean up empty parent directories left by orphan removal (deepest first)
-  const orphanParents = manifest.skills
-    .filter((s) => !sourceSkillSet.has(s))
+  // Clean up empty parent directories left by legacy nested installs
+  const legacyParents = manifest.skills
+    .filter((s) => s.includes('/'))
     .map((s) => path.dirname(s))
     .filter((p) => p !== '.');
 
-  const uniqueParents = [...new Set(orphanParents)].sort(
+  for (const parent of [...new Set(legacyParents)].sort(
     (a, b) => b.split(path.sep).length - a.split(path.sep).length,
-  );
-
-  for (const parent of uniqueParents) {
+  )) {
     await removeIfEmpty(path.join(targetDir, parent));
   }
 
-  // 3. Copy updated skills from source
-  let fileCount = 0;
+  // 3. Copy updated skills from source (flat)
+  const installedNames = new Set<string>();
   for (const skillPath of manifest.categoryPaths) {
-    const src = path.join(sourceDir, skillPath);
-    const dest = path.join(targetDir, skillPath);
+    const skillDirs = await resolveSkillsForPath(sourceDir, skillPath);
+    for (const skillDir of skillDirs) {
+      const name = path.basename(skillDir);
+      if (installedNames.has(name)) continue;
+      installedNames.add(name);
 
-    if (!fs.existsSync(src)) continue;
-
-    await fsp.mkdir(path.dirname(dest), { recursive: true });
-    await fsp.cp(src, dest, { recursive: true });
-
-    fileCount += await countSkillFiles(dest);
+      await copySkillFlat(skillDir, path.join(targetDir, name));
+    }
   }
 
   // 4. Write updated manifest with current source skills
   await writeManifest(targetDir, {
     ...manifest,
     updatedAt: new Date().toISOString(),
-    skills: sourceSkillDirs.sort(),
+    skills: [...installedNames].sort(),
   });
 
-  return fileCount;
+  return await countCategoryFiles(sourceDir, manifest.categoryPaths);
 }
 
 // ---------------------------------------------------------------------------
@@ -230,25 +278,23 @@ export async function cleanSkills(targetDir: string): Promise<number> {
 
   let removed = 0;
 
-  for (const skillDir of manifest.skills) {
-    const fullPath = path.join(targetDir, skillDir);
+  for (const skill of manifest.skills) {
+    const fullPath = path.join(targetDir, skill);
     if (fs.existsSync(fullPath)) {
       await fsp.rm(fullPath, { recursive: true });
       removed++;
     }
   }
 
-  // Clean up empty parent directories (deepest first)
-  const parents = [
-    ...new Set([
-      ...manifest.skills.map((s) => path.dirname(s)),
-      ...manifest.categoryPaths,
-      ...manifest.categoryPaths.map((cp) => path.dirname(cp)),
-    ]),
-  ].sort((a, b) => b.split(path.sep).length - a.split(path.sep).length);
+  // Handle legacy nested paths that may contain '/'
+  const legacyParents = manifest.skills
+    .filter((s) => s.includes('/'))
+    .map((s) => path.dirname(s))
+    .filter((p) => p !== '.');
 
-  for (const parent of parents) {
-    if (parent === '.') continue;
+  for (const parent of [...new Set(legacyParents)].sort(
+    (a, b) => b.split(path.sep).length - a.split(path.sep).length,
+  )) {
     await removeIfEmpty(path.join(targetDir, parent));
   }
 

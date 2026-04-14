@@ -366,7 +366,7 @@ function ProductList({ products, searchQuery }: Props) {
 
 ## Related Skills
 
-Consult [`frontend/SKILL.md`](../SKILL.md) for the full chain.
+Consult [`frontend/SKILL.md`](../frontend/SKILL.md) for the full chain.
 
 - `testing-rules` — tests for stores and selectors
 - `fetching-rules` — TanStack Query for server state
