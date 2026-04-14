@@ -364,6 +364,8 @@ Sentry.captureException(error, {
 
 ## 6. Toast / Notifications
 
+To build a custom toast system (without `sonner`), see [`component-patterns`](../component-patterns/SKILL.md) for the composition pattern and [`design-system-build-components-rules`](../design-system-build-components-rules/SKILL.md) for component structure (variants with CVA, a11y, tests).
+
 ```tsx
 import { toast } from 'sonner';
 

@@ -211,44 +211,7 @@ export function getToken(): string | null {
 }
 ```
 
-```typescript
-// shared/lib/api-client.ts — Inyectar token automáticamente
-import { getToken, clearAuth } from '@features/auth';
-import { env } from '@config/env';
-
-export async function apiClient<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
-  const token = getToken();
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
-
-  if (token) {
-    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(`${env.VITE_API_URL}${path}`, {
-    ...options,
-    headers,
-  });
-
-  if (response.status === 401) {
-    clearAuth(); // Token expirado → limpiar estado
-    window.location.href = '/login';
-    throw new Error('Session expired');
-  }
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Request failed' }));
-    throw new Error(error.message ?? `HTTP ${response.status}`);
-  }
-
-  return response.json();
-}
-```
+La implementación completa del `apiClient` (con `ApiError` tipado, inyección de token, auto-clear en 401 y normalización de errores) está en [`fetching-rules` §6](../fetching-rules/SKILL.md). Es la **única fuente de verdad** para el API client — no duplicar aquí.
 
 **Regla clave SPA:** El token en memoria se pierde al refrescar la página. Si la API soporta refresh tokens, implementar un endpoint que devuelva un nuevo access token vía httpOnly cookie (set desde el backend). Si no hay refresh token, el usuario debe re-autenticarse.
 
@@ -330,6 +293,7 @@ Reglas: `NEXT_PUBLIC_*` es visible en client (nunca secrets), sin prefijo es sol
 - `dangerouslySetInnerHTML` con input de usuario sin DOMPurify = XSS directo.
 - `eval()`, `new Function()`, `innerHTML` con datos dinámicos = vector de ataque.
 - `Access-Control-Allow-Origin: '*'` en producción expone la API a cualquier origen.
+- **Vite SPA + API local:** El dev server de Vite corre en `localhost:5173` mientras la API suele correr en `localhost:3000`. CORS bloqueará las requests a menos que la API configure el origin correcto (ej: `CORS_ORIGIN=http://localhost:5173`). No usar `proxy` de Vite como workaround en producción — configurar CORS correctamente en el backend.
 - API keys/secrets en `NEXT_PUBLIC_*` quedan expuestas en el bundle del cliente.
 - Confiar solo en validación client-side — el server SIEMPRE debe re-validar.
 - Links con `target="_blank"` sin `rel="noopener noreferrer"`.

@@ -272,6 +272,8 @@ function ProductList() {
 
 ## 6. API Client Layer (Vite SPA)
 
+> **Source of truth:** This section is the canonical reference for the `apiClient` in Vite SPA. [`security-rules` §4B](../security-rules/SKILL.md) defines how to store the token (signal in memory) and refers here for the client implementation.
+
 In an SPA, all queries and mutations go through an API client that encapsulates base URL, auth header injection, and error normalization:
 
 ```typescript
