@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.3](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.4.2...v0.4.3) (2026-04-14)
+
+In version 0.4.3 of "delriodev-skills," we've enhanced the user experience by addressing inconsistencies in the agent-workflow and frontend skills through a comprehensive audit. This update includes the addition of missing cross-reference links, improved formatting for requirements, and updates to the SKILL.md files to better support internationalization. These changes ensure a more cohesive and user-friendly experience when utilizing our GitHub Copilot custom skills for software development, security, and compliance.
+
+### Pull Requests
+
+- [#15](https://github.com/mauriciodelrio/delriodev-skills/pull/15) fix(skills): audit and correct agent-workflow and frontend skill inconsistencies
+
 ## [0.4.2](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.4.1...v0.4.2) (2026-04-14)
 
 In version 0.4.2 of "delriodev-skills," we've enhanced the user experience by unifying the `apiClient` as a single source of truth and adding cross-references for improved navigation between security and fetching rules. This release introduces support for single-page applications (SPAs) using Vite and React Router v6, expanding our skills to include in-memory token patterns, advanced state management, and refined error handling. Additionally, we've addressed CORS issues with Vite's dev-server and provided comprehensive updates to ensure a smoother development process.
