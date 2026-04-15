@@ -70,6 +70,7 @@ Si es un **proyecto nuevo**, preguntar al desarrollador qué tipo de proyecto es
 | [vite-project-structure](../vite-project-structure/SKILL.md) | Estructura de carpetas Vite SPA, router centralizado, path aliases con vite-tsconfig-paths | Organización base Vite SPA |
 | [component-patterns](../component-patterns/SKILL.md) | Patrones de composición: compound, render props, HOC, slots | Diseño de componentes genéricos |
 | [design-system-build-components-rules](../design-system-build-components-rules/SKILL.md) | Atomic Design: átomos, moléculas, organismos, tokens, variants | Construcción de Design System |
+| [storybook](../storybook/SKILL.md) | CSF3, controls, play functions, addon-a11y, decorators de providers, tokens | Stories y testing visual del DS |
 | [monorepo-and-tooling](../monorepo-and-tooling/SKILL.md) | Turborepo, pnpm workspaces, shared configs | Arquitectura multi-paquete |
 
 ### React y Rendering
@@ -115,7 +116,7 @@ Si es un **proyecto nuevo**, preguntar al desarrollador qué tipo de proyecto es
 
 | Skill | Descripción | Alcance |
 |-------|-------------|---------|
-| [package-management-rules](../package-management-rules/SKILL.md) | pnpm, lockfiles, versioning, auditoría, actualización | Gestión de dependencias |
+| [install-dependencies-rules](../../install-dependencies-rules/SKILL.md) | pnpm obligatorio, pin exact, pnpm view, audit, osv-scanner, Dependabot | Gestión de dependencias |
 
 ## 3. Guía de Activación por Palabras Clave
 
@@ -124,7 +125,8 @@ Si es un **proyecto nuevo**, preguntar al desarrollador qué tipo de proyecto es
 **Arquitectura y estructura:**
 - `estructura`, `carpetas`, `folder`, `barrel`, `alias`, `path` → `nextjs-project-structure` / `vite-project-structure` (según tipo de proyecto)
 - `compound component`, `render props`, `HOC`, `slots`, `composición`, `patrón` → `component-patterns`
-- `design system`, `átomo`, `molécula`, `organismo`, `token`, `variant`, `storybook` → `design-system-build-components-rules`
+- `design system`, `átomo`, `molécula`, `organismo`, `token`, `variant` → `design-system-build-components-rules`
+- `storybook`, `story`, `stories`, `addon`, `play function`, `controls`, `argTypes`, `autodocs` → `storybook`
 - `monorepo`, `turborepo`, `workspace`, `shared config`, `multi-paquete` → `monorepo-and-tooling`
 
 **React y rendering:**
@@ -154,7 +156,7 @@ Si es un **proyecto nuevo**, preguntar al desarrollador qué tipo de proyecto es
 - `error boundary`, `sentry`, `fallback`, `retry`, `toast`, `notificación error` → `error-handling-rules`
 
 **Infraestructura:**
-- `pnpm`, `dependencia`, `lockfile`, `versión`, `audit`, `actualizar paquete` → `package-management-rules`
+- `pnpm`, `dependencia`, `lockfile`, `versión`, `audit`, `actualizar paquete`, `instalar paquete`, `supply chain` → `install-dependencies-rules`
 
 ## 4. Skills Obligatorias por Acción
 

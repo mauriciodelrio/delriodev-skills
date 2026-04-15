@@ -68,6 +68,11 @@ Estas skills se aplican en **toda** interacción que genere o modifique código,
 - **Keywords**: script, bash, zsh, .sh, sed, awk, grep, automatización, CLI
 - **Activar**: [scripting](../scripting/SKILL.md)
 
+### Dependencias
+
+- **Keywords**: `pnpm add`, instalar paquete, dependencia, devDependency, npm install, audit, lockfile, caret, versión, supply chain, osv-scanner, socket, dependabot
+- **Activar**: [install-dependencies-rules](../install-dependencies-rules/SKILL.md) **SIEMPRE** antes de cualquier `pnpm add`
+
 ---
 
 ## Mapa Completo de Skills
@@ -83,6 +88,7 @@ Estas skills se aplican en **toda** interacción que genere o modifique código,
 | [deploy-pipelines](../deploy-pipelines/SKILL.md) | Deploy a staging/production, preview environments, secrets |
 | [docker](../docker/SKILL.md) | Dockerfile, docker-compose, dev containers, image optimization |
 | [scripting](../scripting/SKILL.md) | Bash/Zsh scripts, Unix tools, terminal styles, CLIs |
+| [install-dependencies-rules](../install-dependencies-rules/SKILL.md) | pnpm obligatorio, pin exact, pnpm view, pnpm audit, osv-scanner, Dependabot |
 
 ### Orquestadores con Sub-skills
 

@@ -58,6 +58,11 @@ These skills apply in **every** interaction that generates or modifies code, wit
 - **Activate**: [basic-workflows](../basic-workflows/SKILL.md) for initial CI/CD setup
 - **Activate**: [deploy-pipelines](../deploy-pipelines/SKILL.md) for deploy pipelines (staging, production, preview)
 
+### Dependencies
+
+- **Keywords**: `pnpm add`, install package, dependency, devDependency, npm install, audit, lockfile, caret, version, supply chain, osv-scanner, socket, dependabot
+- **Activate**: [install-dependencies-rules](../install-dependencies-rules/SKILL.md) **ALWAYS** before any `pnpm add`
+
 ### Docker and Containers
 
 - **Keywords**: Docker, Dockerfile, docker-compose, container, image, devcontainer, multi-stage
@@ -83,6 +88,7 @@ These skills apply in **every** interaction that generates or modifies code, wit
 | [deploy-pipelines](../deploy-pipelines/SKILL.md) | Deploy to staging/production, preview environments, secrets |
 | [docker](../docker/SKILL.md) | Dockerfile, docker-compose, dev containers, image optimization |
 | [scripting](../scripting/SKILL.md) | Bash/Zsh scripts, Unix tools, terminal styles, CLIs |
+| [install-dependencies-rules](../install-dependencies-rules/SKILL.md) | Mandatory pnpm, exact pinning, pnpm view, pnpm audit, osv-scanner, Dependabot |
 
 ### Orchestrators with Sub-skills
 
