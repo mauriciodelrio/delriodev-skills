@@ -292,3 +292,4 @@ test('tab navigates between modal buttons', async () => {
 | [`css-rules`](../css-rules/SKILL.md) | Contrast, focus indicators, prefers-reduced-motion |
 | [`forms-and-validation-rules`](../forms-and-validation-rules/SKILL.md) | Labels, accessible error messages, fieldset/legend |
 | [`i18n-react-rules`](../i18n-react-rules/SKILL.md) / [`i18n-nextjs-rules`](../i18n-nextjs-rules/SKILL.md) | `lang` attribute, translations of aria-labels |
+| [`design-system-build-components-rules`](../design-system-build-components-rules/SKILL.md) | A11y built into atoms, molecules, and organisms of the DS |

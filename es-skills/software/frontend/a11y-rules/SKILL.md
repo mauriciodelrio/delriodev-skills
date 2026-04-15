@@ -291,3 +291,4 @@ test('tab navega entre botones del modal', async () => {
 | [`css-rules`](../css-rules/SKILL.md) | Contraste, focus indicators, prefers-reduced-motion |
 | [`forms-and-validation-rules`](../forms-and-validation-rules/SKILL.md) | Labels, error messages accesibles, fieldset/legend |
 | [`i18n-react-rules`](../i18n-react-rules/SKILL.md) / [`i18n-nextjs-rules`](../i18n-nextjs-rules/SKILL.md) | `lang` attribute, traducciones de aria-labels |
+| [`design-system-build-components-rules`](../design-system-build-components-rules/SKILL.md) | A11y integrada en átomos, moléculas y organismos del DS |
