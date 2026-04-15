@@ -163,6 +163,31 @@ async function resolveSkillsForPath(
 }
 
 // ---------------------------------------------------------------------------
+// Detect new skills — present in source category paths but not yet installed
+// ---------------------------------------------------------------------------
+
+export async function detectNewSkills(targetDir: string): Promise<string[]> {
+  const manifest = await readManifest(targetDir);
+  if (!manifest) return [];
+
+  const sourceDir = resolveSkillsSource(manifest.lang);
+  const installedNames = new Set(manifest.skills.map((s) => path.basename(s)));
+
+  const newSkills: string[] = [];
+  for (const skillPath of manifest.categoryPaths) {
+    const skillDirs = await resolveSkillsForPath(sourceDir, skillPath);
+    for (const d of skillDirs) {
+      const name = path.basename(d);
+      if (!installedNames.has(name) && !newSkills.includes(name)) {
+        newSkills.push(name);
+      }
+    }
+  }
+
+  return newSkills;
+}
+
+// ---------------------------------------------------------------------------
 // Install skills — copy selected skill dirs to target + write manifest
 // ---------------------------------------------------------------------------
 
@@ -228,7 +253,8 @@ export async function installSkills(
 }
 // ---------------------------------------------------------------------------
 
-export async function updateSkills(targetDir: string): Promise<number> {
+export async function updateSkills(targetDir: string, options?: { addNew?: boolean }): Promise<number> {
+  const addNew = options?.addNew ?? true;
   const manifest = await readManifest(targetDir);
   if (!manifest) throw new Error('No manifest found');
 
@@ -267,11 +293,13 @@ export async function updateSkills(targetDir: string): Promise<number> {
 
   // 3. Copy updated skills from source (flat)
   const installedNames = new Set<string>();
+  const existingSkillNames = new Set(manifest.skills.map((s) => path.basename(s)));
   for (const skillPath of manifest.categoryPaths) {
     const skillDirs = await resolveSkillsForPath(sourceDir, skillPath);
     for (const skillDir of skillDirs) {
       const name = path.basename(skillDir);
       if (installedNames.has(name)) continue;
+      if (!addNew && !existingSkillNames.has(name)) continue;
       installedNames.add(name);
 
       await copySkillFlat(skillDir, path.join(targetDir, name));

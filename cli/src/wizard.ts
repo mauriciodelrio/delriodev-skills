@@ -8,6 +8,7 @@ import {
   resolveTarget,
   installSkills,
   readManifest,
+  detectNewSkills,
   updateSkills,
   cleanSkills,
   countCategoryFiles,
@@ -90,6 +91,7 @@ export async function runWizard(): Promise<void> {
   let targetDir = '';
   let categoryCounts = new Map<string, number>();
   let totalFiles = 0;
+  let updateMode: 'existing-only' | 'add-new' = 'add-new';
 
   while (step < 100) {
     switch (step) {
@@ -308,7 +310,7 @@ export async function runWizard(): Promise<void> {
         break;
       }
 
-      // ── Step 11: Show manifest + confirm update ──────────────────────
+      // ── Step 11: Check for new skills + show manifest + confirm ──────
       case 11: {
         const manifest = await readManifest(targetDir);
 
@@ -316,6 +318,38 @@ export async function runWizard(): Promise<void> {
           p.log.warning(t(l, 'noManifestFound'));
           step = 10;
           break;
+        }
+
+        // Detect skills present in source category paths but not yet installed
+        const newSkills = await detectNewSkills(targetDir);
+        if (newSkills.length > 0) {
+          const newLines = newSkills.map((s) => `  ${pc.green('+')} ${s}`);
+          p.note(
+            newLines.join('\n') +
+              `\n\n  ${pc.bold(String(newSkills.length))} ${t(l, 'newSkillsFoundNote')}`,
+            t(l, 'newSkillsAvailable'),
+          );
+
+          const mode = await p.select({
+            message: t(l, 'updateModePrompt'),
+            options: [
+              {
+                value: 'existing-only',
+                label: t(l, 'updateExistingOnly'),
+                hint: t(l, 'updateExistingOnlyHint'),
+              },
+              {
+                value: 'add-new',
+                label: t(l, 'updateAndAddNew'),
+                hint: t(l, 'updateAndAddNewHint'),
+              },
+              backOption(l),
+            ],
+          });
+
+          if (p.isCancel(mode)) return cancel(l);
+          if (mode === BACK) { step = 10; break; }
+          updateMode = mode as 'existing-only' | 'add-new';
         }
 
         const skillLines = manifest.skills.map(
@@ -341,7 +375,7 @@ export async function runWizard(): Promise<void> {
         const s = p.spinner();
         s.start(t(l, 'updating'));
 
-        const count = await updateSkills(targetDir);
+        const count = await updateSkills(targetDir, { addNew: updateMode === 'add-new' });
 
         s.stop(pc.green(`✓ ${count} ${t(l, 'skillsUpdated')}`));
         p.outro(`${t(l, 'updateDone')} ${pc.dim(targetDir)}`);

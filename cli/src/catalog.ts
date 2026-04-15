@@ -155,7 +155,14 @@ type TranslationKey =
   | 'skillsUpdated'
   | 'skillsCleaned'
   | 'updateDone'
-  | 'cleanDone';
+  | 'cleanDone'
+  | 'newSkillsAvailable'
+  | 'newSkillsFoundNote'
+  | 'updateModePrompt'
+  | 'updateExistingOnly'
+  | 'updateExistingOnlyHint'
+  | 'updateAndAddNew'
+  | 'updateAndAddNewHint';
 
 const TRANSLATIONS: Record<Lang, Record<TranslationKey, string>> = {
   en: {
@@ -202,6 +209,13 @@ const TRANSLATIONS: Record<Lang, Record<TranslationKey, string>> = {
     skillsCleaned: 'skills removed',
     updateDone: 'Done! Skills updated at',
     cleanDone: 'Done! Skills removed from',
+    newSkillsAvailable: '🆕  New skills available',
+    newSkillsFoundNote: 'new skill(s) found in your installed categories',
+    updateModePrompt: 'How would you like to update?',
+    updateExistingOnly: 'Update existing skills only',
+    updateExistingOnlyHint: 'Keep your current skill set',
+    updateAndAddNew: 'Update existing + add new skills',
+    updateAndAddNewHint: 'Also install the new skill(s) listed above',
   },
   es: {
     selectMode: '¿Qué quieres instalar?',
@@ -247,6 +261,13 @@ const TRANSLATIONS: Record<Lang, Record<TranslationKey, string>> = {
     skillsCleaned: 'skills eliminadas',
     updateDone: '¡Listo! Skills actualizadas en',
     cleanDone: '¡Listo! Skills eliminadas de',
+    newSkillsAvailable: '🆕  Nuevas skills disponibles',
+    newSkillsFoundNote: 'nueva(s) skill(s) encontrada(s) en tus categorías instaladas',
+    updateModePrompt: '¿Cómo deseas actualizar?',
+    updateExistingOnly: 'Actualizar solo skills existentes',
+    updateExistingOnlyHint: 'Mantener tu conjunto de skills actual',
+    updateAndAddNew: 'Actualizar existentes + añadir nuevas skills',
+    updateAndAddNewHint: 'También instalar la(s) nueva(s) skill(s) listada(s) arriba',
   },
 };
 
