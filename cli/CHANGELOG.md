@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.5.1...v0.6.0) (2026-04-15)
+
+In version 0.6.0 of "delriodev-skills," we've introduced significant enhancements to the design system, including improved accessibility compliance with WCAG 2.2, internationalization support, and a unified token scale for better consistency. Additionally, we've added new skills for Storybook and dependency installation while removing the outdated package-management-rules skill to streamline your development experience. These updates aim to elevate the quality and usability of your GitHub Copilot custom skills.
+
+### Pull Requests
+
+- [#19](https://github.com/mauriciodelrio/delriodev-skills/pull/19) feat: add Storybook and install-dependencies skills, enhance design-system, remove package-management-rules
+
 ## [0.5.1](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.5.0...v0.5.1) (2026-04-14)
 
 In version 0.5.1 of "delriodev-skills," we've enhanced the skill installation process for improved visibility in VS Code by flattening the directory structure. This change allows VS Code to discover all skills more effectively, ensuring that users can access a broader range of available capabilities. Additionally, we've updated over 200 cross-references in the SKILL.md files to streamline navigation and improve usability.
