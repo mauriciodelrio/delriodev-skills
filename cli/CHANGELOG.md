@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.2](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.6.1...v0.6.2) (2026-04-15)
+
+In version 0.6.2 of "delriodev-skills," we've introduced an exciting new feature that enhances the update process. When users select the Update option, the CLI now detects any new skills available in their installed categories and prompts them to either update existing skills, update while adding new ones, or cancel the action. This update streamlines the user experience and ensures that developers can easily keep their skills current and comprehensive.
+
+### Pull Requests
+
+- [#21](https://github.com/mauriciodelrio/delriodev-skills/pull/21) feat(cli): detect new skills on update and prompt to add them
+
 ## [0.6.1](https://github.com/mauriciodelrio/delriodev-skills/compare/v0.6.0...v0.6.1) (2026-04-15)
 
 In version 0.6.1 of "delriodev-skills," we've improved the CLI by dynamically reading the version from the package.json file, ensuring that users always see the correct version in the banner. Additionally, we've enhanced the general category by adding the install-dependencies-rules, making it easier for users to manage their dependencies effectively.
