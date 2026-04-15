@@ -27,6 +27,14 @@ No installation needed. The wizard guides you through language selection, catego
 
 ---
 
+## How Skills Work
+
+Each `SKILL.md` contains a YAML frontmatter with `name` and `description` that GitHub Copilot uses to automatically activate the skill when the development context requires it.
+
+For manual activation, reference the skill from your prompt or add its path to `.github/copilot-instructions.md`. The CLI wizard copies the selected skills to the target directory of your choice.
+
+---
+
 ## Structure
 
 ```
@@ -34,25 +42,28 @@ en-skills/
 ├── software/
 │   ├── frontend/
 │   │   ├── SKILL.md                            ← Frontend orchestrator index
-│   │   ├── project-structure/SKILL.md          ← Project structure
+│   │   ├── nextjs-project-structure/SKILL.md   ← Project structure (Next.js App Router)
+│   │   ├── vite-project-structure/SKILL.md     ← Project structure (Vite SPA)
 │   │   ├── component-patterns/SKILL.md         ← Component patterns
 │   │   ├── design-system-build-components-rules/SKILL.md ← Design System
 │   │   ├── react-best-practices/SKILL.md       ← React 19+
 │   │   ├── state-management-rules/SKILL.md     ← Zustand, Jotai, Signals
 │   │   ├── rendering-strategies/SKILL.md       ← SSR, SSG, RSC, PPR
 │   │   ├── nextjs-best-practices/SKILL.md      ← Next.js 15+ App Router
-│   │   ├── routing-rules/SKILL.md              ← Routes and navigation
+│   │   ├── nextjs-routing-rules/SKILL.md       ← Routes and navigation (Next.js)
+│   │   ├── vite-routing-rules/SKILL.md         ← Routes and navigation (React Router v6)
 │   │   ├── css-rules/SKILL.md                  ← Tailwind, CSS Modules, MUI
 │   │   ├── a11y-rules/SKILL.md                 ← WCAG Accessibility
 │   │   ├── animations-and-transitions/SKILL.md ← Framer Motion, CSS
-│   │   ├── i18n-rules/SKILL.md                 ← Internationalization
+│   │   ├── i18n-react-rules/SKILL.md           ← i18n (Vite SPA — react-i18next)
+│   │   ├── i18n-nextjs-rules/SKILL.md          ← i18n (Next.js — next-intl)
 │   │   ├── seo-rules/SKILL.md                  ← SEO and Core Web Vitals
 │   │   ├── fetching-rules/SKILL.md             ← TanStack Query, SWR
 │   │   ├── forms-and-validation-rules/SKILL.md ← React Hook Form + Zod
 │   │   ├── code-quality-rules/SKILL.md         ← ESLint, Prettier, Biome
 │   │   ├── testing-rules/SKILL.md              ← Vitest, RTL, Playwright
 │   │   ├── performance-rules/SKILL.md          ← Performance and metrics
-│   │   ├── package-management-rules/SKILL.md   ← pnpm
+│   │   ├── storybook/SKILL.md                  ← Storybook 8, CSF3, a11y addon
 │   │   ├── monorepo-and-tooling/SKILL.md       ← Turborepo
 │   │   ├── security-rules/SKILL.md             ← XSS, CSP, tokens
 │   │   └── error-handling-rules/SKILL.md       ← Error Boundaries, Sentry
@@ -86,6 +97,7 @@ en-skills/
 │   │   ├── database-design/SKILL.md            ← Modeling, relations, indices, naming
 │   │   └── api-consumption/SKILL.md            ← External API consumption, retry, webhooks
 │   │
+│   ├── install-dependencies-rules/SKILL.md     ← pnpm, exact versions, OSV-Scanner, Dependabot
 │   ├── docker/SKILL.md                         ← Dockerfiles, compose, dev containers
 │   ├── typescript-patterns/SKILL.md            ← Generics, utility types, branded types
 │   ├── deploy-pipelines/SKILL.md               ← GitHub Actions deploy, Vercel, AWS, rollback
@@ -117,19 +129,21 @@ en-skills/
 
 ---
 
-## Frontend Skills (22 skills)
+## Frontend Skills (25 skills)
 
-Stack: React 19+ · Next.js 15+ App Router · TypeScript strict · Tailwind CSS 4+ · Material UI 6+ · Vitest · Playwright · pnpm · Turborepo
+Stack: React 19+ · Next.js 15+ App Router · Vite SPA · TypeScript strict · Tailwind CSS 4+ · Material UI 6+ · Vitest · Playwright · pnpm · Turborepo
 
 | Layer | Skills |
 |-------|--------|
-| **Architecture** | project-structure · component-patterns · design-system-build-components-rules |
+| **Architecture** | nextjs-project-structure · vite-project-structure · component-patterns · design-system-build-components-rules |
 | **React / Rendering** | react-best-practices · state-management-rules · rendering-strategies |
-| **Next.js / Routing** | nextjs-best-practices · routing-rules |
-| **UI / UX** | css-rules · a11y-rules · animations-and-transitions · i18n-rules · seo-rules |
+| **Next.js** | nextjs-best-practices · nextjs-routing-rules |
+| **Vite SPA** | vite-routing-rules |
+| **UI / UX** | css-rules · a11y-rules · animations-and-transitions · i18n-react-rules · i18n-nextjs-rules · seo-rules |
 | **Data / Forms** | fetching-rules · forms-and-validation-rules |
-| **Quality / Security** | code-quality-rules · testing-rules · performance-rules · security-rules · error-handling-rules |
-| **Infrastructure** | package-management-rules · monorepo-and-tooling |
+| **Quality / Testing** | code-quality-rules · testing-rules · performance-rules · storybook |
+| **Security / Errors** | security-rules · error-handling-rules |
+| **Infrastructure** | monorepo-and-tooling |
 
 ---
 
@@ -182,6 +196,7 @@ Focused on HOW to implement in code (which cloud service to use → architecture
 | **docker** | Multi-stage Dockerfiles, docker-compose, dev containers, optimization |
 | **typescript-patterns** | Generics, utility types, discriminated unions, branded types, satisfies |
 | **deploy-pipelines** | GitHub Actions deploy, Vercel, AWS (SST), preview envs, rollback |
+| **install-dependencies-rules** | pnpm only, exact version pins, OSV-Scanner, Socket.dev, Dependabot |
 
 ---
 
@@ -212,11 +227,3 @@ Agent work protocol within any project. Defines how it receives features, decomp
 | **OWASP Top 10** | Web vulnerabilities | 🌍 Global |
 | **CCPA/CPRA** | Consumer privacy | 🇺🇸 California |
 | **LGPD** | Data protection | 🇧🇷 Brazil |
-
----
-
-## Usage
-
-Each `SKILL.md` has a YAML frontmatter with `name` and `description` that allows GitHub Copilot to automatically activate the skill when the development context requires it.
-
-For manual activation, reference the relevant skill from your prompt or configure it in your `.github/copilot-instructions.md` file.

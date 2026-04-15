@@ -27,6 +27,14 @@ No se necesita instalación. El asistente te guiará a través de la selección 
 
 ---
 
+## Cómo funcionan las skills
+
+Cada `SKILL.md` contiene un frontmatter YAML con `name` y `description` que GitHub Copilot usa para activar la skill automáticamente cuando el contexto del desarrollo lo requiera.
+
+Para activación manual, referencia la skill desde tu prompt o añade su ruta a `.github/copilot-instructions.md`. El asistente CLI copia las skills seleccionadas al directorio de destino que elijas.
+
+---
+
 ## Estructura
 
 ```
@@ -34,25 +42,28 @@ es-skills/
 ├── software/
 │   ├── frontend/
 │   │   ├── SKILL.md                            ← Índice orquestador frontend
-│   │   ├── project-structure/SKILL.md          ← Estructura de proyecto
+│   │   ├── nextjs-project-structure/SKILL.md   ← Estructura de proyecto (Next.js App Router)
+│   │   ├── vite-project-structure/SKILL.md     ← Estructura de proyecto (Vite SPA)
 │   │   ├── component-patterns/SKILL.md         ← Patrones de componentes
 │   │   ├── design-system-build-components-rules/SKILL.md ← Design System
 │   │   ├── react-best-practices/SKILL.md       ← React 19+
 │   │   ├── state-management-rules/SKILL.md     ← Zustand, Jotai, Signals
 │   │   ├── rendering-strategies/SKILL.md       ← SSR, SSG, RSC, PPR
 │   │   ├── nextjs-best-practices/SKILL.md      ← Next.js 15+ App Router
-│   │   ├── routing-rules/SKILL.md              ← Rutas y navegación
+│   │   ├── nextjs-routing-rules/SKILL.md       ← Rutas y navegación (Next.js)
+│   │   ├── vite-routing-rules/SKILL.md         ← Rutas y navegación (React Router v6)
 │   │   ├── css-rules/SKILL.md                  ← Tailwind, CSS Modules, MUI
 │   │   ├── a11y-rules/SKILL.md                 ← Accesibilidad WCAG
 │   │   ├── animations-and-transitions/SKILL.md ← Framer Motion, CSS
-│   │   ├── i18n-rules/SKILL.md                 ← Internacionalización
+│   │   ├── i18n-react-rules/SKILL.md           ← i18n (Vite SPA — react-i18next)
+│   │   ├── i18n-nextjs-rules/SKILL.md          ← i18n (Next.js — next-intl)
 │   │   ├── seo-rules/SKILL.md                  ← SEO y Core Web Vitals
 │   │   ├── fetching-rules/SKILL.md             ← TanStack Query, SWR
 │   │   ├── forms-and-validation-rules/SKILL.md ← React Hook Form + Zod
 │   │   ├── code-quality-rules/SKILL.md         ← ESLint, Prettier, Biome
 │   │   ├── testing-rules/SKILL.md              ← Vitest, RTL, Playwright
 │   │   ├── performance-rules/SKILL.md          ← Rendimiento y métricas
-│   │   ├── package-management-rules/SKILL.md   ← pnpm
+│   │   ├── storybook/SKILL.md                  ← Storybook 8, CSF3, addon a11y
 │   │   ├── monorepo-and-tooling/SKILL.md       ← Turborepo
 │   │   ├── security-rules/SKILL.md             ← XSS, CSP, tokens
 │   │   └── error-handling-rules/SKILL.md       ← Error Boundaries, Sentry
@@ -86,6 +97,7 @@ es-skills/
 │   │   ├── database-design/SKILL.md            ← Modelado, relaciones, índices, naming
 │   │   └── api-consumption/SKILL.md            ← Consumo APIs externas, retry, webhooks
 │   │
+│   ├── install-dependencies-rules/SKILL.md     ← pnpm, versiones exactas, OSV-Scanner, Dependabot
 │   ├── docker/SKILL.md                         ← Dockerfiles, compose, dev containers
 │   ├── typescript-patterns/SKILL.md            ← Generics, utility types, branded types
 │   ├── deploy-pipelines/SKILL.md               ← GitHub Actions deploy, Vercel, AWS, rollback
@@ -117,19 +129,21 @@ es-skills/
 
 ---
 
-## Frontend Skills (22 skills)
+## Frontend Skills (25 skills)
 
-Stack: React 19+ · Next.js 15+ App Router · TypeScript strict · Tailwind CSS 4+ · Material UI 6+ · Vitest · Playwright · pnpm · Turborepo
+Stack: React 19+ · Next.js 15+ App Router · Vite SPA · TypeScript strict · Tailwind CSS 4+ · Material UI 6+ · Vitest · Playwright · pnpm · Turborepo
 
 | Capa | Skills |
 |------|--------|
-| **Arquitectura** | project-structure · component-patterns · design-system-build-components-rules |
+| **Arquitectura** | nextjs-project-structure · vite-project-structure · component-patterns · design-system-build-components-rules |
 | **React / Rendering** | react-best-practices · state-management-rules · rendering-strategies |
-| **Next.js / Routing** | nextjs-best-practices · routing-rules |
-| **UI / UX** | css-rules · a11y-rules · animations-and-transitions · i18n-rules · seo-rules |
+| **Next.js** | nextjs-best-practices · nextjs-routing-rules |
+| **Vite SPA** | vite-routing-rules |
+| **UI / UX** | css-rules · a11y-rules · animations-and-transitions · i18n-react-rules · i18n-nextjs-rules · seo-rules |
 | **Data / Formularios** | fetching-rules · forms-and-validation-rules |
-| **Calidad / Seguridad** | code-quality-rules · testing-rules · performance-rules · security-rules · error-handling-rules |
-| **Infraestructura** | package-management-rules · monorepo-and-tooling |
+| **Calidad / Testing** | code-quality-rules · testing-rules · performance-rules · storybook |
+| **Seguridad / Errores** | security-rules · error-handling-rules |
+| **Infraestructura** | monorepo-and-tooling |
 
 ---
 
@@ -182,6 +196,7 @@ Enfocado en CÓMO implementar en código (qué servicio cloud usar → architect
 | **docker** | Dockerfiles multi-stage, docker-compose, dev containers, optimización |
 | **typescript-patterns** | Generics, utility types, discriminated unions, branded types, satisfies |
 | **deploy-pipelines** | GitHub Actions deploy, Vercel, AWS (SST), preview envs, rollback |
+| **install-dependencies-rules** | Solo pnpm, versiones exactas, OSV-Scanner, Socket.dev, Dependabot |
 
 ---
 
@@ -212,11 +227,3 @@ Protocolo de trabajo del agente dentro de cualquier proyecto. Define cómo recib
 | **OWASP Top 10** | Vulnerabilidades web | 🌍 Global |
 | **CCPA/CPRA** | Privacidad del consumidor | 🇺🇸 California |
 | **LGPD** | Protección de datos | 🇧🇷 Brasil |
-
----
-
-## Uso
-
-Cada `SKILL.md` tiene un frontmatter YAML con `name` y `description` que permite a GitHub Copilot activar la skill automáticamente cuando el contexto del desarrollo lo requiera.
-
-Para activación manual, referencia la skill relevante desde tu prompt o configúrala en tu archivo `.github/copilot-instructions.md`.

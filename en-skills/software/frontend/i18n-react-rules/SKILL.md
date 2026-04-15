@@ -16,6 +16,7 @@ description: >
 | [`i18n-nextjs-rules`](../i18n-nextjs-rules/SKILL.md) | If the project is Next.js (detect `next.config.*`). Do not use this skill in that case. |
 | [`a11y-rules`](../a11y-rules/SKILL.md) | Always — `lang` attribute, `aria-label` translations, accessible RTL layout. |
 | [`forms-and-validation-rules`](../forms-and-validation-rules/SKILL.md) | When the form needs translated error messages and i18n labels. |
+| [`design-system-build-components-rules`](../design-system-build-components-rules/SKILL.md) | When building DS components — all user-visible strings as props, translatable `aria-label`. |
 
 ## Agent workflow
 

@@ -70,6 +70,7 @@ If it's a **new project**, ask the developer what type of project it is before p
 | [vite-project-structure](../vite-project-structure/SKILL.md) | Vite SPA folder structure, centralized router, path aliases with vite-tsconfig-paths | Vite SPA base organization |
 | [component-patterns](../component-patterns/SKILL.md) | Composition patterns: compound, render props, HOC, slots | Generic component design |
 | [design-system-build-components-rules](../design-system-build-components-rules/SKILL.md) | Atomic Design: atoms, molecules, organisms, tokens, variants | Design System construction |
+| [storybook](../storybook/SKILL.md) | CSF3, controls, play functions, addon-a11y, provider decorators, tokens | DS stories and visual testing |
 | [monorepo-and-tooling](../monorepo-and-tooling/SKILL.md) | Turborepo, pnpm workspaces, shared configs | Multi-package architecture |
 
 ### React and Rendering
@@ -115,7 +116,7 @@ If it's a **new project**, ask the developer what type of project it is before p
 
 | Skill | Description | Scope |
 |-------|-------------|-------|
-| [package-management-rules](../package-management-rules/SKILL.md) | pnpm, lockfiles, versioning, auditing, updates | Dependency management |
+| [install-dependencies-rules](../../install-dependencies-rules/SKILL.md) | Mandatory pnpm, exact pinning, pnpm view, audit, osv-scanner, Dependabot | Dependency management |
 
 ## 3. Keyword Activation Guide
 
@@ -124,7 +125,8 @@ If it's a **new project**, ask the developer what type of project it is before p
 **Architecture and structure:**
 - `structure`, `folders`, `folder`, `barrel`, `alias`, `path` → `nextjs-project-structure` / `vite-project-structure` (based on project type)
 - `compound component`, `render props`, `HOC`, `slots`, `composition`, `pattern` → `component-patterns`
-- `design system`, `atom`, `molecule`, `organism`, `token`, `variant`, `storybook` → `design-system-build-components-rules`
+- `design system`, `atom`, `molecule`, `organism`, `token`, `variant` → `design-system-build-components-rules`
+- `storybook`, `story`, `stories`, `addon`, `play function`, `controls`, `argTypes`, `autodocs` → `storybook`
 - `monorepo`, `turborepo`, `workspace`, `shared config`, `multi-package` → `monorepo-and-tooling`
 
 **React and rendering:**
@@ -154,7 +156,7 @@ If it's a **new project**, ask the developer what type of project it is before p
 - `error boundary`, `sentry`, `fallback`, `retry`, `toast`, `error notification` → `error-handling-rules`
 
 **Infrastructure:**
-- `pnpm`, `dependency`, `lockfile`, `version`, `audit`, `update package` → `package-management-rules`
+- `pnpm`, `dependency`, `lockfile`, `version`, `audit`, `update package`, `install package`, `supply chain` → `install-dependencies-rules`
 
 ## 4. Mandatory Skills by Action
 
