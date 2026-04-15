@@ -37,6 +37,7 @@ export const CATEGORIES: Category[] = [
       'software/docker',
       'software/typescript-patterns',
       'software/deploy-pipelines',
+      'software/install-dependencies-rules',
     ],
   },
   {
