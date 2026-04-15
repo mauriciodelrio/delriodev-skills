@@ -1,3 +1,4 @@
+import { createRequire } from 'module';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
 
@@ -16,8 +17,9 @@ import {
 // Constants
 // ---------------------------------------------------------------------------
 
+const require = createRequire(import.meta.url);
+const { version: VERSION } = require('../package.json') as { version: string };
 const BACK = '__back__';
-const VERSION = '0.1.0';
 
 function backOption(l: Lang) {
   return { value: BACK, label: pc.dim(`← ${t(l, 'goBack')}`) } as const;
